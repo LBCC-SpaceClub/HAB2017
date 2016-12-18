@@ -48,6 +48,8 @@ void displayInfo(){
   Serial.print(StationGps.location.lat(), 6); Serial.print(",");
   Serial.print(StationGps.location.lng(), 6); Serial.print(",");
   Serial.print(StationGps.altitude.meters()); Serial.print(",");
+  
+  // courseTo() is bearing relative to true north
   double courseTo = TinyGPSPlus::courseTo(
     StationGps.location.lat(), StationGps.location.lng(),
     PayloadGps.location.lat(), PayloadGps.location.lng()
