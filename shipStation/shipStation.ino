@@ -30,22 +30,12 @@ void displayInfo(){
   Serial.print(RxGps.location.lat(), 6); Serial.print(",");
   Serial.print(RxGps.location.lng(), 6); Serial.print(",");
   Serial.print(RxGps.altitude.meters()); Serial.print(",");
-  Serial.println(findBearing(RxGps, TxGps));
-}
-
-double findBearing(TinyGPSPlus A, TinyGPSPlus B){
-  // Returns bearing from point A to point B
-  // See http://www.igismap.com/formula-to-find-bearing-or-heading-angle-between-two-points-latitude-longitude/
-  double cosA = cos(A.location.lat());
-  double cosB = cos(B.location.lat());
-  double sinA = sin(A.location.lat());
-  double sinB = sin(B.location.lat());
-  double lamLong = A.location.lng()-B.location.lng();
-  return atan2(
-    cosB*sin(lamLong),
-    cosA*sinB-sinA*cosB*cos(lamLong)
+  double courseTo = TinyGPSPlus::courseTo(
+    TxGps.location.lat(), TxGps.location.lng(),
+    RxGps.location.lat(), RxGps.location.lng()
   );
-    
+  Serial.print(courseTo); Serial.print(",");
+  Serial.println(TinyGPSPlus::cardinal(courseTo));
 }
 
 void loop() {
