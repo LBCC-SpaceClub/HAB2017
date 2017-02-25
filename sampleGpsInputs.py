@@ -29,8 +29,8 @@ def gmapsToNMEA(coord):
     return '{0}{1:07.4f},{2}'.format(DDD, MM, cardinal)
 
 # use google earth DD.DDDDDD coordinates here:
-targetLat = 44.636957
-targetLng = -123.105770
+targetLat = 44.546105
+targetLng = -123.256989
 # Alt is in meters
 targetAlt = 1000
 
@@ -43,6 +43,7 @@ print 'nmea=',nmea
 if __name__ == "__main__":
     ser = serial.Serial(args.port, args.baudRate, timeout=10)
     ser.flush()
+    print "pLat, pLng, pAlt, sLat, sLng, sAlt, course, cardinal, surfaceDist, vertAngle"
     while True:
         ser.write(nmea)
         line = ser.readline()[:-2]
