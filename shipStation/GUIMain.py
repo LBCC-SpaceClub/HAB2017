@@ -18,6 +18,3 @@ class GUIMain(App):
         return RootFrame()
 
 
-#if __name__ == '__main__':
-#GUIMain().run()
-
