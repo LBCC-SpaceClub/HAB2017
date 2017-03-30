@@ -2,7 +2,8 @@ import pymysql.cursors
 import configparser
 
 
-class DBConnect():
+class DatabaseConnect():
+
   def __init__(self, cfg_file):
     try:
   	  cfg = configparser.ConfigParser()
@@ -12,13 +13,14 @@ class DBConnect():
 
     try:
       self.db = pymysql.connect(host=cfg["MySQL"]["Host"],
-	  	user=cfg["MySQL"]["User"],
-	  	password=cfg["MySQL"]["Password"],
-	  	db=cfg["MySQL"]["Database"],
-	  	charset='utf8mb4',
-	  	cursorclass=pymysql.cursors.DictCursor)
+	  	  user=cfg["MySQL"]["User"],
+	  	  password=cfg["MySQL"]["Password"],
+	  	  db=cfg["MySQL"]["Database"],
+	  	  charset='utf8mb4',
+	  	  cursorclass=pymysql.cursors.DictCursor)
     except:
       print("ERROR - failed to connect to MySQL database")
+
 
 
   def parseData(self):
@@ -36,4 +38,3 @@ class DBConnect():
       	return 
     except:
       print("ERROR - failed to parse data, no connection")
-

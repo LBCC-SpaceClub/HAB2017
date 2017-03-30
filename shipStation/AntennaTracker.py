@@ -8,32 +8,26 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import NumericProperty,ReferenceListProperty,ObjectProperty
 import threading
 import time
-
 from Actions import *
-from Database import DBConnect
-
-
+from Database import *
+from IntervalThread import *
 
 configs = "Configs.ini"
 
-def connectDB():
-  db = DBConnect(configs)
-  print(db.parseData())
-
-
-#stop = threading.Event()
-threading.Thread(target=connectDB).start()
-
-
-
 class AntennaTracker(App):
-  def stop_thread(self):
-    self.root.stop.set()
+  thread = IntervalThread()
 
+  @thread.setInterval(5)
+  def __queryDatabase(self):
+  	self.db = DatabaseConnect(configs)
+  	print(self.db.parseData())
+  
   def build(self):
-    self.load_kv('Components.kv')
-    return RootFrame()
+  	self.__queryDatabase()
+  	self.load_kv('Components.kv')
+  	return RootFrame()
+  
 
-
+#-------------------------START OF EXECUTION
 if __name__ == "__main__":
   AntennaTracker().run()
