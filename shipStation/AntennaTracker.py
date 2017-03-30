@@ -15,16 +15,25 @@ from Database import DBConnect
 
 
 configs = "Configs.ini"
-db = DBConnect(configs)
-print(db.parseData())
+
+def connectDB():
+  db = DBConnect(configs)
+  print(db.parseData())
+
+
+#stop = threading.Event()
+threading.Thread(target=connectDB).start()
 
 
 
 class AntennaTracker(App):
-    def build(self):
-        self.load_kv('Components.kv')
-        return RootFrame()
+  def stop_thread(self):
+    self.root.stop.set()
+
+  def build(self):
+    self.load_kv('Components.kv')
+    return RootFrame()
 
 
 if __name__ == "__main__":
-    AntennaTracker().run()
+  AntennaTracker().run()
