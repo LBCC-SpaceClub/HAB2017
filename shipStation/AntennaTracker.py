@@ -9,12 +9,22 @@ from kivy.properties import NumericProperty,ReferenceListProperty,ObjectProperty
 import threading
 import time
 
-from GUIActions import *
+from Actions import *
+from Database import DBConnect
 
 
-class GUIMain(App):
+
+configs = "Configs.ini"
+db = DBConnect(configs)
+print(db.parseData())
+
+
+
+class AntennaTracker(App):
     def build(self):
         self.load_kv('Components.kv')
         return RootFrame()
 
 
+if __name__ == "__main__":
+    AntennaTracker().run()

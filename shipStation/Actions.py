@@ -1,4 +1,5 @@
-from GUIMain import *
+from AntennaTracker import *
+
 
 class RootFrame(BoxLayout):
     def update(self):
