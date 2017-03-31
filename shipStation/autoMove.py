@@ -1,5 +1,7 @@
 import math
 import serial
+import requests
+import time
 
 #Ground station location
 groundLat = 0.00
@@ -30,8 +32,17 @@ accelCommand = 0x89
 speedCommand = 0x87
 
 # Shouldn't need to change these unless you change to some exotic servos
-servo_min = 0
-servo_max = 254
+servo_min = 95
+servo_max = 159
+
+panChannel = 1
+panRange = 360
+panAccel = 1
+panSpeed = 3
+# change the movement speed etc of ubiquity tilt servo
+tiltChannel = 0
+tiltAccel = 1
+tiltSpeed = 1
 
 def configServos():
     ''' Set the default movement parameters of the servos '''
@@ -90,35 +101,72 @@ def movePanServo(position):
 def findMaxRSSI():
     x=127
     y=127
-    baseline = getRSSI()
-    print "Starting values: pan=%d, tilt=%d, RSSI=%d.".format(x,y,baseline)
-    # Pan right until you can't turn any farther, or the signal fades
-    while(x < MAXPAN and getRSSI() > baseline):
-        movePanServo(x+1)
-        print "\tRSSI: ", getRSSI()
-    # Pan left until you can't turn any farther, or the signal fades
-    while(x > MINPAN and getRSSI() > baseline):
-        movePanServo(x-1)
-        print "\tRSSI: ", getRSSI()
-    # Cancel the last movement (bad idea?)
-    movePanServo(x+1)
+    movement = 5
+    delay = 0.8
+    global servo_min, servo_max
+    with requests.Session() as session:
+        session.get('http://192.168.1.20/login.cgi')  # This line has magic sauce
+        data={'uri': '','username': 'ubnt','password': 'ubnt'}
+        # Use files trick to post using multipart/form-data encoding.
+        r = session.post(
+            'http://192.168.1.20/login.cgi',
+            files={k: (None, v) for k, v in data.items()},
+            verify=False
+        )
+        baseline = getRSSI(session)
+        temp = baseline
+        while(True):
+            #rssi = getRSSI(session)
+            #print "Signal={}, rssi={}".format(signal, rssi)
+            print "Starting values: pan={}, tilt={}, baseline={}, RSSI={}.".format(x,y,baseline,getRSSI(session))
 
-    # Tilt up until you can't turn any farther, or the signal fades
-    while(y < MAXTILT and getRSSI() > baseline):
-        moveTiltServo(y+1)
-        print "\tRSSI: ", getRSSI()
-    # Tilt down until you can't turn any farther, or the signal fades
-    while(y > MINTILT and getRSSI() > baseline):
-        moveTiltServo(y-1)
-        print "\tRSSI: ", getRSSI()
-    # Cancel the last movement (bad idea?)
-    moveTiltServo(y+1)
-
-def getRSSI():
-    #See bookmarks for ideas here
+            '''
+            if(x > servo_min):
+                x -= movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)            
+            ''' 
+            # Pan left until you can't turn any farther, or the signal fades
+            while(x > servo_min and temp >= baseline):
+                x -= movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)
+                print "\tDOWN RSSI: ", temp
+                if(temp > baseline):
+                    baseline = temp            
+            '''
+            if(x < servo_max):
+                x += movement
+                movePanServo(x)            
+                time.sleep(delay)
+                temp = getRSSI(session)    
+            '''
+            # Pan right until you can't turn any farther, or the signal fades
+            while(x < servo_max and temp >= baseline):
+                x += movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)                
+                print "\tUP RSSI: ", temp    
+                if(temp > baseline):
+                    baseline = temp
+                    
+            #time.sleep(0.1)
+            baseline -= 0.1
+            
+def getRSSI(session):
     #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-i-see-signal-from-command-line/td-p/353927
     #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-I-remotely-read-RSSI/td-p/249199
+    res = session.get('http://192.168.1.20/status.cgi')
+    #print "res=", res
+    #print res.content
+    #signal = res.content.split('\n')[21][11:14]
+    rssi = res.content.split('\n')[21][24:26]
+    #print "Signal={}, rssi={}\n".format(signal, rssi)
+    return int(rssi)
 
 if __name__ == '__main__':
-    configServos()
+    configServos()   
     findMaxRSSI()
