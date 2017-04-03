@@ -38,13 +38,13 @@ class LeftFrame(BoxLayout):
 class Root(BoxLayout):
 	pass
 
-	
+
 
 
 #---------------------------START OF EXECUTION
 class AntennaTracker(App):
 	def build(self):
-		self.load_kv('Components.kv')
+		self.load_kv('Layout.kv')
 		Window.size = (1024,900)
 		return Root()
 
