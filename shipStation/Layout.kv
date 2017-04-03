@@ -1,0 +1,106 @@
+<LeftFrame>:
+	orientation: 'vertical'
+	BoxLayout:
+		orientation: 'horizontal'
+		Label:
+			size_hint_x: None
+			width: 100
+			text: "Lat: "
+			font_size: '30sp'
+
+		TextInput:
+			id: lbl_lat
+			readonly: True
+			font_size: '30sp'
+			multiline: False
+			size_hint_x: None
+			size_hint_y: None
+			width: 400
+			height: 50
+			pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+	BoxLayout:
+		orientation: 'horizontal'
+		Label:
+			size_hint_x: None
+			width: 100
+			text: "Long: "
+			font_size: '30sp'
+
+		TextInput:
+			id: lbl_long
+			readonly: True
+			font_size: '30sp'
+			multiline: False
+			size_hint_x: None
+			size_hint_y: None
+			width: 400
+			height: 50
+			pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+	BoxLayout:
+		orientation: 'horizontal'
+		Label:
+			size_hint_x: None
+			width: 100
+			text: "Alt: "
+			font_size: '30sp'
+
+		TextInput:
+			id: lbl_alt
+			readonly: True
+			font_size: '30sp'
+			multiline: False
+			size_hint_x: None
+			size_hint_y: None
+			width: 400
+			height: 50
+			pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+	BoxLayout:
+		orientation: 'horizontal'
+		Label:
+			size_hint_x: None
+			width: 100
+			text: "Date: "
+			font_size: '30sp'
+
+		TextInput:
+			id: lbl_date
+			readonly: True
+			font_size: '30sp'
+			multiline: False
+			size_hint_x: None
+			size_hint_y: None
+			width: 400
+			height: 50
+			pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+	BoxLayout:
+		orientation: 'horizontal'
+		Label:
+			size_hint_x: None
+			width: 100
+			text: "Time: "
+			font_size: '30sp'
+
+		TextInput:
+			id: lbl_time
+			readonly: True
+			font_size: '30sp'
+			multiline: False
+			size_hint_x: None
+			size_hint_y: None
+			width: 400
+			height: 50
+			pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+
+
+
+
+<Root>:
+	orientation: 'vertical'
+	
+	LeftFrame:
+		id: leftframe
