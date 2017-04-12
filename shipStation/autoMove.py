@@ -157,11 +157,10 @@ def findMaxRSSI():
             baseline -= 0.1
             
 def getRSSI(session):
+    ''' Read the signal strength from the ubiquity modem '''
     #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-i-see-signal-from-command-line/td-p/353927
     #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-I-remotely-read-RSSI/td-p/249199
     res = session.get('http://192.168.1.20/status.cgi')
-    #print "res=", res
-    #print res.content
     #signal = res.content.split('\n')[21][11:14]
     rssi = res.content.split('\n')[21][24:26]
     #print "Signal={}, rssi={}\n".format(signal, rssi)
