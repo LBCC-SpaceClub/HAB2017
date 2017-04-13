@@ -46,7 +46,7 @@ void setup() {
   GPS.begin(9600);                                        //Launches a software serial connection to the GPS at a baud rate of 9600
   delay(500);                                               //Wait for 0.5s
   bno.setExtCrystalUse(true);                               //Use the external clock in the IMU (true for better accuracy)
-  bno.setMode(bno.OPERATION_MODE_NDOF);                               
+  bno.setMode(bno.OPERATION_MODE_NDOF);
   GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);             //String formatting on the GPS
   GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);                //GPS packet dump rate
   GPS.sendCommand(PGCMD_ANTENNA);
@@ -60,9 +60,9 @@ SIGNAL(TIMER0_COMPA_vect) {
   // if you want to debug, this is a good time to do it!
 #ifdef UDR0
   if (GPSECHO)
-    if (c) UDR0 = c;  
-    // writing direct to UDR0 is much much faster than Serial.print 
-    // but only one character can be written at a time. 
+    if (c) UDR0 = c;
+    // writing direct to UDR0 is much much faster than Serial.print
+    // but only one character can be written at a time.
 #endif
 }
 
@@ -82,9 +82,9 @@ void useInterrupt(boolean v) {
 }
 
 uint32_t timer = millis();
-sensors_event_t event;                                    //Create a new local event instance.... called event  
+sensors_event_t event;                                    //Create a new local event instance.... called event
 uint8_t sys, gyro, accel, mag;                            //Create local variables gyro, accel, mag
-  
+
 void loop() {
   //Read the calibration values from the IMU
   bno.getCalibration(&sys, &gyro, &accel, &mag);
@@ -113,7 +113,8 @@ void loop() {
       Serial.print(",");
       Serial.print(GPS.longitudeDegrees,7);
       Serial.print(",");
-      Serial.println((int)(GPS.altitude * 3.28084)); // converted m to feet
+      Serial.println((int)(GPS.altitude));
+      // Serial.println((int)(GPS.altitude * 3.28084)); // converted m to feet
       // Followed by IMU data
       Serial.print("[IMU]");
       Serial.print(event.orientation.x,2);
