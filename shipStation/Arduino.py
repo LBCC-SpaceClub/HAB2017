@@ -44,7 +44,7 @@ class Arduino:
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Arduino' in p[1]:
-                _arduinoAttached = True
+                self._arduinoAttached = True
                 return p[0]
         return None
 
@@ -81,7 +81,7 @@ class Arduino:
             self.lonDeg,
             self.altMeters
         )
-        print "Heading: ", imuX
+        print "Heading: ", self.imuX
 
     def updateIMU(self, line):
         line = line.split(',')
