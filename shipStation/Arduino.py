@@ -68,20 +68,25 @@ class Arduino:
 
     def update(self):
         ''' Read in new data from the arduino '''
-        while(self._ser.in_waiting):
+        while self._ser.inWaiting():
             line = self._ser.readline()
-            if line[:5] == '[IMU]':
-                self.updateIMU(line[5:])
-            elif line[:5] == '[GPS]':
-                self.updateGPS(line[5:])
-            else:
-                print "Error reading line: ", line
+            try:
+                if line[:5] == '[IMU]':
+                    self.updateIMU(line[5:])
+                elif line[:5] == '[GPS]':
+                    self.updateGPS(line[5:])
+                else:
+                    print "Error reading line: ", line
+            except ValueError:
+                print "Error parsing ", line
+        '''
         print "Most up-to-date Lat: {}, Long: {}, Alt (m): {}".format(
             self.latDeg,
             self.lonDeg,
             self.altMeters
         )
         print "Heading: ", self.imuX
+        '''
 
     def updateIMU(self, line):
         line = line.split(',')

@@ -17,8 +17,8 @@ class ServoControl:
             print "ERROR: Could not find pololu controller for servos."
             return None
         # Default settings for the servo connection
-        servoBaud = 9600
-        servoTimeout = 0.5
+        self.servoBaud = 9600
+        self.servoTimeout = 0.5
         # use these to manually tweak the tracking
         self.panOffset = 0     # increase to turn right, decrease to turn left
         self.tiltOffset = 0    # increase to raise, decrease to lower
@@ -93,6 +93,12 @@ class ServoControl:
         print "debugging: Move Pan: ", float(position)
         movePan = [moveCommand,panChannel,chr(255-position)]
         self.usb.write(movePan)
+
+def degToServo(d):
+    ''' Converts 0-360 degrees to 0-255 servo positions '''
+    # panTo = ((bearing - (centerBear - 168)) * (servo_max - servo_min) / ((centerBear + 168) - (centerBear - 168)) + servo_min) + (255*panOffset/360)
+    # tiltTo = (((0-elevation) - tilt_angle_min) * (servo_max - servo_min) / (tilt_angle_max - tilt_angle_min) + servo_min) + tiltOffset
+    return int(round(d*255/360))
 
 def findMaxRSSI():
     x=127
@@ -170,18 +176,21 @@ def bearing(trackerLat, trackerLon, payloadLat, payloadLon):
     # where φ1,λ1 is the start point,
     # φ2,λ2 the end point and Δλ is the difference in longitude
     '''
-    tLat = radians(trackerLat)
-    tLon = radians(trackerLon)
-    pLat = radians(payloadLat)
-    pLon = radians(payloadLon)
-    deltaLon = pLon - tLon
+    try:
+        tLat = radians(trackerLat)
+        tLon = radians(trackerLon)
+        pLat = radians(payloadLat)
+        pLon = radians(payloadLon)
+        deltaLon = pLon - tLon
 
-    bearing = atan2(
-        (sin(deltaLon) * cos(pLat)),
-        (cos(tLat) * sin(pLat) - sin(tLat) * cos(pLat) * cos(deltaLon))
-    )
-    bearing = (degrees(bearing)+360) % 360   # stay within 0-360 degrees
-    return bearing
+        bearing = atan2(
+            (sin(deltaLon) * cos(pLat)),
+            (cos(tLat) * sin(pLat) - sin(tLat) * cos(pLat) * cos(deltaLon))
+        )
+        bearing = (degrees(bearing)+360) % 360   # stay within 0-360 degrees
+        return bearing
+    except TypeError:
+        return None
 
 def original_bearing(trackerLat, trackerLon, remoteLat, remoteLon):
     ''' Pulled straight from antennatracker v6 '''
