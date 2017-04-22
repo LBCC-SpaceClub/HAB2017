@@ -1,5 +1,8 @@
 #!/usr/bin/env python
+# -*- coding: iso-8859-15 -*-
+
 import math
+from math import radians, degrees, sin, cos, atan2, tan
 import serial
 import requests
 import time
@@ -91,73 +94,118 @@ class ServoControl:
         movePan = [moveCommand,panChannel,chr(255-position)]
         self.usb.write(movePan)
 
-    def findMaxRSSI():
-        x=127
-        y=127
-        movement = 5
-        delay = 0.8
-        global servo_min, servo_max
-        with requests.Session() as session:
-            session.get('http://192.168.1.20/login.cgi')  # This line has magic sauce
-            data={'uri': '','username': 'ubnt','password': 'ubnt'}
-            # Use files trick to post using multipart/form-data encoding.
-            r = session.post(
-                'http://192.168.1.20/login.cgi',
-                files={k: (None, v) for k, v in data.items()},
-                verify=False
-            )
-            baseline = getRSSI(session)
-            temp = baseline
-            while(True):
-                #rssi = getRSSI(session)
-                #print "Signal={}, rssi={}".format(signal, rssi)
-                print "Starting values: pan={}, tilt={}, baseline={}, RSSI={}.".format(x,y,baseline,getRSSI(session))
+def findMaxRSSI():
+    x=127
+    y=127
+    movement = 5
+    delay = 0.8
+    global servo_min, servo_max
+    with requests.Session() as session:
+        session.get('http://192.168.1.20/login.cgi')  # This line has magic sauce
+        data={'uri': '','username': 'ubnt','password': 'ubnt'}
+        # Use files trick to post using multipart/form-data encoding.
+        r = session.post(
+            'http://192.168.1.20/login.cgi',
+            files={k: (None, v) for k, v in data.items()},
+            verify=False
+        )
+        baseline = getRSSI(session)
+        temp = baseline
+        while(True):
+            #rssi = getRSSI(session)
+            #print "Signal={}, rssi={}".format(signal, rssi)
+            print "Starting values: pan={}, tilt={}, baseline={}, RSSI={}.".format(x,y,baseline,getRSSI(session))
 
-                '''
-                if(x > servo_min):
-                    x -= movement
-                    movePanServo(x)
-                    time.sleep(delay)
-                    temp = getRSSI(session)
-                '''
-                # Pan left until you can't turn any farther, or the signal fades
-                while(x > servo_min and temp >= baseline):
-                    x -= movement
-                    movePanServo(x)
-                    time.sleep(delay)
-                    temp = getRSSI(session)
-                    print "\tDOWN RSSI: ", temp
-                    if(temp > baseline):
-                        baseline = temp
-                '''
-                if(x < servo_max):
-                    x += movement
-                    movePanServo(x)
-                    time.sleep(delay)
-                    temp = getRSSI(session)
-                '''
-                # Pan right until you can't turn any farther, or the signal fades
-                while(x < servo_max and temp >= baseline):
-                    x += movement
-                    movePanServo(x)
-                    time.sleep(delay)
-                    temp = getRSSI(session)
-                    print "\tUP RSSI: ", temp
-                    if(temp > baseline):
-                        baseline = temp
+            '''
+            if(x > servo_min):
+                x -= movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)
+            '''
+            # Pan left until you can't turn any farther, or the signal fades
+            while(x > servo_min and temp >= baseline):
+                x -= movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)
+                print "\tDOWN RSSI: ", temp
+                if(temp > baseline):
+                    baseline = temp
+            '''
+            if(x < servo_max):
+                x += movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)
+            '''
+            # Pan right until you can't turn any farther, or the signal fades
+            while(x < servo_max and temp >= baseline):
+                x += movement
+                movePanServo(x)
+                time.sleep(delay)
+                temp = getRSSI(session)
+                print "\tUP RSSI: ", temp
+                if(temp > baseline):
+                    baseline = temp
 
-                #time.sleep(0.1)
-                baseline -= 0.1
+            #time.sleep(0.1)
+            baseline -= 0.1
 
-    def getRSSI(session):
-        ''' Read the signal strength from the ubiquity modem '''
-        #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-i-see-signal-from-command-line/td-p/353927
-        #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-I-remotely-read-RSSI/td-p/249199
-        res = session.get('http://192.168.1.20/status.cgi')
-        #signal = res.content.split('\n')[21][11:14]
-        rssi = res.content.split('\n')[21][24:26]
-        #print "Signal={}, rssi={}\n".format(signal, rssi)
-        return int(rssi)
+def getRSSI(session):
+    ''' Read the signal strength from the ubiquity modem '''
+    #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-i-see-signal-from-command-line/td-p/353927
+    #https://community.ubnt.com/t5/airOS-Software-Configuration/How-can-I-remotely-read-RSSI/td-p/249199
+    res = session.get('http://192.168.1.20/status.cgi')
+    #signal = res.content.split('\n')[21][11:14]
+    rssi = res.content.split('\n')[21][24:26]
+    #print "Signal={}, rssi={}\n".format(signal, rssi)
+    return int(rssi)
+
+def bearing(trackerLat, trackerLon, payloadLat, payloadLon):
+    ''' Returns bearing in degrees, from tracker to payload '''
+    # http://www.movable-type.co.uk/scripts/latlong.html
+    '''
+    # Formula: θ = atan2( sin Δλ ⋅ cos φ2 , cos φ1 ⋅ sin φ2 − sin φ1 ⋅ cos φ2 ⋅ cos Δλ )
+    # where φ1,λ1 is the start point,
+    # φ2,λ2 the end point and Δλ is the difference in longitude
+    '''
+    tLat = radians(trackerLat)
+    tLon = radians(trackerLon)
+    pLat = radians(payloadLat)
+    pLon = radians(payloadLon)
+    deltaLon = pLon - tLon
+
+    bearing = atan2(
+        (sin(deltaLon) * cos(pLat)),
+        (cos(tLat) * sin(pLat) - sin(tLat) * cos(pLat) * cos(deltaLon))
+    )
+    bearing = (degrees(bearing)+360) % 360   # stay within 0-360 degrees
+    return bearing
+
+def original_bearing(trackerLat, trackerLon, remoteLat, remoteLon):
+    ''' Pulled straight from antennatracker v6 '''
+    dLat = math.radians(remoteLat-trackerLat)       # delta latitude in radians
+    dLon = math.radians(remoteLon-trackerLon)       # delta longitude in radians
+    y = math.sin(dLon)*math.cos(math.radians(remoteLat))
+    x = math.cos(math.radians(trackerLat))*math.sin(math.radians(remoteLat))-math.sin(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.cos(dLat)
+    tempBearing = math.degrees(math.atan2(y,x))     # returns the bearing from true north
+    if (tempBearing < 0):
+        tempBearing = tempBearing + 360
+    return tempBearing
+
+# haversine formula, see: http://www.movable-type.co.uk/scripts/latlong.html
+def haversine(trackerLat, trackerLon, payloadLat, payloadLon):
+    ''' Pulled straight from antennatracker v6 '''
+    R = 6371        # radius of earth in Km
+    dLat = math.radians(payloadLat-trackerLat)       # delta latitude in radians
+    dLon = math.radians(payloadLon-trackerLon)       # delta longitude in radians
+    ####################################
+    a = math.sin(dLat/2)*math.sin(dLat/2)+math.cos(math.radians(trackerLat))*math.cos(math.radians(payloadLat))*math.sin(dLon/2)*math.sin(dLon/2)
+    #############################
+    c = 2*math.atan2(math.sqrt(a),math.sqrt(1-a))
+    d = R*c
+    return d*3280.839895 # multiply distance in Km by 3280 for feet
 
 if __name__ == '__main__':
     print "Running ServoControl as Main.."
