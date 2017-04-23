@@ -8,15 +8,16 @@ from kivy.clock import Clock, mainthread
 from kivy.properties import NumericProperty,ReferenceListProperty,ObjectProperty
 from Database import *
 from IntervalThread import *
+import Arduino
 
 
-class LeftFrame(BoxLayout):
+class PayloadFrame(BoxLayout):
 
 	thread = IntervalThread()
 	configs = "Configs.ini"
-	
+
 	def __init__(self, **kwargs):
-		super(LeftFrame, self).__init__(**kwargs)
+		super(PayloadFrame, self).__init__(**kwargs)
 		Clock.schedule_once(self._run)
 
 	def _run(self, args):
@@ -32,13 +33,30 @@ class LeftFrame(BoxLayout):
 		self.ids.lbl_date.text = str(data["gps_fltDate"])
 		self.ids.lbl_time.text = str(data["gps_time"])
 
+class TrackerFrame(BoxLayout):
+	thread = IntervalThread()
 
+	def __init__(self, **kwargs):
+		# self.arduino = Arduino.Arduino()
+		super(TrackerFrame, self).__init__(**kwargs)
+		Clock.schedule_once(self._run)
+
+	def _run(self, args):
+		self.updateGps()
+
+	@thread.setInterval(.5)
+	def updateGps(self):
+		# arduino.update()
+		# self.ids.lbl_lat.text = self.arduino.latDeg
+		# self.ids.lbl_lon.text = self.arduino.lonDeg
+		# self.ids.lbl_alt.text = self.arduino.altMeters
+		self.ids.gpsLat.text = '145.0232'
+		self.ids.gpsLon.text = '-123.13122'
+		self.ids.altMeters.text = '123'
 
 
 class Root(BoxLayout):
 	pass
-
-
 
 
 #---------------------------START OF EXECUTION

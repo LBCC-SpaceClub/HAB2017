@@ -1,4 +1,79 @@
-<LeftFrame>:
+<TrackerFrame>:
+	BoxLayout:
+		orientation: 'vertical'
+
+		BoxLayout:
+			orientation: 'horizontal'
+			Label:
+				size_hint_x: None
+				width: 100
+				text: "Local Gps Source: "
+				font_size: '20sp'
+			Label:
+				id: localGpsSource
+				size_hint_x: None
+				width: 100
+				text: "Arduino"
+				font_size: '20sp'
+				pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+		BoxLayout:
+			orientation: 'horizontal'
+			Label:
+				size_hint_x: None
+				width: 100
+				text: "Lat: "
+				font_size: '20sp'
+			TextInput:
+				id: gpsLat
+				readonly: True
+				font_size: '20sp'
+				multiline: False
+				size_hint_x: None
+				size_hint_y: None
+				width: 200
+				height: 40
+				pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+		BoxLayout:
+			orientation: 'horizontal'
+			Label:
+				size_hint_x: None
+				width: 100
+				text: "Lon: "
+				font_size: '20sp'
+			TextInput:
+				id: gpsLon
+				readonly: True
+				font_size: '20sp'
+				multiline: False
+				size_hint_x: None
+				size_hint_y: None
+				width: 200
+				height: 40
+				pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+		BoxLayout:
+			orientation: 'horizontal'
+			Label:
+				size_hint_x: None
+				width: 100
+				text: "Alt: "
+				font_size: '20sp'
+			TextInput:
+				id: altMeters
+				readonly: True
+				font_size: '20sp'
+				multiline: False
+				size_hint_x: None
+				size_hint_y: None
+				width: 200
+				height: 40
+				pos_hint: {'center_x': .5, 'center_y': 0.5}
+
+
+
+<PayloadFrame>:
 	orientation: 'vertical'
 	BoxLayout:
 		orientation: 'horizontal'
@@ -6,17 +81,17 @@
 			size_hint_x: None
 			width: 100
 			text: "Lat: "
-			font_size: '30sp'
+			font_size: '20sp'
 
 		TextInput:
 			id: lbl_lat
 			readonly: True
-			font_size: '30sp'
+			font_size: '20sp'
 			multiline: False
 			size_hint_x: None
 			size_hint_y: None
-			width: 400
-			height: 50
+			width: 200
+			height: 40
 			pos_hint: {'center_x': .5, 'center_y': 0.5}
 
 	BoxLayout:
@@ -25,17 +100,17 @@
 			size_hint_x: None
 			width: 100
 			text: "Long: "
-			font_size: '30sp'
+			font_size: '20sp'
 
 		TextInput:
 			id: lbl_long
 			readonly: True
-			font_size: '30sp'
+			font_size: '20sp'
 			multiline: False
 			size_hint_x: None
 			size_hint_y: None
-			width: 400
-			height: 50
+			width: 200
+			height: 40
 			pos_hint: {'center_x': .5, 'center_y': 0.5}
 
 	BoxLayout:
@@ -44,17 +119,17 @@
 			size_hint_x: None
 			width: 100
 			text: "Alt: "
-			font_size: '30sp'
+			font_size: '20sp'
 
 		TextInput:
 			id: lbl_alt
 			readonly: True
-			font_size: '30sp'
+			font_size: '20sp'
 			multiline: False
 			size_hint_x: None
 			size_hint_y: None
-			width: 400
-			height: 50
+			width: 200
+			height: 40
 			pos_hint: {'center_x': .5, 'center_y': 0.5}
 
 	BoxLayout:
@@ -63,17 +138,17 @@
 			size_hint_x: None
 			width: 100
 			text: "Date: "
-			font_size: '30sp'
+			font_size: '20sp'
 
 		TextInput:
 			id: lbl_date
 			readonly: True
-			font_size: '30sp'
+			font_size: '20sp'
 			multiline: False
 			size_hint_x: None
 			size_hint_y: None
-			width: 400
-			height: 50
+			width: 200
+			height: 40
 			pos_hint: {'center_x': .5, 'center_y': 0.5}
 
 	BoxLayout:
@@ -82,25 +157,23 @@
 			size_hint_x: None
 			width: 100
 			text: "Time: "
-			font_size: '30sp'
+			font_size: '20sp'
 
 		TextInput:
 			id: lbl_time
 			readonly: True
-			font_size: '30sp'
+			font_size: '20sp'
 			multiline: False
 			size_hint_x: None
 			size_hint_y: None
-			width: 400
-			height: 50
+			width: 200
+			height: 40
 			pos_hint: {'center_x': .5, 'center_y': 0.5}
 
 
-
-
-
 <Root>:
-	orientation: 'vertical'
-	
-	LeftFrame:
-		id: leftframe
+	orientation: 'horizontal'
+	TrackerFrame:
+		id: trackerframe
+	PayloadFrame:
+		id: payloadframe

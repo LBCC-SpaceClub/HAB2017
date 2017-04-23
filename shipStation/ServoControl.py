@@ -11,11 +11,6 @@ class ServoControl:
     ''' Methods to move the tracking servos '''
     def __init__(self):
         self.servoCOM = self.findComPort()
-        if self.servoAttached:
-            print "Found servos on ", self.servoCOM
-        else:
-            print "ERROR: Could not find pololu controller for servos."
-            return None
         # Default settings for the servo connection
         self.servoBaud = 9600
         self.servoTimeout = 0.5
@@ -48,9 +43,9 @@ class ServoControl:
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Pololu Micro Maestro 6-Servo Controller Command Port' in p[1]:
-                self.servoAttached = True
+                print "Found servos on ", p[0]
                 return p[0]
-        return None
+        raise IOError("ERROR: Could not find pololu controller for servos.")
 
     def configServos(self):
         print "Setting servo configurations."
