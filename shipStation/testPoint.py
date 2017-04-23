@@ -1,22 +1,47 @@
 import Arduino
 import ServoControl
+import Database
 import time
 import geomag
 
-tracker = Arduino.Arduino()
-servos = ServoControl.ServoControl()
+tracker = None
+servos = None
+
+# Connect to the local arduino
+try:
+    tracker = Arduino.Arduino()
+except IOError:
+    print "Please connect an appropriate Arduino and try again."
+    exit(2)
+
+# Connect to the servo controllers
+try:
+    servos = ServoControl.ServoControl()
+except IOError:
+    print "Could not find servos, will write output to screen instead."
+
+# Connect to MSU's irridium database
+try:
+    target = Database.DatabaseConnect()
+except:
+    print "Failure to connect to database."
 
 while True:
-    lat = 44.602255
-    lon = -123.130668
-    alt = 500
-    #lat = input('Enter latitude of target: ')
-    #lon = input('Enter longitude of target: ')
-    #alt = input('Enter altitude of target: ')
-
+    if USELOCAL:
+        target.latDeg = 44.602255
+        target.lonDeg = -123.130668
+        target.altMeters = 500
+        #lat = input('Enter latitude of target: ')
+        #lon = input('Enter longitude of target: ')
+        #alt = input('Enter altitude of target: ')
+    else:
+        target.update()
     tracker.update()
-    # print "{} is type {}".format(tracker.latDeg, type(tracker.latDeg)
-    bearing = ServoControl.bearing(tracker.latDeg, tracker.lonDeg, lat, lon)
+
+    bearing = ServoControl.bearing(
+        tracker.latDeg, tracker.lonDeg, target.latDeg, target.lonDeg
+    )
+
     if(bearing):
         tracker.imuX = (tracker.imuX + 360)%360
         # print "The tracker heading is ", tracker.imuX

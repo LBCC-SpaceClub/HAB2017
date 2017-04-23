@@ -4,7 +4,6 @@ import serial.tools.list_ports
 
 class Arduino:
     ''' Methods to get information from the arduino (gps and IMU) '''
-
     def __init__(self):
         self.arduinoCOM = self.findComPort()
         self.usb = serial.Serial(
@@ -29,8 +28,9 @@ class Arduino:
 
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
-        print "Closing port."
-        self.usb.close()
+        if self.usb:
+            print "Closing port."
+            self.usb.close()
 
     def findComPort(self):
         # find the actual com port of the arduino (windows only?)
@@ -39,6 +39,7 @@ class Arduino:
             if 'Arduino' in p[1]:
                 print "Found arduino on ", self.p[0]
                 return p[0]
+        self.usb = None
         raise IOError("ERROR: Could not find an attached arduino.")
 
     def calibrateIMU(self):
@@ -96,3 +97,6 @@ class Arduino:
         self.latDeg = float(line[0])
         self.lonDeg = float(line[1])
         self.altMeters = float(line[2])
+
+if __name__ == "__main__":
+    print "Arduino is not a standalone Python program."

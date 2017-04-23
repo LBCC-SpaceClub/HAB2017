@@ -35,8 +35,9 @@ class ServoControl:
 
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
-        print "Closing servo port."
-        self.usb.close()
+        if usb:
+            print "Closing servo port."
+            self.usb.close()
 
     def findComPort(self):
         # find the actual com port of the arduino (windows only?)
@@ -45,6 +46,7 @@ class ServoControl:
             if 'Pololu Micro Maestro 6-Servo Controller Command Port' in p[1]:
                 print "Found servos on ", p[0]
                 return p[0]
+        self.usb = None
         raise IOError("ERROR: Could not find pololu controller for servos.")
 
     def configServos(self):
