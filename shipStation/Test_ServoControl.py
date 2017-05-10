@@ -3,6 +3,7 @@ import ServoControl
 
 class Test_ServoControl(unittest.TestCase):
 
+    
     def test_bearing(self):
         aLat = 44.564939
         aLon = -123.241243
@@ -11,6 +12,11 @@ class Test_ServoControl(unittest.TestCase):
         new_bearing = ServoControl.bearing(aLat, aLon, bLat, bLon)
         old_bearing = ServoControl.original_bearing(aLat, aLon, bLat, bLon)
         self.assertEqual(new_bearing, old_bearing)
+
+    def test_degToServo(self):
+        testValue = 360
+        print ServoControl.degToServo(testValue)
+
 
 if __name__ == '__main__':
     unittest.main()

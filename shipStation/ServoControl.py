@@ -95,7 +95,20 @@ def degToServo(d):
     ''' Converts 0-360 degrees to 0-255 servo positions '''
     # panTo = ((bearing - (centerBear - 168)) * (servo_max - servo_min) / ((centerBear + 168) - (centerBear - 168)) + servo_min) + (255*panOffset/360)
     # tiltTo = (((0-elevation) - tilt_angle_min) * (servo_max - servo_min) / (tilt_angle_max - tilt_angle_min) + servo_min) + tiltOffset
-    return int(round(d*255/360))
+    #return int(round(d*255/360))
+
+    #remove extra 360s
+    if d >= 360:
+        d = d % 360
+    #convert if it is on the right hemisphere
+    if d < 180:
+        res = int(round(127 - d(255/360))) #subtract from the 0 degree position
+    #convert if it is on the left hemisphere
+    else:
+        d = 360 - d #get the degree position going left from center
+        res = int(round(127 + d(255/360))) # add from the 0 degree position
+    return res
+
 
 def findMaxRSSI():
     x=127
