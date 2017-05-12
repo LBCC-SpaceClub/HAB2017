@@ -74,16 +74,33 @@ class ServoControl:
         moveTiltServo(127)
         movePanServo(127)
 
-    def moveTiltServo(position):
-        ''' Move the horizontal servo to a given position '''
-        print "debugging: Move Tilt: ", float(position)
-        if(position < self.minTilt):
-            moveTilt = [moveCommand,tiltChannel,chr(self.minTilt)]
-        elif(position > self.maxTilt):
-            moveTilt = [moveCommand,tiltChannel,chr(self.maxTilt)]
-        else:
-            moveTilt = [moveCommand,tiltChannel,chr(position)]
-        self.usb.write(moveTilt)
+    def moveTiltServo(degrees):
+        ''' Move the horizontal servo to a given number of degrees '''
+        '''
+        Notes:
+        Servo can take a character from 0-255 and outputs 0-360 degrees
+        centerBear is the magnetometer heading
+        servo_min is 0
+        servo_max is 254
+        panOffset is 0
+        output = output_start + ((output_end - output_start) / (input_end - input_start)) * (input - input_start)
+        '''
+        # 0 + ((254 - 0) / (360 - 0)) * (degrees - 0)
+        degInServo = 254.0 / 360 * degrees  # should be equiv to above
+
+        if(degInServo < self.minTilt):
+            degInServo = self.minTilt
+        elif(degInServo > self.maxTilt):
+            degInServo = self.maxTilt
+        # Maestro controlled can only take characters, so round to an int
+        degInServo = int(round(degInServo))
+        print "debugging: Move Tilt: degrees={}, degInServo={}".format(degrees, degInServo)
+        moveTilt = [self.moveCommand, self.tiltChannel, chr(degInServo)]
+        self.usb.write(degInServo)
+
+    def MSUMoveTiltServo(pos):
+        tiltTo = (((0-elevation) - tilt_angle_min) * (servo_max - servo_min) / (tilt_angle_max - tilt_angle_min) + servo_min) + tiltOffset
+        degInServo
 
     def movePanServo(position):
         ''' Move the vertical servo to a given position '''
