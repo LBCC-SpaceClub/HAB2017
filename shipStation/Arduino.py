@@ -37,7 +37,7 @@ class Arduino:
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Arduino' in p[1]:
-                print "Found arduino on ", self.p[0]
+                print "Found arduino on ", p[0]
                 return p[0]
         self.usb = None
         raise IOError("ERROR: Could not find an attached arduino.")
