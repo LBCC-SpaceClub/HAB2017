@@ -29,14 +29,14 @@ trackTiltOffset = 0.0
 trackBearOffset = 0.0
 moveCommand = 0xFF
 accelCommand = 0x89
-speedCommand = 0x87
-
-# Shouldn't need to change these unless you change to some exotic servos
-servo_min = 95
 servo_max = 159
 
 panChannel = 1
 panRange = 360
+speedCommand = 0x87
+
+# Shouldn't need to change these unless you change to some exotic servos
+servo_min = 95
 panAccel = 1
 panSpeed = 3
 # change the movement speed etc of ubiquity tilt servo
@@ -115,6 +115,7 @@ def findMaxRSSI():
         )
         baseline = getRSSI(session)
         temp = baseline
+        print baseline
         while(True):
             #rssi = getRSSI(session)
             #print "Signal={}, rssi={}".format(signal, rssi)
@@ -168,4 +169,5 @@ def getRSSI(session):
 
 if __name__ == '__main__':
     configServos()   
-    findMaxRSSI()
+    while(True):
+        findMaxRSSI()

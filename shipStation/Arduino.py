@@ -6,12 +6,6 @@ class Arduino:
     ''' Methods to get information from the arduino (gps and IMU) '''
     def __init__(self):
         self.arduinoCOM = self.findComPort()
-        self.usb = serial.Serial(
-            self.arduinoCOM,
-            baudrate = self.arduinoBaud,
-            timeout = self.arduinoTimeout
-        )
-        self.arduinoCOM = None
         self.arduinoBaud = 115200
         self.arduinoTimeout = 5
         # GPS fields
@@ -25,6 +19,11 @@ class Arduino:
         self.imuX = None
         self.imuY = None
         self.imuZ = None
+        self.usb = serial.Serial(
+            port = self.arduinoCOM,
+            baudrate = self.arduinoBaud,
+            timeout = self.arduinoTimeout
+        )
 
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
@@ -48,17 +47,17 @@ class Arduino:
         calibrationGoal = 8
         temp_arduino = None
         while (calibration < calibrationGoal):
-            usb.flushInput()
+            self.usb.flushInput()
             time.sleep(0.05)
             while(temp_arduino[0] != '~'):
-                temp_arduino = usb.readline()
+                temp_arduino = self.usb.readline()
                 print temp_arduino
                 temp_arduino = temp_arduino.split(',')
             try:
                 calibration = int(temp_arduino[8])+int(temp_arduino[7])+int(temp_arduino[6])
             finally:
                 print "Calibration: ",calibration, " // Goal of ", int(calibrationGoal)
-        usb.flushInput()
+        self.usb.flushInput()
 
     def update(self):
         ''' Read in new data from the arduino '''
@@ -84,13 +83,16 @@ class Arduino:
 
     def updateIMU(self, line):
         line = line.split(',')
-        self.imuX = float(line[0])
-        self.imuY = float(line[1])
-        self.imuZ = float(line[2])
-        self.imuSys = int(line[3])
-        self.imuAcc = int(line[4])
-        self.imuGyro = int(line[5])
-        self.imuMag = int(line[6])
+        if len(line) == 7:
+            self.imuX = float(line[0])
+            self.imuY = float(line[1])
+            self.imuZ = float(line[2])
+            self.imuSys = int(line[3])
+            self.imuGyro = int(line[4])
+            self.imuAcc = int(line[5])
+            self.imuMag = int(line[6])
+        else:
+            print "Error parsing IMU line: ", line
 
     def updateGPS(self, line):
         line = line.split(',')
