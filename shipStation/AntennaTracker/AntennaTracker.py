@@ -127,12 +127,6 @@ class AntennaTracker(App):
 		Window.size = (1280,1024)
 		return MainLayout()
 
-	def myexit(self):
-		app.stop()
-	
-
-
-
 
 if __name__ == '__main__':
     AntennaTracker().run()
