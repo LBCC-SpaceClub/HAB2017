@@ -106,21 +106,15 @@ class MainLayout(FloatLayout):
 
 
 	def confirmExit(self):
-		layout = FloatLayout()
-		label=(Label(text="Are you sure?",font_size=25,size_hint=(None,None),pos_hint={'x':.38,'y':.6}))
-		yes=(Button(text="Yes",size_hint=(None,None),width=150,height=50,pos_hint={'x':.55,'y':.4}))
-		no=(Button(text="No",size_hint=(None,None),width=150,height=50,pos_hint={'x':.13,'y':.4}))
-		
-		layout.add_widget(label)
-		layout.add_widget(yes)
-		layout.add_widget(no)
-		
-		popup = Popup(title="Confirm",content=layout,size_hint=(None,None),size=(450,300),auto_dismiss=False,title_size=15)
-		no.bind(on_press=popup.dismiss)
-		#yes.bind(on_press=exit())
+		popup = ExitPopup()
 		popup.open()
 
 
+
+
+class ExitPopup(Popup):
+	def closePopup(self, *args):
+		self.dismiss()
 
 
 #---------------------------START OF EXECUTION
@@ -133,7 +127,7 @@ class AntennaTracker(App):
 		Window.size = (1280,1024)
 		return MainLayout()
 
-	def exit(self):
+	def myexit(self):
 		app.stop()
 	
 

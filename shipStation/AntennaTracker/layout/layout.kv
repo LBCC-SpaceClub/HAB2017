@@ -1,4 +1,5 @@
 <MainLayout>:
+    ExitPopup:
     BoxLayout:
         orientation: 'vertical'
         canvas.before:
@@ -500,3 +501,33 @@
                         font_size:'20sp'
                         bold: True
             ### END CALCULATIONS ###
+
+
+<ExitPopup>:
+    id: popup
+    title:"Confirm"
+    size_hint:(None,None)
+    size:(450,300)
+    auto_dismiss:False
+    title_size:15
+
+    FloatLayout:
+        Label:
+            text:"Are you sure?"
+            font_size:25
+            size_hint:(None,None)
+            pos_hint:{'x':.38,'y':.6}
+        Button:
+            text:"Yes"
+            size_hint:(None,None)
+            width:150
+            height:50
+            pos_hint:{'x':.55,'y':.4}
+            on_press: app.stop()
+        Button:
+            text:"No"
+            size_hint:(None,None)
+            width:150
+            height:50
+            pos_hint:{'x':.13,'y':.4}
+            on_press: popup.closePopup()

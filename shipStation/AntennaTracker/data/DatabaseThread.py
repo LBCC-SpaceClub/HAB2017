@@ -33,7 +33,7 @@ class DatabaseThread(Thread):
 		self.altMeters = None
 		self.lastChecked = 0
 		self.connected = False
-		self.daemon = True
+		self.daemon = True #stops thread on app exit, important
 
 
 	def run(self):
