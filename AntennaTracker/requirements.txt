@@ -1,0 +1,4 @@
+PyMySQL==0.7.11
+Kivy==1.9.1
+pyserial==3.3
+configparser==3.5
