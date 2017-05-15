@@ -6,10 +6,11 @@ import time
  
  
 class DatabaseThread(Thread):
-	_is_running = True
 
 	def __init__(self, cfg_file):
 		Thread.__init__(self)
+		self._stop_event = False
+		
 		try:
 			cfg = configparser.ConfigParser()
 			cfg.read(cfg_file)
@@ -34,18 +35,39 @@ class DatabaseThread(Thread):
 		self.lastChecked = 0
 		self.connected = False
 		self.daemon = True #stops thread on app exit, important
-
-
-	def run(self):
-		self.update()
+		self.log = ""
 
 
 	def stop(self):
-		self._is_running = False
+		self._stop_event = True
+		self.connected = False
+
+	
+	def stopped(self):
+		return self._stop_event
+
+	
+	def run(self):
+		while(1):
+			self.update()
 
 	
 	def isConnected(self):
 		return self.connected
+
+	
+	def setLog(self, txt):
+		self.log= self.log+""+txt
+
+	
+	def getLog(self):
+		if(self.log != ""):
+			return self.log
+		else:
+			return ""
+	
+	def clearLog(self):
+		self.log = ""
 
 
 	def update(self):
@@ -68,11 +90,12 @@ class DatabaseThread(Thread):
 			try:
 				result = sql.fetchone()
 				self.connected = True
+				self.setLog("Database query successful! Updating data..")
 				return result
 			except:
-				print("ERROR - failed to get data from database")
+				self.setLog("ERROR - failed to get data from database")
 				self.connected = False
 				sql.close()
 				return
 		except:
-			print("ERROR - failed to parse data, check internet connection")
+			self.setLog("ERROR - failed to parse data, check internet connection")

@@ -26,7 +26,8 @@ from data.DatabaseThread import *
 class MainLayout(FloatLayout):
 
 	configs = "cfg/Configs.ini"
-	interval_thread = IntervalThread()
+	interval_threadA = IntervalThread()
+	interval_threadB = IntervalThread()
 	db_thread = DatabaseThread(configs)
 
 	
@@ -50,6 +51,7 @@ class MainLayout(FloatLayout):
 		self.ids.reconnect_payload.disabled = True
 		self.updateConsole("Welcome, setting initialized!")
 		self.checkAutoMove()
+		self.poolLogMessages()
 
 
 	def startIrridiumDatabase(self):
@@ -89,14 +91,23 @@ class MainLayout(FloatLayout):
 			self.ids.input_automove.disabled = False
 			self.ids.button_automove.disabled = False
 
+	
+	@interval_threadB.setInterval(1)
+	def poolLogMessages(self):
+		if (self.db_thread.getLog() ==""):
+			pass
+		else:
+			self.updateConsole(self.db_thread.getLog())
+			self.db_thread.clearLog()
+
 
 	## Function sits on a Thread in background and pools the status of connections / updates DB values
-	@interval_thread.setInterval(15)
+	@interval_threadA.setInterval(15)
 	def checkDBStatus(self):
 		if(self.db_thread.isConnected):
 			self.ids.db_status.text = "Connected"
 			self.ids.db_status.color = (0,1,0,1)
-			self.updateConsole("Parsing database data...")
+			self.updateConsole("Irridium database connected successfully!")
 
 			self.ids.payload_lat.text = self.db_thread.latDeg
 			self.ids.payload_long.text = self.db_thread.lonDeg
