@@ -57,7 +57,7 @@ class DatabaseThread(Thread):
 
 	
 	def setLog(self, txt):
-		self.log= self.log+""+txt
+		self.log= self.log+" "+txt
 
 	
 	def getLog(self):
@@ -89,8 +89,11 @@ class DatabaseThread(Thread):
 			sql.execute(query)
 			try:
 				result = sql.fetchone()
+				if not self.connected:
+					self.setLog("Irridium database connected successfully!")
+				else:
+					self.setLog("Database query successful!  Updating data..")
 				self.connected = True
-				self.setLog("Database query successful! Updating data..")
 				return result
 			except:
 				self.setLog("ERROR - failed to get data from database")

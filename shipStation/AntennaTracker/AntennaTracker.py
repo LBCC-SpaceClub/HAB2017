@@ -102,12 +102,11 @@ class MainLayout(FloatLayout):
 
 
 	## Function sits on a Thread in background and pools the status of connections / updates DB values
-	@interval_threadA.setInterval(15)
+	@interval_threadA.setInterval(10)
 	def checkDBStatus(self):
 		if(self.db_thread.isConnected):
 			self.ids.db_status.text = "Connected"
 			self.ids.db_status.color = (0,1,0,1)
-			self.updateConsole("Irridium database connected successfully!")
 
 			self.ids.payload_lat.text = self.db_thread.latDeg
 			self.ids.payload_long.text = self.db_thread.lonDeg
