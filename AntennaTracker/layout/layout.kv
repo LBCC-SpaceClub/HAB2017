@@ -56,52 +56,63 @@
                     id: reconnect_payload
                     text: 'Reconnect'
                     on_press: root.payloadReconnect()
+            
+
+
+
+
             GridLayout:
                 cols: 1
                 rows: 4
-                size_hint: (.2, .15)
-                spacing: '2dp'
-                pos_hint: {'x':.03,'y':.77}
+                size_hint:(None, None)
+                pos_hint: {'x':.12,'y':.77}
+                row_force_default:True
+                row_default_height:'30dp'
                 GridLayout:
                     cols: 2
                     rows: 1
+                    spacing:'70dp'
                     Label:
                         text: 'Irridium Database'
                         font_size: '16sp'
                     CheckBox:
                         id: cbox_database
                         active: True
-                        size_hint: (None, None)
+                        #spacing:'20dp'
+                        #size_hint: (None, None)
                         group: 'gr'
                 GridLayout:
                     cols: 2
                     rows: 1
+                    spacing:'70dp'
                     Label:
                         text: 'Network(Ubiquity)'
                         font_size: '16sp'
                     CheckBox:
                         id: cbox_arduino
-                        size_hint: (None, None)
+                        #size_hint: (None, None)
                         group: 'gr'
                 GridLayout:
                     cols: 2
                     rows: 1
+                    spacing:'70dp'
                     Label:
                         text: 'Local'
                         font_size: '16sp'
                     CheckBox:
                         id: cbox_local
-                        size_hint: (None, None)
+                        #size_hint: (None, None)
                         group: 'gr'
                 GridLayout:
                     cols: 2
                     rows: 1
+                    spacing:'70dp'
                     Label:
                         text: 'ARRSfi'
                         font_size: '16sp'
                     CheckBox:
                         id: cbox_aprs
-                        size_hint: (None, None)
+                        #size_hint: (None, None)
                         group: 'gr'
             ### END PAYLOAD SOURCES ###
 
