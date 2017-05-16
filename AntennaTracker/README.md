@@ -29,7 +29,7 @@ pip install requirements.txt
 ## Usage:
 
 ```
-python AntennaTracker.py
+python3 AntennaTracker.py
 ```
 
 More usage instructions will follow as we continue to develop the system.

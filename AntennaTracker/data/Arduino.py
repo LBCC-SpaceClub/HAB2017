@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 import serial
 import serial.tools.list_ports
+from threading import Thread
+import time
 
-class Arduino:
+class Arduino(Thread):
     ''' Methods to get information from the arduino (gps and IMU) '''
     def __init__(self):
+        Thread.__init__(self)
         self.arduinoCOM = self.findComPort()
         self.usb = serial.Serial(
             self.arduinoCOM,
@@ -26,11 +29,20 @@ class Arduino:
         self.imuY = None
         self.imuZ = None
 
+
+
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
         if self.usb:
             self.setLog("Closing port.")
             self.usb.close()
+
+
+
+    def run(self):
+        while(1):
+            pass
+
 
     def findComPort(self):
         # find the actual com port of the arduino (windows only?)
@@ -42,6 +54,7 @@ class Arduino:
         self.usb = None
         raise IOError("ERROR: Could not find an attached arduino.")
 
+    
     def calibrateIMU(self):
         ''' Poorly named as it doesn't force the arduino to DO anything '''
         calibration = 0
@@ -60,6 +73,7 @@ class Arduino:
                 self.setLog("Calibration: "+calibration+" // Goal of ",+str(int(calibrationGoal)))
         usb.flushInput()
 
+   
     def update(self):
         ''' Read in new data from the arduino '''
         while self.usb.inWaiting():
