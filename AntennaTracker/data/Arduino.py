@@ -29,7 +29,7 @@ class Arduino:
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
         if self.usb:
-            print ("Closing port.")
+            self.setLog("Closing port.")
             self.usb.close()
 
     def findComPort(self):
@@ -37,7 +37,7 @@ class Arduino:
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Arduino' in p[1]:
-                print ("Found arduino on ", self.p[0])
+                self.setLog("Found arduino on ", self.p[0])
                 return p[0]
         self.usb = None
         raise IOError("ERROR: Could not find an attached arduino.")
@@ -52,12 +52,12 @@ class Arduino:
             time.sleep(0.05)
             while(temp_arduino[0] != '~'):
                 temp_arduino = usb.readline()
-                print (temp_arduino)
+                self.setLog(temp_arduino)
                 temp_arduino = temp_arduino.split(',')
             try:
                 calibration = int(temp_arduino[8])+int(temp_arduino[7])+int(temp_arduino[6])
             finally:
-                print ("Calibration: ",calibration, " // Goal of ", int(calibrationGoal))
+                self.setLog("Calibration: "+calibration+" // Goal of ",+str(int(calibrationGoal)))
         usb.flushInput()
 
     def update(self):
@@ -70,9 +70,9 @@ class Arduino:
                 elif line[:5] == '[GPS]':
                     self.updateGPS(line[5:])
                 else:
-                    print ("Error reading line: ", line)
+                    self.setLog("Error reading line: "+line)
             except ValueError:
-                print ("Error parsing ", line)
+                self.setLog("Error parsing "+line)
         '''
         print "Most up-to-date Lat: {}, Long: {}, Alt (m): {}".format(
             self.latDeg,
@@ -97,6 +97,20 @@ class Arduino:
         self.latDeg = float(line[0])
         self.lonDeg = float(line[1])
         self.altMeters = float(line[2])
+
+
+    def setLog(self, txt):
+        self.log= self.log+" "+txt
+
+    
+    def getLog(self):
+        if(self.log != ""):
+            return self.log
+        else:
+            return ""
+    
+    def clearLog(self):
+        self.log = ""
 
 if __name__ == "__main__":
     print ("Arduino is not a standalone Python program.")

@@ -15,7 +15,7 @@ class DatabaseThread(Thread):
 			cfg = configparser.ConfigParser()
 			cfg.read(cfg_file)
 		except:
-			print("ERROR - could not read database config file.")
+			self.setLog("ERROR - could not read database config file.")
 		try:
 			self.db = pymysql.connect(
 				host=cfg["MySQL"]["Host"],
@@ -26,7 +26,7 @@ class DatabaseThread(Thread):
 				cursorclass=pymysql.cursors.DictCursor
 			)
 		except:
-			print("ERROR - failed to connect to MySQL database")
+			self.setLog("ERROR - failed to connect to MySQL database")
 		self.gpsTime = None
 		self.gpsDate = None
 		self.latDeg = None
