@@ -364,7 +364,7 @@
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.44,'y':.48}
+                pos_hint: {'x':.43,'y':.48}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '2dp'
@@ -462,6 +462,71 @@
                             multiline: False
                             font_size: '18sp'
             ## END PAYLOAD GPS DATA ######
+            ##############################
+
+
+
+
+            ##############################
+            ## CALCULATIONS ##############
+            FloatLayout:
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '70dp'
+                    pos_hint: {'x':.19,'y':.2}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Calculations'
+                        font_size:'20sp'
+                        bold: True
+            GridLayout: #Text fields
+                cols: 1
+                rows: 5
+                size_hint: (None, None)
+                pos_hint: {'x':.17,'y':.05}
+                row_force_default:True
+                row_default_height:'40dp'
+                spacing: '2dp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: calculationA_lbl
+                        text: 'Value A'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: calculationA
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: calculationB_lbl
+                        text: 'Value B'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: calculationB
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+            ## END CALCULATIONS ##########
             ##############################
 
 
@@ -651,22 +716,6 @@
             ## END CONSOLE LOG ###########
             ##############################
 
-
-
-
-            ### CALCULATIONS ###
-            # FloatLayout:
-            #     Bubble:
-            #         size_hint: (None, None)
-            #         width: '250dp'
-            #         height: '70dp'
-            #         pos_hint: {'x':.15,'y':.3}
-            #         background_color:(1, 0, 0, .4)
-            #         Label:
-            #             text: 'Calculations'
-            #             font_size:'20sp'
-            #             bold: True
-            ### END CALCULATIONS ###
 
 
 
