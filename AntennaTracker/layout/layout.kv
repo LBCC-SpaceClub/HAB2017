@@ -48,11 +48,11 @@
                 row_default_height:'40dp'
                 spacing: '4dp'
                 Button:
-                    id: connect_payload
+                    id: payload_connect
                     text: 'Connect'
                     on_press: root.payloadConnect()
                 Button:
-                    id: reconnect_payload
+                    id: payload_reconnect
                     text: 'Reconnect'
                     on_press: root.payloadReconnect()
             
@@ -151,6 +151,7 @@
                     row_default_height:'40dp'
                     spacing:'20dp'
                     Label:
+                        id: payload_lat_lbl
                         text: 'Latitude'
                         bold: True
                     GridLayout:
@@ -169,6 +170,7 @@
                     row_default_height:'40dp'
                     spacing:'20dp'
                     Label:
+                        id: payload_long_lbl
                         text: 'Longitude'
                         bold: True
                     GridLayout:
@@ -187,6 +189,7 @@
                     row_default_height:'40dp'
                     spacing:'20dp'
                     Label:
+                        id: payload_alt_lbl
                         text: 'Altitude'
                         bold: True
                     GridLayout:

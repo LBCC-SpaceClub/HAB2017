@@ -68,7 +68,7 @@ class RootLayout(FloatLayout):
 		self.ids.ard_status.color = (1,0,0,1)
 		self.ids.eth_status.text = "Not Connected"
 		self.ids.eth_status.color = (1,0,0,1)
-		self.ids.reconnect_payload.disabled = True
+		self.ids.payload_reconnect.disabled = True
 		self.updateConsole("Welcome, setting initialized!")
 		#self.checkAutoMove()
 		self.checkPayloadManualSwitch()
@@ -77,8 +77,8 @@ class RootLayout(FloatLayout):
 
 	def startIrridiumDatabase(self):
 		self.db_thread.start()
-		self.ids.connect_payload.disabled = True
-		self.ids.reconnect_payload.disabled = False
+		self.ids.payload_connect.disabled = True
+		self.ids.payload_reconnect.disabled = False
 		self.checkDBStatus()
 		self.updateConsole("Starting irridium database connection...")
 
@@ -125,11 +125,16 @@ class RootLayout(FloatLayout):
 			self.ids.payload_lat.readonly = False
 			self.ids.payload_long.readonly = False
 			self.ids.payload_alt.readonly = False
+			self.ids.payload_lat_lbl.color = (0, 1, 1, 1)
+			self.ids.payload_long_lbl.color = (0, 1, 1, 1)
+			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
+			self.ids.payload_connect.disabled = True
 		else:
 			self.ids.payload_setvalues.disabled = True
 			self.ids.payload_lat.readonly = True
 			self.ids.payload_long.readonly = True
 			self.ids.payload_alt.readonly = True
+			self.ids.payload_connect.disabled = False
 
 
 	## Pooling Log Messages
