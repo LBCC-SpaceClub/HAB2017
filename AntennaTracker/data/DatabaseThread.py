@@ -9,13 +9,13 @@ class DatabaseThread(Thread):
 
 	def __init__(self, cfg_file):
 		Thread.__init__(self)
-		self._stop_event = False
+		self.stop = True
 		
 		try:
 			cfg = configparser.ConfigParser()
 			cfg.read(cfg_file)
 		except:
-			self.setLog("ERROR - could not read database config file.")
+			self.setLog("ERROR could not read database config file.")
 		try:
 			self.db = pymysql.connect(
 				host=cfg["MySQL"]["Host"],
@@ -26,29 +26,20 @@ class DatabaseThread(Thread):
 				cursorclass=pymysql.cursors.DictCursor
 			)
 		except:
-			self.setLog("ERROR - failed to connect to MySQL database")
-		self.gpsTime = None
-		self.gpsDate = None
-		self.latDeg = None
-		self.lonDeg = None
-		self.altMeters = None
+			self.setLog("ERROR failed to connect to MySQL database")
+		self.gpsTime = ""
+		self.gpsDate = ""
+		self.latDeg = ""
+		self.lonDeg = ""
+		self.altMeters = ""
 		self.lastChecked = 0
 		self.connected = False
 		self.daemon = True #stops thread on app exit, important
 		self.log = ""
+ 
 
-
-	def stop(self):
-		self._stop_event = True
-		self.connected = False
-
-	
-	def stopped(self):
-		return self._stop_event
-
-	
 	def run(self):
-		while(1):
+		while(self.stop):
 			self.update()
 
 	
@@ -57,7 +48,7 @@ class DatabaseThread(Thread):
 
 	
 	def setLog(self, txt):
-		self.log= self.log+" "+txt
+		self.log= self.log+""+txt
 
 	
 	def getLog(self):
@@ -90,15 +81,15 @@ class DatabaseThread(Thread):
 			try:
 				result = sql.fetchone()
 				if not self.connected:
-					self.setLog("Irridium database connected successfully!")
+					self.setLog("SUCCESS irridium database connected")
 				else:
-					self.setLog("Database query successful!  Updating data..")
+					self.setLog("SUCCESS database query, updating data...")
 				self.connected = True
 				return result
 			except:
-				self.setLog("ERROR - failed to get data from database")
+				self.setLog("ERROR failed to get data from database")
 				self.connected = False
 				sql.close()
 				return
 		except:
-			self.setLog("ERROR - failed to parse data, check internet connection")
+			self.setLog("ERROR failed to parse data, check internet connection")

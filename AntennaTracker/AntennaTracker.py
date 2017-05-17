@@ -48,7 +48,8 @@ class RootLayout(FloatLayout):
 	configs = "cfg/Configs.ini"
 	interval_threadA = IntervalThread()
 	interval_threadB = IntervalThread()
-	db_thread = DatabaseThread(configs)
+	db_check = False
+	db_list = []
 
 	
 	def __init__(self, **kwargs):
@@ -68,23 +69,37 @@ class RootLayout(FloatLayout):
 		self.ids.ard_status.color = (1,0,0,1)
 		self.ids.eth_status.text = "Not Connected"
 		self.ids.eth_status.color = (1,0,0,1)
-		self.ids.payload_reconnect.disabled = True
+		self.ids.payload_disconnect.disabled = True
 		self.updateConsole("Welcome, setting initialized!")
-		#self.checkAutoMove()
 		self.checkPayloadManualSwitch()
-		self.poolLogMessages()
 
 
 	def startIrridiumDatabase(self):
-		self.db_thread.start()
+		self.db_list.insert(0,DatabaseThread(self.configs))
+		self.db_list[0].start()
+		self.db_check = True
 		self.ids.payload_connect.disabled = True
-		self.ids.payload_reconnect.disabled = False
+		self.ids.payload_disconnect.disabled = False
 		self.checkDBStatus()
-		self.updateConsole("Starting irridium database connection...")
+		self.poolLogMessages()
+		self.updateConsole("START irridium database connection...")
 
 
 	def stopIrridiumDatabase(self):
-		self.db_thread.stop()
+		if(self.db_list):
+			self.ids.payload_lat.text = ""
+			self.ids.payload_long.text = ""
+			self.ids.payload_alt.text = ""
+			self.ids.payload_date.text = ""
+			self.ids.payload_time.text = ""
+			self.db_list[0].stop = False
+			self.db_list.pop(0)
+			self.db_check = False
+			self.ids.db_status.text = "Not Connected"
+			self.ids.db_status.color = (1,0,0,1) 
+			self.ids.payload_disconnect.disabled = True
+			self.ids.payload_connect.disabled = False
+			self.updateConsole("STOP irridium database connection...")
 
 
 	def payloadConnect(self):
@@ -92,7 +107,7 @@ class RootLayout(FloatLayout):
 			self.startIrridiumDatabase()
 
 
-	def payloadReconnect(self):
+	def payloadDisconnect(self):
 		self.stopIrridiumDatabase()
 
 
@@ -129,7 +144,8 @@ class RootLayout(FloatLayout):
 			self.ids.payload_long_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_connect.disabled = True
-			self.ids.payload_reconnect.disabled = True
+			self.ids.payload_disconnect.disabled = True
+			self.stopIrridiumDatabase()
 		else:
 			self.ids.payload_setvalues.disabled = True
 			self.ids.payload_lat.readonly = True
@@ -144,24 +160,26 @@ class RootLayout(FloatLayout):
 	## Pooling Log Messages
 	@interval_threadB.setInterval(1)
 	def poolLogMessages(self):
-		if (self.db_thread.getLog() ==""):
-			pass
-		else:
-			self.updateConsole(self.db_thread.getLog())
-			self.db_thread.clearLog()
+		if(self.db_check):
+			if (self.db_list[0].getLog() ==""):
+				pass
+			else:
+				self.updateConsole(self.db_list[0].getLog())
+				self.db_list[0].clearLog()
 
 
 	## Pooling the status of connections / updates DB values
 	@interval_threadA.setInterval(10)
 	def checkDBStatus(self):
-		if(self.db_thread.isConnected):
-			self.ids.db_status.text = "Connected"
-			self.ids.db_status.color = (0,1,0,1)
-			self.ids.payload_lat.text = self.db_thread.latDeg
-			self.ids.payload_long.text = self.db_thread.lonDeg
-			self.ids.payload_alt.text = self.db_thread.altMeters
-			self.ids.payload_date.text = str(self.db_thread.gpsDate)
-			self.ids.payload_time.text = str(self.db_thread.gpsTime)
+		if(self.db_check):
+			if(self.db_list[0].isConnected):
+				self.ids.db_status.text = "Connected"
+				self.ids.db_status.color = (0,1,0,1)
+				self.ids.payload_lat.text = self.db_list[0].latDeg
+				self.ids.payload_long.text = self.db_list[0].lonDeg
+				self.ids.payload_alt.text = self.db_list[0].altMeters
+				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
+				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
 
 
 	def confirmExit(self):
