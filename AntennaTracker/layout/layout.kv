@@ -524,7 +524,7 @@
                     size_hint: (None, None)
                     width: '250dp'
                     height: '65dp'
-                    pos_hint: {'x':.74,'y':.55}
+                    pos_hint: {'x':.73,'y':.55}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Motor Control'
@@ -534,7 +534,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.76,'y':.41}
+                pos_hint: {'x':.76,'y':.42}
                 row_force_default: True
                 row_default_height:'50dp'
                 GridLayout: #Stop Motor
@@ -569,16 +569,15 @@
                 cols: 2
                 rows: 1
                 size_hint: (None, None)
-                pos_hint: {'x':.74,'y':.26}
+                pos_hint: {'x':.74,'y':.28}
                 row_force_default: True
                 row_default_height:'32dp'
                 col_default_width: '220dp'
                 Slider:
-                    id: motor_slider
+                    id: motor_sliderX
                     min:0
                     max:100
                     step:1
-
                 GridLayout:
                     cols: 1
                     rows: 1
@@ -587,11 +586,37 @@
                     col_force_default: True
                     col_default_width: '60dp'
                     TextInput:
-                        id: slider_text
+                        id: motor_sliderX_text
                         readonly: True
                         multiline: False
                         font_size: '17sp'
-                        text: str(motor_slider.value)
+                        text: str(motor_sliderX.value)
+            GridLayout:
+                cols: 2
+                rows: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.74,'y':.23}
+                row_force_default: True
+                row_default_height:'32dp'
+                col_default_width: '220dp'
+                Slider:
+                    id: motor_sliderY
+                    min:0
+                    max:100
+                    step:1
+                GridLayout:
+                    cols: 1
+                    rows: 1
+                    row_force_default: True
+                    row_default_height:'35dp'
+                    col_force_default: True
+                    col_default_width: '60dp'
+                    TextInput:
+                        id: motor_sliderY_text
+                        readonly: True
+                        multiline: False
+                        font_size: '17sp'
+                        text: str(motor_sliderY.value)
 
             ### END MOTOR CONTROL ####
             ##############################

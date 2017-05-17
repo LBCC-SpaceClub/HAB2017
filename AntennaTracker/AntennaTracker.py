@@ -55,7 +55,8 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.text = "Not Connected"
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
-		self.ids.motor_slider.bind(value=self.sliderValueChange)
+		self.ids.motor_sliderX.bind(value=self.sliderXValue)
+		self.ids.motor_sliderY.bind(value=self.sliderYValue)
 		self.updateConsole("WELCOME setting initialized")
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
@@ -187,17 +188,25 @@ class RootLayout(FloatLayout):
 	
 	def motorManualSwitch(self):
 		if(self.ids.motor_switchmanual.active):
-			self.ids.motor_slider.disabled = False
-			self.ids.slider_text.disabled = False
+			self.ids.motor_sliderX.disabled = False
+			self.ids.motor_sliderX_text.disabled = False
+			self.ids.motor_sliderY.disabled = False
+			self.ids.motor_sliderY_text.disabled = False
 			self.updateConsole("MODE manual motor control")
 		else:
-			self.ids.motor_slider.disabled = True
-			self.ids.slider_text.disabled = True
+			self.ids.motor_sliderX.disabled = True
+			self.ids.motor_sliderX_text.disabled = True
+			self.ids.motor_sliderY.disabled = True
+			self.ids.motor_sliderY_text.disabled = True
 			self.updateConsole("MODE auto motor control")
 
 
-	def sliderValueChange(self,instance,value):
-		self.ids.slider_text.text = str(value)
+	def sliderXValue(self,instance,value):
+		self.ids.motor_sliderX_text.text = str(value)
+
+
+	def sliderYValue(self,instance,value):
+		self.ids.motor_sliderY_text.text = str(value)
 
 
 	## Pooling Log Messages
