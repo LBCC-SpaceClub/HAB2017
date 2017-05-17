@@ -26,22 +26,6 @@ from data.DatabaseThread import *
 '''import Arduino '''
 
 
-'''
-
-I can put a switch in so that you can switch for manual to auto for sources and 
-	then it would enable or disable the radio button of a source and enable or disable 
-	inserting text and turn on or off a button to submit
-
-yeah I can have a motor off button
-
-
-Hmm ok let's see.
-1) Radio buttons, for me the click area is above the graphic, so if I click on the middle button, the bottom button is selected.
-2) Since some of the buttons aren't implemented yet, is it possible to disable them? If not, it's ok.
-3) Calculations section should have a couple fields.
-4) Automove should get lat/long/alt.
-'''
-
 
 class RootLayout(FloatLayout):
 
