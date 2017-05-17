@@ -1,5 +1,5 @@
 import kivy
-from kivy.config import Config 
+from kivy.config import Config
 kivy.config.Config.set('graphics','resizable', False) #config needs to be set before kivy.app is imported
 from kivy.app import App
 from time import time
@@ -38,12 +38,12 @@ class RootLayout(FloatLayout):
 	db_list = []
 	arduino_list = []
 
-	
+
 	def __init__(self, **kwargs):
 		super(RootLayout, self).__init__(**kwargs)
 		Clock.schedule_once(self.run)
 
-	
+
 	def updateConsole(self, text):
 		self.ids.consolelog.text=self.ids.consolelog.text+"\n"+">\t\t"+text
 
@@ -68,7 +68,7 @@ class RootLayout(FloatLayout):
 	#######################
 
 
-	def startIrridiumDatabase(self):
+	def startIridiumDatabase(self):
 		self.db_list.insert(0,DatabaseThread(self.configs))
 		self.poolLogMessages()
 		self.db_list[0].start()
@@ -76,10 +76,10 @@ class RootLayout(FloatLayout):
 		self.ids.payload_connect.disabled = True
 		self.ids.payload_disconnect.disabled = False
 		self.checkDBStatus()
-		self.updateConsole("START irridium database connection")
+		self.updateConsole("START Iridium database connection")
 
 
-	def stopIrridiumDatabase(self):
+	def stopIridiumDatabase(self):
 		if(self.db_list):
 			self.ids.payload_lat.text = ""
 			self.ids.payload_long.text = ""
@@ -91,12 +91,12 @@ class RootLayout(FloatLayout):
 			self.db_list.pop(0)
 			self.db_check = False
 			self.ids.db_status.text = "Not Connected"
-			self.ids.db_status.color = (1,0,0,1) 
+			self.ids.db_status.color = (1,0,0,1)
 			self.ids.payload_disconnect.disabled = True
 			self.ids.payload_connect.disabled = False
-			self.updateConsole("STOP irridium database connection")
+			self.updateConsole("STOP Iridium database connection")
 
-	
+
 	def startArduinoUSB(self):
 		self.arduino_list.insert(0,ArduinoThread())
 		self.arduino_check = True
@@ -126,7 +126,7 @@ class RootLayout(FloatLayout):
 			self.arduino_list.pop(0)
 			self.arduino_check = False
 			self.ids.ard_status.text = "Not Connected"
-			self.ids.ard_status.color = (1,0,0,1) 
+			self.ids.ard_status.color = (1,0,0,1)
 			self.ids.station_disconnect.disabled = True
 			self.ids.station_connect.disabled = False
 			self.updateConsole("STOP arduino usb")
@@ -134,11 +134,11 @@ class RootLayout(FloatLayout):
 
 	def payloadConnect(self):
 		if(self.ids.cbox_database.active):
-			self.startIrridiumDatabase()
+			self.startIridiumDatabase()
 
 
 	def payloadDisconnect(self):
-		self.stopIrridiumDatabase()
+		self.stopIridiumDatabase()
 
 
 	def payloadSetManualValues(self):
@@ -160,7 +160,7 @@ class RootLayout(FloatLayout):
 			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_connect.disabled = True
 			self.ids.payload_disconnect.disabled = True
-			self.stopIrridiumDatabase()
+			self.stopIridiumDatabase()
 			self.updateConsole("MODE manual payload")
 		else:
 			self.ids.payload_setvalues.disabled = True
@@ -220,12 +220,12 @@ class RootLayout(FloatLayout):
 			self.ids.station_connect.disabled = False
 			self.updateConsole("MODE auto station")
 
-	
+
 	def motorStopSwitch(self):
 		if(self.ids.motor_switchstop.active):
 			self.updateConsole("STOP motors")
 
-	
+
 	def motorManualSwitch(self):
 		if(self.ids.motor_switchmanual.active):
 			self.ids.motor_sliderX.disabled = False
@@ -280,17 +280,17 @@ class RootLayout(FloatLayout):
 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
 
 
-	# @interval_threadC.setInterval(7)
-	# def checkArduinoStatus(self):
-	# 	if(self.arduino_check):
-	# 		if(self.arduino_list[0].isConnected):
-	# 			self.ids.ard_status.text = "Connected"
-	# 			self.ids.ard_status.color = (0,1,0,1)
-	# 			self.ids.station_lat.text = self.arduino_list[0].latDeg
-	# 			self.ids.station_long.text = self.arduino_list[0].lonDeg
-	# 			self.ids.station_alt.text = self.arduino_list[0].altMeters
-	# 			self.ids.station_date.text = str(self.arduino_list[0].gpsDate)
-	# 			self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
+	@interval_threadC.setInterval(1)
+	def checkArduinoStatus(self):
+		if(self.arduino_check):
+			if(self.arduino_list[0].isConnected):
+				self.ids.ard_status.text = "Connected"
+				self.ids.ard_status.color = (0,1,0,1)
+				self.ids.station_lat.text = self.arduino_list[0].latDeg
+				self.ids.station_long.text = self.arduino_list[0].lonDeg
+				self.ids.station_alt.text = self.arduino_list[0].altMeters
+				self.ids.station_date.text = str(self.arduino_list[0].gpsDate)
+				self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
 
 
 	def confirmExit(self):
@@ -306,7 +306,7 @@ class ExitPopup(Popup):
 
 
 #---------------------------START OF EXECUTION
-class AntennaTracker(App):	
+class AntennaTracker(App):
 	def build(self):
 		self.title = 'AntennaTracker'
 		self.load_kv('layout/layout.kv')

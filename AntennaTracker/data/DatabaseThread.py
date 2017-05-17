@@ -3,14 +3,14 @@ from random import randint
 import pymysql.cursors
 import configparser
 import time
- 
- 
+
+
 class DatabaseThread(Thread):
 
 	def __init__(self, cfg_file):
 		Thread.__init__(self)
 		self.stop = True
-		
+
 		try:
 			cfg = configparser.ConfigParser()
 			cfg.read(cfg_file)
@@ -36,34 +36,34 @@ class DatabaseThread(Thread):
 		self.connected = False
 		self.daemon = True #stops thread on app exit, important
 		self.log = ""
- 
+
 
 	def run(self):
 		while(self.stop):
 			self.update()
 
-	
+
 	def isConnected(self):
 		return self.connected
 
-	
+
 	def setLog(self, txt):
 		self.log= self.log+""+txt
 
-	
+
 	def getLog(self):
 		if(self.log != ""):
 			return self.log
 		else:
 			return ""
-	
+
 	def clearLog(self):
 		self.log = ""
 
 
 	def update(self):
 		''' Read in new data from the database '''
-		if time.time() - self.lastChecked > 30: # don't hammer db			
+		if time.time() - self.lastChecked > 30: # don't hammer db
 			data = self.parseData()
 			self.latDeg = data["gps_lat"]
 			self.lonDeg = data["gps_long"]
@@ -71,7 +71,7 @@ class DatabaseThread(Thread):
 			self.gpsDate = str(data["gps_fltDate"])
 			self.gpsTime = str(data["gps_time"])
 			self.lastChecked = time.time()
-			
+
 
 	def parseData(self):
 		try:
@@ -81,10 +81,10 @@ class DatabaseThread(Thread):
 			try:
 				result = sql.fetchone()
 				if not self.connected:
-					self.setLog("SUCCESS irridium database connected")
+					self.setLog("SUCCESS Iridium database connected")
 					self.connected = True
 				else:
-					self.setLog("UPDATE irridium database data")
+					self.setLog("UPDATE Iridium database data")
 				return result
 			except:
 				self.setLog("ERROR failed to get data from database")

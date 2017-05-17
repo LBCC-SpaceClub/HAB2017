@@ -32,6 +32,7 @@ class ArduinoThread(Thread):
         while(self.stop):
             self.update()
 
+
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
         if self.usb:
@@ -58,9 +59,9 @@ class ArduinoThread(Thread):
                 return p[0]
             else:
                 self.setLog("ERROR could not find an attached arduino")
-                return 
-                
-    
+                return
+
+
     def calibrateIMU(self):
         ''' Poorly named as it doesn't force the arduino to DO anything '''
         calibration = 0
@@ -79,7 +80,7 @@ class ArduinoThread(Thread):
                 self.setLog("Calibration: "+calibration+" // Goal of ",+str(int(calibrationGoal)))
         usb.flushInput()
 
-   
+
     def update(self):
         ''' Read in new data from the arduino '''
         while self.usb.inWaiting():
@@ -102,6 +103,7 @@ class ArduinoThread(Thread):
         print "Heading: ", self.imuX
         '''
 
+
     def updateIMU(self, line):
         line = line.split(',')
         self.imuX = float(line[0])
@@ -123,15 +125,17 @@ class ArduinoThread(Thread):
     def setLog(self, txt):
         self.log= self.log+" "+txt
 
-    
+
     def getLog(self):
         if(self.log != ""):
             return self.log
         else:
             return ""
-    
+
+
     def clearLog(self):
         self.log = ""
+
 
 if __name__ == "__main__":
     print ("Arduino is not a standalone Python program.")

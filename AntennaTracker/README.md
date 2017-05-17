@@ -16,14 +16,16 @@ One station is stationary and uses a pair of servo motors to move the dish.
 The other station is mobile, mounted on the deck of the
 [R/V Pacific Storm](http://ceoas.oregonstate.edu/pacificstorm/), and
 must handle the motion of the ship and waves.  This station uses stepper
-motors with a 15:1 planetary gearbox.
+motors with a 15:1 planetary gearbox, which gives us 3000 steps per revolution
+and 0.12 degrees per step.  This is significantly more accurate than our
+previous servo solution, which was limted to 1.41 degrees per step.
 
 ## Install
 
 Install pip, then from the main directory:
 
 ```
-pip install requirements.txt
+sudo pip install -r requirements.txt
 ```
 
 ## Usage:
