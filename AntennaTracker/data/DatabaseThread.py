@@ -15,7 +15,7 @@ class DatabaseThread(Thread):
 			cfg = configparser.ConfigParser()
 			cfg.read(cfg_file)
 		except:
-			self.setLog("ERROR could not read database config file.")
+			self.setLog("ERROR could not read database config file")
 		try:
 			self.db = pymysql.connect(
 				host=cfg["MySQL"]["Host"],
@@ -84,7 +84,7 @@ class DatabaseThread(Thread):
 					self.setLog("SUCCESS irridium database connected")
 					self.connected = True
 				else:
-					self.setLog("SUCCESS database query, updating data...")
+					self.setLog("UPDATE irridium database data")
 				return result
 			except:
 				self.setLog("ERROR failed to get data from database")

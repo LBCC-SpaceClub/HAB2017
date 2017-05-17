@@ -56,8 +56,10 @@ class RootLayout(FloatLayout):
 		super(RootLayout, self).__init__(**kwargs)
 		Clock.schedule_once(self.run)
 
+	
 	def updateConsole(self, text):
 		self.ids.consolelog.text=self.ids.consolelog.text+"\n"+">\t\t"+text
+
 
 	#######################
 	### INITIAL SETTING ###
@@ -69,8 +71,9 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.text = "Not Connected"
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
-		self.updateConsole("Welcome, setting initialized!")
-		self.checkPayloadManualSwitch()
+		self.updateConsole("WELCOME setting initialized")
+		self.payloadManualSwitch()
+		self.stationManualSwitch()
 	#######################
 
 
@@ -82,7 +85,7 @@ class RootLayout(FloatLayout):
 		self.ids.payload_disconnect.disabled = False
 		self.checkDBStatus()
 		self.poolLogMessages()
-		self.updateConsole("START irridium database connection...")
+		self.updateConsole("START irridium database connection")
 
 
 	def stopIrridiumDatabase(self):
@@ -93,14 +96,14 @@ class RootLayout(FloatLayout):
 			self.ids.payload_date.text = ""
 			self.ids.payload_time.text = ""
 			self.db_list[0].isConnected = False
-			self.db_list[0].stop = False
+			self.db_list[0].stop = False #must happen before pop or thread wont get garbage collected
 			self.db_list.pop(0)
 			self.db_check = False
 			self.ids.db_status.text = "Not Connected"
 			self.ids.db_status.color = (1,0,0,1) 
 			self.ids.payload_disconnect.disabled = True
 			self.ids.payload_connect.disabled = False
-			self.updateConsole("STOP irridium database connection...")
+			self.updateConsole("STOP irridium database connection")
 
 
 	def payloadConnect(self):
@@ -113,49 +116,83 @@ class RootLayout(FloatLayout):
 
 
 	def payloadSetManualValues(self):
-		self.updateConsole(self.ids.payload_lat.text)
-		self.updateConsole(self.ids.payload_long.text)
-		self.updateConsole(self.ids.payload_alt.text)
+		self.updateConsole("SET payload ("+self.ids.payload_lat.text+", "
+			+self.ids.payload_long.text+", "+self.ids.payload_alt.text+")")
 
 
-	def stationConnect(self):
-		pass
-
-
-	def stationReconnect(self):
-		pass
-
-
-	# def checkAutoMove(self):
-	# 	if(self.ids.switch_automove.active):
-	# 		self.ids.input_automove.disabled = True
-	# 		self.ids.button_automove.disabled = True
-	# 	else:
-	# 		self.ids.input_automove.disabled = False
-	# 		self.ids.button_automove.disabled = False
-
-
-	def checkPayloadManualSwitch(self):
+	def payloadManualSwitch(self):
 		if(self.ids.payload_switchmanual.active):
 			self.ids.payload_setvalues.disabled = False
 			self.ids.payload_lat.readonly = False
 			self.ids.payload_long.readonly = False
 			self.ids.payload_alt.readonly = False
+			self.ids.payload_lat.background_color = (.7, .7, .7, 1)
+			self.ids.payload_long.background_color = (.7, .7, .7, 1)
+			self.ids.payload_alt.background_color = (.7, .7, .7, 1)
 			self.ids.payload_lat_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_long_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_connect.disabled = True
 			self.ids.payload_disconnect.disabled = True
 			self.stopIrridiumDatabase()
+			self.updateConsole("MODE manual payload")
 		else:
 			self.ids.payload_setvalues.disabled = True
 			self.ids.payload_lat.readonly = True
 			self.ids.payload_long.readonly = True
 			self.ids.payload_alt.readonly = True
+			self.ids.payload_lat.background_color = (1, 1, 1, 1)
+			self.ids.payload_long.background_color = (1, 1, 1, 1)
+			self.ids.payload_alt.background_color = (1, 1, 1, 1)
 			self.ids.payload_lat_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_long_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_alt_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_connect.disabled = False
+			self.updateConsole("MODE auto payload")
+
+
+	def stationConnect(self):
+		pass
+
+
+	def stationDisconnect(self):
+		pass
+
+
+	def stationSetManualValues(self):
+		self.updateConsole("SET station ("+self.ids.station_lat.text+", "
+			+self.ids.station_long.text+", "+self.ids.station_alt.text+")")
+
+
+	def stationManualSwitch(self):
+		if(self.ids.station_switchmanual.active):
+			self.ids.station_setvalues.disabled = False
+			self.ids.station_lat.readonly = False
+			self.ids.station_long.readonly = False
+			self.ids.station_alt.readonly = False
+			self.ids.station_lat.background_color = (.7, .7, .7, 1)
+			self.ids.station_long.background_color = (.7, .7, .7, 1)
+			self.ids.station_alt.background_color = (.7, .7, .7, 1)
+			self.ids.station_lat_lbl.color = (0, 1, 1, 1)
+			self.ids.station_long_lbl.color = (0, 1, 1, 1)
+			self.ids.station_alt_lbl.color = (0, 1, 1, 1)
+			self.ids.station_connect.disabled = True
+			self.ids.station_disconnect.disabled = True
+			self.updateConsole("MODE manual station")
+		else:
+			self.ids.station_setvalues.disabled = True
+			self.ids.station_lat.readonly = True
+			self.ids.station_long.readonly = True
+			self.ids.station_alt.readonly = True
+			self.ids.station_lat.background_color = (1, 1, 1, 1)
+			self.ids.station_long.background_color = (1, 1, 1, 1)
+			self.ids.station_alt.background_color = (1, 1, 1, 1)
+			self.ids.station_lat_lbl.color = (1, 1, 1, 1)
+			self.ids.station_long_lbl.color = (1, 1, 1, 1)
+			self.ids.station_alt_lbl.color = (1, 1, 1, 1)
+			self.ids.station_connect.disabled = False
+			self.updateConsole("MODE auto station")
+
 
 
 	## Pooling Log Messages
