@@ -39,22 +39,6 @@
                         font_size:'18sp'
                         bold: True
 
-            # FloatLayout:
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.4,'y':.4}
-            #     GridLayout: #Auto / Manual Switch
-            #         cols: 2
-            #         rows: 1
-            #         row_force_default:True
-            #         row_default_height:'40dp'
-            #         Label:
-            #             text: 'Manual Values:'
-            #             font_size:'18sp'
-            #         Switch:
-            #             id: switch_payloadmanual
-            #             active: True
-            #             #on_active: root.checkAutoMove()
-
             GridLayout:
                 cols: 1
                 rows: 2
@@ -123,11 +107,41 @@
             ### END PAYLOAD SOURCES ###
 
             ### PAYLOAD GPS DATA ###
+       
+            GridLayout: #Auto / Manual Switch
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.49,'y':.6}
+                row_force_default:True
+                row_default_height:'30dp'
+                Label:
+                    text: 'Manually Enter Values:'
+                    font_size:'16sp'
+                    color: (0, 1, 1, 1)
+                Switch:
+                    id: payload_switchmanual
+                    active: False
+                    on_active: root.checkPayloadManualSwitch()
+            
             GridLayout:
+                cols: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.60,'y':.58}
+                row_force_default:True
+                row_default_height:'40dp'
+                col_default_width: '120dp'
+                Button:
+                    id: payload_setvalues
+                    text: 'Set Values'
+                    disabled: True
+                    on_press: root.payloadSetManualValues()
+
+            GridLayout: #Text fields
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.49,'y':.6}
+                pos_hint: {'x':.49,'y':.5}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '4dp'
@@ -138,6 +152,7 @@
                     spacing:'20dp'
                     Label:
                         text: 'Latitude'
+                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
@@ -155,6 +170,7 @@
                     spacing:'20dp'
                     Label:
                         text: 'Longitude'
+                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
@@ -172,6 +188,7 @@
                     spacing:'20dp'
                     Label:
                         text: 'Altitude'
+                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
@@ -189,6 +206,7 @@
                     spacing:'20dp'
                     Label:
                         text: 'Date'
+                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
@@ -206,6 +224,7 @@
                     spacing:'20dp'
                     Label:
                         text: 'Time'
+                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True

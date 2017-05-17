@@ -71,6 +71,7 @@ class RootLayout(FloatLayout):
 		self.ids.reconnect_payload.disabled = True
 		self.updateConsole("Welcome, setting initialized!")
 		#self.checkAutoMove()
+		self.checkPayloadManualSwitch()
 		self.poolLogMessages()
 
 
@@ -95,6 +96,12 @@ class RootLayout(FloatLayout):
 		self.stopIrridiumDatabase()
 
 
+	def payloadSetManualValues(self):
+		self.updateConsole(self.ids.payload_lat.text)
+		self.updateConsole(self.ids.payload_long.text)
+		self.updateConsole(self.ids.payload_alt.text)
+
+
 	def stationConnect(self):
 		pass
 
@@ -111,7 +118,21 @@ class RootLayout(FloatLayout):
 	# 		self.ids.input_automove.disabled = False
 	# 		self.ids.button_automove.disabled = False
 
-	
+
+	def checkPayloadManualSwitch(self):
+		if(self.ids.payload_switchmanual.active):
+			self.ids.payload_setvalues.disabled = False
+			self.ids.payload_lat.readonly = False
+			self.ids.payload_long.readonly = False
+			self.ids.payload_alt.readonly = False
+		else:
+			self.ids.payload_setvalues.disabled = True
+			self.ids.payload_lat.readonly = True
+			self.ids.payload_long.readonly = True
+			self.ids.payload_alt.readonly = True
+
+
+	## Pooling Log Messages
 	@interval_threadB.setInterval(1)
 	def poolLogMessages(self):
 		if (self.db_thread.getLog() ==""):
@@ -121,13 +142,12 @@ class RootLayout(FloatLayout):
 			self.db_thread.clearLog()
 
 
-	## Function sits on a Thread in background and pools the status of connections / updates DB values
+	## Pooling the status of connections / updates DB values
 	@interval_threadA.setInterval(10)
 	def checkDBStatus(self):
 		if(self.db_thread.isConnected):
 			self.ids.db_status.text = "Connected"
 			self.ids.db_status.color = (0,1,0,1)
-
 			self.ids.payload_lat.text = self.db_thread.latDeg
 			self.ids.payload_long.text = self.db_thread.lonDeg
 			self.ids.payload_alt.text = self.db_thread.altMeters
