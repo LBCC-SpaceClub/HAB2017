@@ -1,8 +1,10 @@
-from time import time
+import kivy
+from kivy.config import Config 
+kivy.config.Config.set('graphics','resizable', False) #config needs to be set before kivy.app is imported
 from kivy.app import App
+from time import time
 from os.path import dirname, join
 from kivy.lang import Builder
-from kivy.config import Config 
 from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ListProperty,ReferenceListProperty,ObjectProperty
 from kivy.clock import Clock
 from kivy.animation import Animation
@@ -17,6 +19,7 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.clock import Clock, mainthread
+
 
 from data.IntervalThread import *
 from data.DatabaseThread import *
@@ -40,7 +43,7 @@ Hmm ok let's see.
 '''
 
 
-class MainLayout(FloatLayout):
+class RootLayout(FloatLayout):
 
 	configs = "cfg/Configs.ini"
 	interval_threadA = IntervalThread()
@@ -49,7 +52,7 @@ class MainLayout(FloatLayout):
 
 	
 	def __init__(self, **kwargs):
-		super(MainLayout, self).__init__(**kwargs)
+		super(RootLayout, self).__init__(**kwargs)
 		Clock.schedule_once(self.run)
 
 
@@ -67,7 +70,7 @@ class MainLayout(FloatLayout):
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.reconnect_payload.disabled = True
 		self.updateConsole("Welcome, setting initialized!")
-		self.checkAutoMove()
+		#self.checkAutoMove()
 		self.poolLogMessages()
 
 
@@ -100,13 +103,13 @@ class MainLayout(FloatLayout):
 		pass
 
 
-	def checkAutoMove(self):
-		if(self.ids.switch_automove.active):
-			self.ids.input_automove.disabled = True
-			self.ids.button_automove.disabled = True
-		else:
-			self.ids.input_automove.disabled = False
-			self.ids.button_automove.disabled = False
+	# def checkAutoMove(self):
+	# 	if(self.ids.switch_automove.active):
+	# 		self.ids.input_automove.disabled = True
+	# 		self.ids.button_automove.disabled = True
+	# 	else:
+	# 		self.ids.input_automove.disabled = False
+	# 		self.ids.button_automove.disabled = False
 
 	
 	@interval_threadB.setInterval(1)
@@ -138,7 +141,7 @@ class MainLayout(FloatLayout):
 
 
 
-
+#-------------------------------#
 class ExitPopup(Popup):
 	def closePopup(self, *args):
 		self.dismiss()
@@ -146,14 +149,11 @@ class ExitPopup(Popup):
 
 #---------------------------START OF EXECUTION
 class AntennaTracker(App):	
-
 	def build(self):
 		self.title = 'AntennaTracker'
 		self.load_kv('layout/layout.kv')
-		Config.set('graphics','resizable', False) #cant get this to work
-		Window.size = (1280,1024)
-		return MainLayout()
-
+		Window.size = (1280,900)
+		return RootLayout()
 
 if __name__ == '__main__':
     AntennaTracker().run()
