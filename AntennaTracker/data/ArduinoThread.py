@@ -4,25 +4,23 @@ import serial.tools.list_ports
 from threading import Thread
 import time
 
-class Arduino(Thread):
+class ArduinoThread(Thread):
     ''' Methods to get information from the arduino (gps and IMU) '''
     def __init__(self):
         Thread.__init__(self)
-        self.arduinoCOM = self.findComPort()
-        self.usb = serial.Serial(
-            self.arduinoCOM,
-            baudrate = self.arduinoBaud,
-            timeout = self.arduinoTimeout
-        )
+        self.stop = True
+        self.log = ""
+        self.usb = None
+        self.connected = False
         self.arduinoCOM = None
         self.arduinoBaud = 115200
         self.arduinoTimeout = 5
         # GPS fields
-        self.gpsTime = None
-        self.gpsDate = None
-        self.latDeg = None
-        self.lonDeg = None
-        self.altMeters = None
+        self.gpsTime = ""
+        self.gpsDate = ""
+        self.latDeg = ""
+        self.lonDeg = ""
+        self.altMeters = ""
         self.ser = None
         # IMU fields
         self.imuX = None
@@ -30,6 +28,9 @@ class Arduino(Thread):
         self.imuZ = None
 
 
+    def run(self):
+        while(self.stop):
+            self.update()
 
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
@@ -38,10 +39,13 @@ class Arduino(Thread):
             self.usb.close()
 
 
-
-    def run(self):
-        while(1):
-            pass
+    def connectToArduino(self):
+        self.arduinoCOM = self.findComPort()
+        self.usb = serial.Serial(
+            self.arduinoCOM,
+            baudrate = self.arduinoBaud,
+            timeout = self.arduinoTimeout
+        )
 
 
     def findComPort(self):
@@ -50,10 +54,12 @@ class Arduino(Thread):
         for p in ports:
             if 'Arduino' in p[1]:
                 self.setLog("Found arduino on ", self.p[0])
+                self.connected = True
                 return p[0]
-        self.usb = None
-        raise IOError("ERROR: Could not find an attached arduino.")
-
+            else:
+                self.setLog("ERROR could not find an attached arduino")
+                return 
+                
     
     def calibrateIMU(self):
         ''' Poorly named as it doesn't force the arduino to DO anything '''
@@ -105,6 +111,7 @@ class Arduino(Thread):
         self.imuAcc = int(line[4])
         self.imuGyro = int(line[5])
         self.imuMag = int(line[6])
+
 
     def updateGPS(self, line):
         line = line.split(',')

@@ -23,7 +23,7 @@ from kivy.clock import Clock, mainthread
 
 from data.IntervalThread import *
 from data.DatabaseThread import *
-'''import Arduino '''
+from data.ArduinoThread import *
 
 
 
@@ -32,8 +32,11 @@ class RootLayout(FloatLayout):
 	configs = "cfg/Configs.ini"
 	interval_threadA = IntervalThread()
 	interval_threadB = IntervalThread()
+	interval_threadC = IntervalThread()
 	db_check = False
+	arduino_check = False
 	db_list = []
+	arduino_list = []
 
 	
 	def __init__(self, **kwargs):
@@ -55,6 +58,7 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.text = "Not Connected"
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
+		self.ids.station_disconnect.disabled = True
 		self.ids.motor_sliderX.bind(value=self.sliderXValue)
 		self.ids.motor_sliderY.bind(value=self.sliderYValue)
 		self.updateConsole("WELCOME setting initialized")
@@ -66,12 +70,12 @@ class RootLayout(FloatLayout):
 
 	def startIrridiumDatabase(self):
 		self.db_list.insert(0,DatabaseThread(self.configs))
+		self.poolLogMessages()
 		self.db_list[0].start()
 		self.db_check = True
 		self.ids.payload_connect.disabled = True
 		self.ids.payload_disconnect.disabled = False
 		self.checkDBStatus()
-		self.poolLogMessages()
 		self.updateConsole("START irridium database connection")
 
 
@@ -91,6 +95,41 @@ class RootLayout(FloatLayout):
 			self.ids.payload_disconnect.disabled = True
 			self.ids.payload_connect.disabled = False
 			self.updateConsole("STOP irridium database connection")
+
+	
+	def startArduinoUSB(self):
+		self.arduino_list.insert(0,ArduinoThread())
+		self.arduino_check = True
+		self.arduino_list[0].connectToArduino()
+		self.poolLogMessages()
+		if(self.arduino_list[0].connected == True):
+			self.arduino_list[0].start()
+			self.ids.station_connect.disabled = True
+			self.ids.station_disconnect.disabled = False
+			self.checkArduinoStatus()
+			self.updateConsole("START connect to arduino usb")
+		else:
+			self.arduino_list.pop(0)
+			self.arduino_check = False
+			self.updateConsole("ERROR couldn't connect to arduino usb")
+
+
+	def stopArduinoUSB(self):
+		if(self.arduino_list):
+			self.ids.station_lat.text = ""
+			self.ids.station_long.text = ""
+			self.ids.station_alt.text = ""
+			self.ids.station_date.text = ""
+			self.ids.station_time.text = ""
+			self.arduino_list[0].isConnected = False
+			self.arduino_list[0].stop = False #must happen before pop or thread wont get garbage collected
+			self.arduino_list.pop(0)
+			self.arduino_check = False
+			self.ids.ard_status.text = "Not Connected"
+			self.ids.ard_status.color = (1,0,0,1) 
+			self.ids.station_disconnect.disabled = True
+			self.ids.station_connect.disabled = False
+			self.updateConsole("STOP arduino usb")
 
 
 	def payloadConnect(self):
@@ -139,11 +178,12 @@ class RootLayout(FloatLayout):
 
 
 	def stationConnect(self):
-		pass
+		if(self.ids.cbox_arduino_usb.active):
+			self.startArduinoUSB()
 
 
 	def stationDisconnect(self):
-		pass
+		self.stopArduinoUSB()
 
 
 	def stationSetManualValues(self):
@@ -210,7 +250,7 @@ class RootLayout(FloatLayout):
 
 
 	## Pooling Log Messages
-	@interval_threadB.setInterval(1)
+	@interval_threadA.setInterval(1)
 	def poolLogMessages(self):
 		if(self.db_check):
 			if (self.db_list[0].getLog() ==""):
@@ -218,10 +258,16 @@ class RootLayout(FloatLayout):
 			else:
 				self.updateConsole(self.db_list[0].getLog())
 				self.db_list[0].clearLog()
+		if(self.arduino_check):
+			if (self.arduino_list[0].getLog() ==""):
+				pass
+			else:
+				self.updateConsole(self.arduino_list[0].getLog())
+				self.arduino_list[0].clearLog()
 
 
 	## Pooling the status of connections / updates DB values
-	@interval_threadA.setInterval(7)
+	@interval_threadB.setInterval(7)
 	def checkDBStatus(self):
 		if(self.db_check):
 			if(self.db_list[0].isConnected):
@@ -232,6 +278,19 @@ class RootLayout(FloatLayout):
 				self.ids.payload_alt.text = self.db_list[0].altMeters
 				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
+
+
+	# @interval_threadC.setInterval(7)
+	# def checkArduinoStatus(self):
+	# 	if(self.arduino_check):
+	# 		if(self.arduino_list[0].isConnected):
+	# 			self.ids.ard_status.text = "Connected"
+	# 			self.ids.ard_status.color = (0,1,0,1)
+	# 			self.ids.station_lat.text = self.arduino_list[0].latDeg
+	# 			self.ids.station_long.text = self.arduino_list[0].lonDeg
+	# 			self.ids.station_alt.text = self.arduino_list[0].altMeters
+	# 			self.ids.station_date.text = str(self.arduino_list[0].gpsDate)
+	# 			self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
 
 
 	def confirmExit(self):
