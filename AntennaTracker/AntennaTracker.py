@@ -56,11 +56,10 @@ class RootLayout(FloatLayout):
 		super(RootLayout, self).__init__(**kwargs)
 		Clock.schedule_once(self.run)
 
-
 	def updateConsole(self, text):
 		self.ids.consolelog.text=self.ids.consolelog.text+"\n"+">\t\t"+text
 
-
+	#######################
 	### INITIAL SETTING ###
 	def run(self, args):
 		self.ids.db_status.text = "Not Connected"
@@ -72,6 +71,7 @@ class RootLayout(FloatLayout):
 		self.ids.payload_disconnect.disabled = True
 		self.updateConsole("Welcome, setting initialized!")
 		self.checkPayloadManualSwitch()
+	#######################
 
 
 	def startIrridiumDatabase(self):
@@ -169,7 +169,7 @@ class RootLayout(FloatLayout):
 
 
 	## Pooling the status of connections / updates DB values
-	@interval_threadA.setInterval(10)
+	@interval_threadA.setInterval(7)
 	def checkDBStatus(self):
 		if(self.db_check):
 			if(self.db_list[0].isConnected):

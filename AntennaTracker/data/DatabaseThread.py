@@ -82,9 +82,9 @@ class DatabaseThread(Thread):
 				result = sql.fetchone()
 				if not self.connected:
 					self.setLog("SUCCESS irridium database connected")
+					self.connected = True
 				else:
 					self.setLog("SUCCESS database query, updating data...")
-				self.connected = True
 				return result
 			except:
 				self.setLog("ERROR failed to get data from database")

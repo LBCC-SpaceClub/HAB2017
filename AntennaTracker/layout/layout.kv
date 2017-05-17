@@ -1,6 +1,8 @@
 <RootLayout>:
     ExitPopup: #this gives RootLayout class a reference to the ExitPopup class
     
+    #############################################
+    ## TOP NAVBAR ###############################
     BoxLayout:
         orientation: 'vertical'
         canvas.before:
@@ -21,8 +23,10 @@
                 	id: btnExit
                 	text: 'Exit'
                 	on_press: root.confirmExit()
+    #############################################
 
-        FloatLayout: #MAIN LAYOUT is FloatLayout#
+        #############################################
+        FloatLayout: ## MAIN LAYOUT is FloatLayout ##
             
             
             ##############################
@@ -107,7 +111,6 @@
             ### END PAYLOAD SOURCES ###
 
             ### PAYLOAD GPS DATA ###
-       
             GridLayout: #Auto / Manual Switch
                 cols: 1
                 rows: 2
@@ -241,160 +244,6 @@
             ## END PAYLOAD GPS DATA ######
             ##############################
 
-
-
-
-            ### STATION SOURCES ###
-            # FloatLayout:
-            #     Bubble:
-            #         size_hint: (None, None)
-            #         width: '250dp'
-            #         height: '70dp'
-            #         pos_hint: {'x':.42,'y':.89}
-            #         background_color:(1, 0, 0, .4)
-            #         Label:
-            #             text: 'Station GPS Data'
-            #             font_size:'25sp'
-            #             bold: True
-            # GridLayout:
-            #     cols: 1
-            #     rows: 2
-            #     spacing: '4dp'
-            #     size_hint: (.1, .1)
-            #     pos_hint: {'x':.56,'y':.76}
-            #     Button
-            #         id: connect_station
-            #         text: 'Connect'
-            #         #on_press: root.stationConnect()
-            #     Button:
-            #         id: reconnect_station
-            #         text: 'Reconnect'
-            #         #on_press: root.stationReconnect()
-            # GridLayout:
-            #     cols: 1
-            #     rows: 4
-            #     size_hint: (.2, .15)
-            #     spacing: '2dp'
-            #     pos_hint: {'x':.37,'y':.77}
-            #     GridLayout:
-            #         cols: 2
-            #         rows: 1
-            #         Label:
-            #             text: 'Arduino GPS'
-            #             font_size: '16sp'
-            #         CheckBox:
-            #             id: cbox_arduinoGPS
-            #             active: True
-            #             size_hint: (None, None)
-            #             group: 'gr2'
-            #     GridLayout:
-            #         cols: 2
-            #         rows: 1
-            #         Label:
-            #             text: 'B'
-            #             font_size: '16sp'
-            #         CheckBox:
-            #             id: cbox_b
-            #             size_hint: (None, None)
-            #             group: 'gr2'
-            #     GridLayout:
-            #         cols: 2
-            #         rows: 1
-            #         Label:
-            #             text: 'C'
-            #             font_size: '16sp'
-            #         CheckBox:
-            #             id: cbox_c
-            #             size_hint: (None, None)
-            #             group: 'gr2'
-            #     GridLayout:
-            #         cols: 2
-            #         rows: 1
-            #         Label:
-            #             text: 'D'
-            #             font_size: '16sp'
-            #         CheckBox:
-            #             id: cbox_d
-            #             size_hint: (None, None)
-            #             group: 'gr2'
-            # ### END STATION SOURCES ###
-
-
-            # ### STATION GPS DATA ###
-            # GridLayout:
-            #     cols: 1
-            #     rows: 5
-            #     spacing: '6dp'
-            #     row_force_default:True
-            #     row_default_height:'40dp'
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.38,'y':.6}
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'40dp'
-            #         Label:
-            #             text: 'Lat'
-            #             size_hint: (None, None)
-            #         TextInput:
-            #             id: station_lat
-            #             readonly: True
-            #             multiline: False
-            #             size_hint: (None, None)
-            #             width: '250dp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'40dp'
-            #         Label:
-            #             text: 'Long'
-            #             size_hint: (None, None)
-            #         TextInput:
-            #             id: station_long
-            #             readonly: True
-            #             multiline: False
-            #             size_hint: (None, None)
-            #             width: '250dp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'40dp'
-            #         Label:
-            #             text: 'Alt'
-            #             size_hint: (None, None)
-            #         TextInput:
-            #             id: station_alt
-            #             readonly: True
-            #             multiline: False
-            #             size_hint: (None, None)
-            #             width: '250dp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'40dp'
-            #         Label:
-            #             text: 'Date'
-            #             size_hint: (None, None)
-            #         TextInput:
-            #             id: station_date
-            #             readonly: True
-            #             multiline: False
-            #             size_hint: (None, None)
-            #             width: '250dp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'40dp'
-            #         Label:
-            #             text: 'Time'
-            #             size_hint: (None, None)
-            #         TextInput:
-            #             id: station_time
-            #             readonly: True
-            #             multiline: False
-            #             size_hint: (None, None)
-            #             width: '250dp'
-            # ### END STATION GPS DATA ###
 
 
 
