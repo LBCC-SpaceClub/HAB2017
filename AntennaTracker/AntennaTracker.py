@@ -71,9 +71,11 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.text = "Not Connected"
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
+		self.ids.motor_slider.bind(value=self.sliderValueChange)
 		self.updateConsole("WELCOME setting initialized")
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
+		self.motorManualSwitch()
 	#######################
 
 
@@ -193,6 +195,25 @@ class RootLayout(FloatLayout):
 			self.ids.station_connect.disabled = False
 			self.updateConsole("MODE auto station")
 
+	
+	def motorStopSwitch(self):
+		if(self.ids.motor_switchstop.active):
+			self.updateConsole("STOP motors")
+
+	
+	def motorManualSwitch(self):
+		if(self.ids.motor_switchmanual.active):
+			self.ids.motor_slider.disabled = False
+			self.ids.slider_text.disabled = False
+			self.updateConsole("MODE manual motor control")
+		else:
+			self.ids.motor_slider.disabled = True
+			self.ids.slider_text.disabled = True
+			self.updateConsole("MODE auto motor control")
+
+
+	def sliderValueChange(self,instance,value):
+		self.ids.slider_text.text = str(value)
 
 
 	## Pooling Log Messages

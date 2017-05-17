@@ -530,6 +530,69 @@
                         text: 'Motor Control'
                         font_size:'18sp'
                         bold: True
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.76,'y':.41}
+                row_force_default: True
+                row_default_height:'50dp'
+                GridLayout: #Stop Motor
+                    cols: 2
+                    rows: 1
+                    row_force_default:True
+                    row_default_height:'30dp'
+                    col_default_width: '90dp'
+                    Label:
+                        text: 'Stop Motor'
+                        font_size:'16sp'
+                        bold: True
+                    Switch:
+                        id: motor_switchstop
+                        active: False
+                        on_active: root.motorStopSwitch()
+                GridLayout: #Manual Motor
+                    cols: 1
+                    rows: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    col_default_width: '210dp'
+                    Label:
+                        text: 'Manual Motor Adjustment'
+                        font_size:'16sp'
+                        bold: True
+                    Switch:
+                        id: motor_switchmanual
+                        active: False
+                        on_active: root.motorManualSwitch()
+            GridLayout:
+                cols: 2
+                rows: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.74,'y':.26}
+                row_force_default: True
+                row_default_height:'32dp'
+                col_default_width: '220dp'
+                Slider:
+                    id: motor_slider
+                    min:0
+                    max:100
+                    step:1
+
+                GridLayout:
+                    cols: 1
+                    rows: 1
+                    row_force_default: True
+                    row_default_height:'35dp'
+                    col_force_default: True
+                    col_default_width: '60dp'
+                    TextInput:
+                        id: slider_text
+                        readonly: True
+                        multiline: False
+                        font_size: '17sp'
+                        text: str(motor_slider.value)
+
             ### END MOTOR CONTROL ####
             ##############################
 
