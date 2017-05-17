@@ -36,7 +36,7 @@ class ArduinoThread(Thread):
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
         if self.usb:
-            self.setLog("Closing port.")
+            self.setLog("STOP closing port")
             self.usb.close()
 
 
@@ -58,9 +58,11 @@ class ArduinoThread(Thread):
                 self.connected = True
                 return p[0]
             else:
-                self.setLog("ERROR could not find an attached arduino")
-                return
+                self.setLog("ERROR could not find an attached arduino") 
+        if not ports:
+            self.setLog("ERROR could not find any ports")
 
+    
 
     def calibrateIMU(self):
         ''' Poorly named as it doesn't force the arduino to DO anything '''

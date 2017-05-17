@@ -101,7 +101,6 @@ class RootLayout(FloatLayout):
 		self.arduino_list.insert(0,ArduinoThread())
 		self.arduino_check = True
 		self.arduino_list[0].connectToArduino()
-		self.poolLogMessages()
 		if(self.arduino_list[0].connected == True):
 			self.arduino_list[0].start()
 			self.ids.station_connect.disabled = True
@@ -109,6 +108,7 @@ class RootLayout(FloatLayout):
 			self.checkArduinoStatus()
 			self.updateConsole("START connect to arduino usb")
 		else:
+			self.poolLogMessages()
 			self.arduino_list.pop(0)
 			self.arduino_check = False
 			self.updateConsole("ERROR couldn't connect to arduino usb")
@@ -242,6 +242,8 @@ class RootLayout(FloatLayout):
 
 
 	def sliderXValue(self,instance,value):
+		# temp = str(value)
+		# temp = temp[:3]
 		self.ids.motor_sliderX_text.text = str(value)
 
 
