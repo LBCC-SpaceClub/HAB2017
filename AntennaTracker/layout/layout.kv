@@ -88,6 +88,7 @@
                     CheckBox:
                         id: cbox_arduino
                         group: 'gr'
+                        disabled: True
                 GridLayout:
                     cols: 2
                     rows: 1
@@ -98,6 +99,7 @@
                     CheckBox:
                         id: cbox_local
                         group: 'gr'
+                        disabled: True
                 GridLayout:
                     cols: 2
                     rows: 1
@@ -108,6 +110,7 @@
                     CheckBox:
                         id: cbox_aprs
                         group: 'gr'
+                        disabled: True
             ### END PAYLOAD SOURCES ###
 
             ### PAYLOAD GPS DATA ###
@@ -115,7 +118,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.49,'y':.6}
+                pos_hint: {'x':.49,'y':.58}
                 row_force_default:True
                 row_default_height:'30dp'
                 Label:
@@ -144,14 +147,14 @@
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.49,'y':.5}
+                pos_hint: {'x':.49,'y':.48}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '4dp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
-                    row_default_height:'40dp'
+                    row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
                         id: payload_lat_lbl
@@ -160,17 +163,17 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
+                        row_default_height:'30dp'
                         col_default_width: '190dp'
                         TextInput:
                             id: payload_lat
                             readonly: True
                             multiline: False
-                            font_size: '20sp'
+                            font_size: '18sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
-                    row_default_height:'40dp'
+                    row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
                         id: payload_long_lbl
@@ -179,17 +182,17 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
+                        row_default_height:'30dp'
                         col_default_width: '190dp'
                         TextInput:
                             id: payload_long
                             readonly: True
                             multiline: False
-                            font_size: '20sp'
+                            font_size: '18sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
-                    row_default_height:'40dp'
+                    row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
                         id: payload_alt_lbl
@@ -198,17 +201,17 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
+                        row_default_height:'30dp'
                         col_default_width: '190dp'
                         TextInput:
                             id: payload_alt
                             readonly: True
                             multiline: False
-                            font_size: '20sp'
+                            font_size: '18sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
-                    row_default_height:'40dp'
+                    row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
                         text: 'Date'
@@ -216,17 +219,17 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
+                        row_default_height:'30dp'
                         col_default_width: '190dp'
                         TextInput:
                             id: payload_date
                             readonly: True
                             multiline: False
-                            font_size: '20sp'
+                            font_size: '18sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
-                    row_default_height:'40dp'
+                    row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
                         text: 'Time'
@@ -234,13 +237,13 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
+                        row_default_height:'30dp'
                         col_default_width: '190dp'
                         TextInput:
                             id: payload_time
                             readonly: True
                             multiline: False
-                            font_size: '20sp'
+                            font_size: '18sp'
             ## END PAYLOAD GPS DATA ######
             ##############################
 
@@ -298,6 +301,21 @@
 
 
 
+            ##############################
+            ## MOTOR CONTROL #########
+            FloatLayout:
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '65dp'
+                    pos_hint: {'x':.76,'y':.55}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Motor Control'
+                        font_size:'18sp'
+                        bold: True
+            ### END MOTOR CONTROL ####
+            ##############################
 
 
             # ### AUTOMOVE ###

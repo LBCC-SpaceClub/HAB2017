@@ -92,6 +92,7 @@ class RootLayout(FloatLayout):
 			self.ids.payload_alt.text = ""
 			self.ids.payload_date.text = ""
 			self.ids.payload_time.text = ""
+			self.db_list[0].isConnected = False
 			self.db_list[0].stop = False
 			self.db_list.pop(0)
 			self.db_check = False
