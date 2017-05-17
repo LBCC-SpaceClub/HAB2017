@@ -129,11 +129,15 @@ class RootLayout(FloatLayout):
 			self.ids.payload_long_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_connect.disabled = True
+			self.ids.payload_reconnect.disabled = True
 		else:
 			self.ids.payload_setvalues.disabled = True
 			self.ids.payload_lat.readonly = True
 			self.ids.payload_long.readonly = True
 			self.ids.payload_alt.readonly = True
+			self.ids.payload_lat_lbl.color = (1, 1, 1, 1)
+			self.ids.payload_long_lbl.color = (1, 1, 1, 1)
+			self.ids.payload_alt_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_connect.disabled = False
 
 
