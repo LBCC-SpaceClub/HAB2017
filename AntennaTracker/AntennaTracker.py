@@ -255,6 +255,12 @@ class RootLayout(FloatLayout):
 			return value
 
 
+	def truncate(self,val):
+		f = '%.12f' % val
+		a,b,c = f.partition('.')
+		return '.'.join([a, (c+'0'*2)[:2]])
+
+
 	## Pooling Log Messages
 	@interval_threadA.setInterval(1)
 	def poolLogMessages(self):

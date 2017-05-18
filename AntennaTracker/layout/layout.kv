@@ -656,7 +656,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.70,'y':.30}
+                pos_hint: {'x':.695,'y':.30}
                 row_force_default: True
                 row_default_height:'30dp'
                 col_default_width: '240dp'
@@ -665,7 +665,7 @@
                     row_force_default: True
                     row_default_height:'50dp'
                     col_force_default: True
-                    col_default_width: '350dp'
+                    col_default_width: '385dp'
                     Label:
                         text:'azimuth'
                 GridLayout:
@@ -673,19 +673,19 @@
                     rows: 1
                     row_force_default: True
                     row_default_height:'22dp'
-                    col_default_width: '70dp'
+                    col_default_width: '75dp'
                     GridLayout:
                         cols: 1
                         row_force_default: True
                         row_default_height:'30dp'
                         col_force_default: True
-                        col_default_width: '60dp'
+                        col_default_width: '70dp'
                         TextInput:
                             id: motor_sliderX_text
                             readonly: False
                             multiline: False
                             font_size: '17sp'
-                            text: str(root.x_value)
+                            text: str(root.truncate(root.x_value))
                             on_text: root.x_value = root.sliderValidate(float(self.text))
                     GridLayout:
                         cols: 2
@@ -695,9 +695,9 @@
                         col_default_width: '250dp'
                         Slider:
                             id: motor_sliderX
-                            min:0.0
-                            max:360.0
-                            step:.5
+                            min:0.00
+                            max:360.00
+                            step:.01
                             value: root.x_value
                             on_value: root.x_value = self.value
                         GridLayout:
@@ -708,12 +708,12 @@
                             col_default_width: '35dp'
                             Label:
                                 font_size: '17sp'
-                                text: str(motor_sliderX.value)
+                                text: str(root.truncate(motor_sliderX.value))
             GridLayout:
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.70,'y':.23}
+                pos_hint: {'x':.695,'y':.23}
                 row_force_default: True
                 row_default_height:'30dp'
                 col_default_width: '240dp'
@@ -722,7 +722,7 @@
                     row_force_default: True
                     row_default_height:'50dp'
                     col_force_default: True
-                    col_default_width: '358dp'
+                    col_default_width: '393dp'
                     Label:
                         text:'elevation'
                 GridLayout:
@@ -730,19 +730,19 @@
                     rows: 1
                     row_force_default: True
                     row_default_height:'22dp'
-                    col_default_width: '70dp'
+                    col_default_width: '75dp'
                     GridLayout:
                         cols: 1
                         row_force_default: True
                         row_default_height:'30dp'
                         col_force_default: True
-                        col_default_width: '60dp'
+                        col_default_width: '70dp'
                         TextInput:
                             id: motor_sliderY_text
                             readonly: False
                             multiline: False
                             font_size: '17sp'
-                            text: str(root.y_value)
+                            text: str(root.truncate(root.y_value))
                             on_text: root.y_value = root.sliderValidate(float(self.text))
                     GridLayout:
                         cols: 2
@@ -754,7 +754,7 @@
                             id: motor_sliderY
                             min:0.0
                             max:360.0
-                            step:.5
+                            step:.01
                             value: root.y_value
                             on_value: root.y_value = self.value
                         GridLayout:
@@ -765,7 +765,7 @@
                             col_default_width: '35dp'
                             Label:
                                 font_size: '17sp'
-                                text: str(motor_sliderY.value)
+                                text: str(root.truncate(motor_sliderY.value))
             ### END MOTOR CONTROL ####
             ##############################
 
