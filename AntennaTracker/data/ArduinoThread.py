@@ -136,7 +136,7 @@ class ArduinoThread(Thread):
 
 
     def setLog(self, txt):
-        self.log= self.log+" "+txt
+        self.log= self.log+""+txt
 
 
     def getLog(self):

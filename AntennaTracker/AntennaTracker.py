@@ -36,6 +36,8 @@ class RootLayout(FloatLayout):
 	interval_threadB = IntervalThread()
 	interval_threadC = IntervalThread()
 	interval_threadD = IntervalThread()
+	x_value = NumericProperty(0.0)
+	y_value = NumericProperty(0.0)
 	db_check = False
 	arduino_check = False
 	db_list = []
@@ -62,8 +64,8 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
 		self.ids.station_disconnect.disabled = True
-		self.ids.motor_sliderX.bind(value=self.sliderXValue)
-		self.ids.motor_sliderY.bind(value=self.sliderYValue)
+		# self.ids.motor_sliderX.bind(value=self.bindUpdateSliderX)
+		# self.ids.motor_sliderY.bind(value=self.bindUpdateSliderY)
 		self.updateConsole("WELCOME setting initialized")
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
@@ -73,19 +75,17 @@ class RootLayout(FloatLayout):
 
 	def startIridiumDatabase(self):
 		self.updateConsole("START iridium database connection")
-		self.db_list.insert(0,DatabaseThread(self.configs))
+		self.ids.payload_connect.disabled = True
 		self.db_check = True
+		self.db_list.insert(0,DatabaseThread(self.configs))
 		self.poolLogMessages()
+		self.poolDatabaseStatus()
 		if(self.db_list):
 			try:
 				self.db_list[0].start()
 			except:
-				self.db_list.pop(0)
 				return
-			if(self.db_list[0].connected == True):
-				self.ids.payload_connect.disabled = True
-				self.ids.payload_disconnect.disabled = False
-				self.checkDBStatus()
+				
 
 
 	def stopIridiumDatabase(self):
@@ -250,13 +250,20 @@ class RootLayout(FloatLayout):
 			self.updateConsole("MODE auto motor control")
 
 
+	# def bindUpdateSliderX(self,instance,value):
+	# 	self.ids.motor_sliderX_text.text = str(value)
 
-	def sliderXValue(self,instance,value):
-		self.ids.motor_sliderX_text.text = str(value)
+
+	# def bindUpdateSliderY(self,instance,value):
+	# 	self.ids.motor_sliderY_text.text = str(value)
 
 
-	def sliderYValue(self,instance,value):
-		self.ids.motor_sliderY_text.text = str(value)
+	# def bindSetSliderX(self, instance, value):
+	# 	self.ids.motor_sliderX.value = int(value)
+
+
+	# def bindSetSliderY(self, instance, value):
+	# 	self.ids.motor_sliderY.value = int(value)
 
 
 	## Pooling Log Messages
@@ -277,10 +284,10 @@ class RootLayout(FloatLayout):
 
 
 	## Pooling the status of connections / updates DB values
-	@interval_threadB.setInterval(7)
-	def checkDBStatus(self):
-		if(self.db_check):
-			if(self.db_list[0].isConnected):
+	@interval_threadB.setInterval(12)
+	def poolDatabaseStatus(self):
+		if(self.db_list):
+			if(self.db_list[0].connected):
 				self.ids.db_status.text = "Connected"
 				self.ids.db_status.color = (0,1,0,1)
 				self.ids.payload_lat.text = self.db_list[0].latDeg
@@ -288,6 +295,10 @@ class RootLayout(FloatLayout):
 				self.ids.payload_alt.text = self.db_list[0].altMeters
 				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
+			else:
+				#self.db_list.pop(0)
+				self.ids.payload_connect.disabled = False
+				self.ids.payload_disconnect.disabled = True
 
 
 	@interval_threadC.setInterval(1)

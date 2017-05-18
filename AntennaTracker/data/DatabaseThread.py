@@ -23,7 +23,6 @@ class DatabaseThread(Thread):
 		self.connected = False
 		
 
-
 	def run(self):
 		if(self.connectToDB()):
 			self.setLog("SUCCESS iridium database connected, parsing data")
@@ -36,12 +35,10 @@ class DatabaseThread(Thread):
 			self.connected = False
 
 
-
-
 	def connectToDB(self):
 		try:
-			self.cfg = configparser.ConfigParser()
-			self.cfg.read(self.cfg_file)
+			cfg = configparser.ConfigParser()
+			cfg.read(self.cfg_file)
 		except:
 			self.setLog("ERROR could not read database config file")
 			return False
@@ -58,7 +55,6 @@ class DatabaseThread(Thread):
 			return True
 		except:
 			return False
-
 
 
 	def update(self):
