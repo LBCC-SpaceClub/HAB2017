@@ -5,7 +5,8 @@ from kivy.app import App
 from time import time
 from os.path import dirname, join
 from kivy.lang import Builder
-from kivy.properties import NumericProperty, StringProperty, BooleanProperty, ListProperty,ReferenceListProperty,ObjectProperty
+from kivy.properties import NumericProperty,StringProperty,BooleanProperty
+from kivy.properties import ListProperty,ReferenceListProperty,ObjectProperty
 from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.screenmanager import Screen
@@ -34,6 +35,7 @@ class RootLayout(FloatLayout):
 	interval_threadA = IntervalThread()
 	interval_threadB = IntervalThread()
 	interval_threadC = IntervalThread()
+	interval_threadD = IntervalThread()
 	db_check = False
 	arduino_check = False
 	db_list = []
@@ -70,7 +72,7 @@ class RootLayout(FloatLayout):
 
 
 	def startIridiumDatabase(self):
-		self.updateConsole("START Iridium database connection")
+		self.updateConsole("START iridium database connection")
 		self.db_list.insert(0,DatabaseThread(self.configs))
 		self.db_check = True
 		self.poolLogMessages()
@@ -88,12 +90,13 @@ class RootLayout(FloatLayout):
 
 	def stopIridiumDatabase(self):
 		if(self.db_list):
+			self.updateConsole("STOP iridium database connection")
 			self.ids.payload_lat.text = ""
 			self.ids.payload_long.text = ""
 			self.ids.payload_alt.text = ""
 			self.ids.payload_date.text = ""
 			self.ids.payload_time.text = ""
-			self.db_list[0].isConnected = False
+			self.db_list[0].connected = False
 			self.db_list[0].stop = False #must happen before pop or thread wont get garbage collected
 			self.db_list.pop(0)
 			self.db_check = False
@@ -101,24 +104,23 @@ class RootLayout(FloatLayout):
 			self.ids.db_status.color = (1,0,0,1)
 			self.ids.payload_disconnect.disabled = True
 			self.ids.payload_connect.disabled = False
-			self.updateConsole("STOP Iridium database connection")
 
 
 	def startArduinoUSB(self):
+		self.updateConsole("START arduino usb connection")
 		self.arduino_list.insert(0,ArduinoThread())
 		self.arduino_check = True
-		self.arduino_list[0].connectToArduino()
-		if(self.arduino_list[0].connected == True):
-			self.arduino_list[0].start()
-			self.ids.station_connect.disabled = True
-			self.ids.station_disconnect.disabled = False
-			self.checkArduinoStatus()
-			self.updateConsole("START connect to arduino usb")
-		else:
-			self.poolLogMessages()
-			self.arduino_list.pop(0)
-			self.arduino_check = False
-			self.updateConsole("ERROR couldn't connect to arduino usb")
+		self.poolLogMessages()
+		if(self.arduino_list):
+			try:
+				self.arduino_list[0].start()
+			except:
+				self.arduino_list.pop(0)
+				return
+			if(self.arduino_list[0].connected == True):
+				self.ids.station_connect.disabled = True
+				self.ids.station_disconnect.disabled = False
+				self.checkArduinoStatus()
 
 
 	def stopArduinoUSB(self):
@@ -267,7 +269,7 @@ class RootLayout(FloatLayout):
 				self.updateConsole(self.db_list[0].getLog())
 				self.db_list[0].clearLog()
 		if(self.arduino_check):
-			if (self.arduino_list[0].getLog() ==""):
+			if(self.arduino_list[0].getLog() ==""):
 				pass
 			else:
 				self.updateConsole(self.arduino_list[0].getLog())

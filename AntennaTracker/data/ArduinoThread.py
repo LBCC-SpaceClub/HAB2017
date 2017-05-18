@@ -29,8 +29,15 @@ class ArduinoThread(Thread):
 
 
     def run(self):
-        while(self.stop):
-            self.update()
+        if(self.connectToArduino()):
+            self.setLog("SUCCESS arduino connected, parsing data")
+            self.connected = True
+            
+            while(self.stop):
+                self.update()
+        else:
+            self.setLog("ERROR failed to connect to arudino usb")
+            self.connected = False
 
 
     def __del__(self):
@@ -41,12 +48,19 @@ class ArduinoThread(Thread):
 
 
     def connectToArduino(self):
-        self.arduinoCOM = self.findComPort()
-        self.usb = serial.Serial(
-            self.arduinoCOM,
-            baudrate = self.arduinoBaud,
-            timeout = self.arduinoTimeout
-        )
+        try:
+            self.arduinoCOM = self.findComPort()
+            self.usb = serial.Serial(
+                self.arduinoCOM,
+                baudrate = self.arduinoBaud,
+                timeout = self.arduinoTimeout
+            )
+            if not self.usb:
+                return True
+            else:
+                return False
+        except:
+            return False
 
 
     def findComPort(self):
@@ -59,9 +73,6 @@ class ArduinoThread(Thread):
                 return p[0]
             else:
                 self.setLog("ERROR could not find an attached arduino") 
-        if not ports:
-            self.setLog("ERROR could not find any ports")
-
     
 
     def calibrateIMU(self):

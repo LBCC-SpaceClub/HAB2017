@@ -44,6 +44,7 @@ class DatabaseThread(Thread):
 			self.cfg.read(self.cfg_file)
 		except:
 			self.setLog("ERROR could not read database config file")
+			return False
 		
 		try:
 			self.db = pymysql.connect(
