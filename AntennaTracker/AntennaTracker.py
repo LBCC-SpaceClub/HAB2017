@@ -64,8 +64,6 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
 		self.ids.station_disconnect.disabled = True
-		# self.ids.motor_sliderX.bind(value=self.bindUpdateSliderX)
-		# self.ids.motor_sliderY.bind(value=self.bindUpdateSliderY)
 		self.updateConsole("WELCOME setting initialized")
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
@@ -250,20 +248,11 @@ class RootLayout(FloatLayout):
 			self.updateConsole("MODE auto motor control")
 
 
-	# def bindUpdateSliderX(self,instance,value):
-	# 	self.ids.motor_sliderX_text.text = str(value)
-
-
-	# def bindUpdateSliderY(self,instance,value):
-	# 	self.ids.motor_sliderY_text.text = str(value)
-
-
-	# def bindSetSliderX(self, instance, value):
-	# 	self.ids.motor_sliderX.value = int(value)
-
-
-	# def bindSetSliderY(self, instance, value):
-	# 	self.ids.motor_sliderY.value = int(value)
+	def sliderValidate(self, value):
+		if(value > 360.0):
+			return 360.0
+		else:
+			return value
 
 
 	## Pooling Log Messages

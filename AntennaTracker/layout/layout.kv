@@ -761,7 +761,7 @@
                             multiline: False
                             font_size: '17sp'
                             text: str(root.x_value)
-                            on_text: root.x_value = float(self.text)
+                            on_text: root.x_value = root.sliderValidate(float(self.text))
                     GridLayout:
                         cols: 2
                         row_force_default: True
@@ -818,7 +818,7 @@
                             multiline: False
                             font_size: '17sp'
                             text: str(root.y_value)
-                            on_text: root.y_value = float(self.text)
+                            on_text: root.y_value = root.sliderValidate(float(self.text))
                     GridLayout:
                         cols: 2
                         row_force_default: True
