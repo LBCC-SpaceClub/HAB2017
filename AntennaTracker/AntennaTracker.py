@@ -54,10 +54,6 @@ class RootLayout(FloatLayout):
 	def updateConsole(self, text):
 		self.rst_doc=(self.rst_doc+"\n"+"> "+text+"\n")
 
-		# def updateConsole(self, text):
-		# self.ids.consolelog.text=(".._top:"+self.ids.consolelog.text+"\n"+">\t\t"+text+"top_::")
-
-
 
 	#######################
 	### INITIAL SETTING ###
@@ -74,16 +70,6 @@ class RootLayout(FloatLayout):
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
 		self.motorManualSwitch()
-		# self.ids.consolelog.text = ('.. _top:\n'
-  #               '\n'
-  #               'Hello world\n'
-  #               '===========\n'
-  #               '\n'
-  #               'This is an **emphased text**, *italic text*, ``interpreted text``.\n'
-  #               'And this is a reference to top_::\n'
-  #               '\n'
-  #               '    $ print("Hello world")\n')
-	#######################
 
 
 	def startIridiumDatabase(self):
@@ -99,7 +85,6 @@ class RootLayout(FloatLayout):
 			except:
 				return
 				
-
 
 	def stopIridiumDatabase(self):
 		if(self.db_list):
