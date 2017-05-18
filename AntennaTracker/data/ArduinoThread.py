@@ -1,46 +1,79 @@
 #!/usr/bin/env python
 import serial
 import serial.tools.list_ports
+from threading import Thread
+import time
 
-class Arduino:
+class ArduinoThread(Thread):
     ''' Methods to get information from the arduino (gps and IMU) '''
     def __init__(self):
-        self.arduinoCOM = self.findComPort()
-        self.usb = serial.Serial(
-            self.arduinoCOM,
-            baudrate = self.arduinoBaud,
-            timeout = self.arduinoTimeout
-        )
+        Thread.__init__(self)
+        self.stop = True
+        self.log = ""
+        self.usb = None
+        self.connected = False
         self.arduinoCOM = None
         self.arduinoBaud = 115200
         self.arduinoTimeout = 5
         # GPS fields
-        self.gpsTime = None
-        self.gpsDate = None
-        self.latDeg = None
-        self.lonDeg = None
-        self.altMeters = None
+        self.gpsTime = ""
+        self.gpsDate = ""
+        self.latDeg = ""
+        self.lonDeg = ""
+        self.altMeters = ""
         self.ser = None
         # IMU fields
         self.imuX = None
         self.imuY = None
         self.imuZ = None
 
+
+    def run(self):
+        if(self.connectToArduino()):
+            self.setLog("SUCCESS arduino connected, parsing data")
+            self.connected = True
+            
+            while(self.stop):
+                self.update()
+        else:
+            self.setLog("ERROR failed to connect to arudino usb")
+            self.connected = False
+
+
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
         if self.usb:
-            print "Closing port."
+            self.setLog("STOP closing port")
             self.usb.close()
+
+
+    def connectToArduino(self):
+        try:
+            self.arduinoCOM = self.findComPort()
+            self.usb = serial.Serial(
+                self.arduinoCOM,
+                baudrate = self.arduinoBaud,
+                timeout = self.arduinoTimeout
+            )
+            if not self.usb:
+                return True
+            else:
+                return False
+        except:
+            return False
+
 
     def findComPort(self):
         # find the actual com port of the arduino (windows only?)
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Arduino' in p[1]:
-                print "Found arduino on ", self.p[0]
+                self.setLog("Found arduino on ", self.p[0])
+                self.connected = True
                 return p[0]
-        self.usb = None
-        raise IOError("ERROR: Could not find an attached arduino.")
+            else:
+                self.setLog("ERROR could not find an attached arduino") 
+    
 
     def calibrateIMU(self):
         ''' Poorly named as it doesn't force the arduino to DO anything '''
@@ -52,13 +85,14 @@ class Arduino:
             time.sleep(0.05)
             while(temp_arduino[0] != '~'):
                 temp_arduino = usb.readline()
-                print temp_arduino
+                self.setLog(temp_arduino)
                 temp_arduino = temp_arduino.split(',')
             try:
                 calibration = int(temp_arduino[8])+int(temp_arduino[7])+int(temp_arduino[6])
             finally:
-                print "Calibration: ",calibration, " // Goal of ", int(calibrationGoal)
+                self.setLog("Calibration: "+calibration+" // Goal of ",+str(int(calibrationGoal)))
         usb.flushInput()
+
 
     def update(self):
         ''' Read in new data from the arduino '''
@@ -70,9 +104,9 @@ class Arduino:
                 elif line[:5] == '[GPS]':
                     self.updateGPS(line[5:])
                 else:
-                    print "Error reading line: ", line
+                    self.setLog("Error reading line: "+line)
             except ValueError:
-                print "Error parsing ", line
+                self.setLog("Error parsing "+line)
         '''
         print "Most up-to-date Lat: {}, Long: {}, Alt (m): {}".format(
             self.latDeg,
@@ -81,6 +115,7 @@ class Arduino:
         )
         print "Heading: ", self.imuX
         '''
+
 
     def updateIMU(self, line):
         line = line.split(',')
@@ -92,11 +127,28 @@ class Arduino:
         self.imuGyro = int(line[5])
         self.imuMag = int(line[6])
 
+
     def updateGPS(self, line):
         line = line.split(',')
         self.latDeg = float(line[0])
         self.lonDeg = float(line[1])
         self.altMeters = float(line[2])
 
+
+    def setLog(self, txt):
+        self.log= self.log+" "+txt
+
+
+    def getLog(self):
+        if(self.log != ""):
+            return self.log
+        else:
+            return ""
+
+
+    def clearLog(self):
+        self.log = ""
+
+
 if __name__ == "__main__":
-    print "Arduino is not a standalone Python program."
+    print ("Arduino is not a standalone Python program.")

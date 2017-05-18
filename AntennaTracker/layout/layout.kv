@@ -1,0 +1,764 @@
+<RootLayout>:
+    ExitPopup: #this gives RootLayout class a reference to the ExitPopup class
+    
+    #############################################
+    ## TOP NAVBAR ###############################
+    BoxLayout:
+        orientation: 'vertical'
+        canvas.before:
+            Rectangle:
+                size: self.size
+                source: 'img/bg.jpg'
+        ActionBar:
+            ActionView:
+                id: av
+                use_separator: True
+                ActionPrevious:
+                	title:'LBCC Near Space Club -- AntennaTracker v1.0'
+                	app_icon:"img/ant.png"
+                	with_previous: False
+                ActionButton:
+                    text: 'About'
+                ActionButton:
+                	id: btnExit
+                	text: 'Exit'
+                	on_press: root.confirmExit()
+    #############################################
+
+        #############################################
+        FloatLayout: ## MAIN LAYOUT is FloatLayout ##
+
+            ##############################
+            ## STATION SOURCES ###########
+            FloatLayout: #Title
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '65dp'
+                    pos_hint: {'x':.11,'y':.89}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Station GPS Data'
+                        font_size:'18sp'
+                        bold: True
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.24,'y':.74}
+                row_force_default:True
+                row_default_height:'40dp'
+                spacing: '4dp'
+                Button:
+                    id: station_connect
+                    text: 'Connect'
+                    on_press: root.stationConnect()
+                Button:
+                    id: station_disconnect
+                    text: 'Disconnect'
+                    on_press: root.stationDisconnect()
+            GridLayout:
+                cols: 1
+                rows: 4
+                size_hint:(None, None)
+                pos_hint: {'x':.13,'y':.76}
+                row_force_default:True
+                row_default_height:'32dp'
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: 'Arduino USB'
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_arduino_usb
+                        active: True
+                        group: 'gr2'
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: 'Arudino Ethernet'
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_arduino_ethernet
+                        group: 'gr2'
+                        disabled: True
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: ''
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_a
+                        group: 'gr2'
+                        disabled: True
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: ''
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_b
+                        group: 'gr2'
+                        disabled: True
+            ### END STATION SOURCES ###
+
+            ### STATION GPS DATA ###
+            GridLayout: #Auto / Manual Switch
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.12,'y':.59}
+                row_force_default:True
+                row_default_height:'30dp'
+                Label:
+                    text: 'Manually Enter Values'
+                    font_size:'16sp'
+                    color: (0, 1, 1, 1)
+                Switch:
+                    id: station_switchmanual
+                    active: False
+                    on_active: root.stationManualSwitch()
+            
+            GridLayout:
+                cols: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.23,'y':.58}
+                row_force_default:True
+                row_default_height:'40dp'
+                col_default_width: '120dp'
+                Button:
+                    id: station_setvalues
+                    text: 'Set Values'
+                    disabled: True
+                    on_press: root.stationSetManualValues()
+
+            GridLayout: #Text fields
+                cols: 1
+                rows: 5
+                size_hint: (None, None)
+                pos_hint: {'x':.10,'y':.48}
+                row_force_default:True
+                row_default_height:'40dp'
+                spacing: '2dp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: station_lat_lbl
+                        text: 'Latitude'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: station_lat
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: station_long_lbl
+                        text: 'Longitude'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: station_long
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: station_alt_lbl
+                        text: 'Altitude'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: station_alt
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        text: 'Date'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: station_date
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        text: 'Time'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: station_time
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+            ## END STATION GPS DATA ######
+            ##############################
+            
+            
+
+
+            ##############################
+            ## PAYLOAD SOURCES ###########
+            FloatLayout: #Title
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '65dp'
+                    pos_hint: {'x':.43,'y':.89}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Payload GPS Data'
+                        font_size:'18sp'
+                        bold: True
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.57,'y':.74}
+                row_force_default:True
+                row_default_height:'40dp'
+                spacing: '4dp'
+                Button:
+                    id: payload_connect
+                    text: 'Connect'
+                    on_press: root.payloadConnect()
+                Button:
+                    id: payload_disconnect
+                    text: 'Disconnect'
+                    on_press: root.payloadDisconnect()
+            
+            GridLayout:
+                cols: 1
+                rows: 4
+                size_hint:(None, None)
+                pos_hint: {'x':.47,'y':.76}
+                row_force_default:True
+                row_default_height:'32dp'
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: 'Iridium Database'
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_database
+                        active: True
+                        group: 'gr'
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: 'Network(Ubiquity)'
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_arduino
+                        group: 'gr'
+                        disabled: True
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: 'Local'
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_local
+                        group: 'gr'
+                        disabled: True
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    spacing:'80dp'
+                    Label:
+                        text: 'ARRSfi'
+                        font_size: '16sp'
+                    CheckBox:
+                        id: cbox_aprs
+                        group: 'gr'
+                        disabled: True
+            ### END PAYLOAD SOURCES ###
+
+            ### PAYLOAD GPS DATA ###
+            GridLayout: #Auto / Manual Switch
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.46,'y':.59}
+                row_force_default:True
+                row_default_height:'30dp'
+                Label:
+                    text: 'Manually Enter Values'
+                    font_size:'16sp'
+                    color: (0, 1, 1, 1)
+                Switch:
+                    id: payload_switchmanual
+                    active: False
+                    on_active: root.payloadManualSwitch()
+            
+            GridLayout:
+                cols: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.57,'y':.58}
+                row_force_default:True
+                row_default_height:'40dp'
+                col_default_width: '120dp'
+                Button:
+                    id: payload_setvalues
+                    text: 'Set Values'
+                    disabled: True
+                    on_press: root.payloadSetManualValues()
+
+            GridLayout: #Text fields
+                cols: 1
+                rows: 5
+                size_hint: (None, None)
+                pos_hint: {'x':.43,'y':.48}
+                row_force_default:True
+                row_default_height:'40dp'
+                spacing: '2dp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: payload_lat_lbl
+                        text: 'Latitude'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: payload_lat
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: payload_long_lbl
+                        text: 'Longitude'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: payload_long
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: payload_alt_lbl
+                        text: 'Altitude'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: payload_alt
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        text: 'Date'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: payload_date
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        text: 'Time'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: payload_time
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+            ## END PAYLOAD GPS DATA ######
+            ##############################
+
+
+
+
+            ##############################
+            ## CALCULATIONS ##############
+            FloatLayout:
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '70dp'
+                    pos_hint: {'x':.11,'y':.22}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Calculations'
+                        font_size:'20sp'
+                        bold: True
+            GridLayout: #Text fields
+                cols: 1
+                rows: 5
+                size_hint: (None, None)
+                pos_hint: {'x':.05,'y':.05}
+                row_force_default:True
+                row_default_height:'40dp'
+                spacing: '2dp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: calculationA_lbl
+                        text: 'Value A'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: calculationA
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: calculationB_lbl
+                        text: 'Value B'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '220dp'
+                        TextInput:
+                            id: calculationB
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+            ## END CALCULATIONS ##########
+            ##############################
+
+
+
+            
+            ##############################
+            ## CONNECTION STATUS #########
+            FloatLayout:
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '65dp'
+                    pos_hint: {'x':.73,'y':.89}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Connection Status'
+                        font_size:'18sp'
+                        bold: True
+                GridLayout:
+                    cols: 1
+                    rows: 3
+                    spacing: '10dp'
+                    size_hint: (None, None)
+                    pos_hint: {'x':.79,'y':.76}
+                    row_force_default:True
+                    row_default_height:'40dp'
+                    GridLayout:
+                        cols: 1
+                        rows: 2
+                        Label:
+                            text: 'Iridium Database:'
+                            font_size:'18sp'
+                        Label:
+                            id: db_status
+                    GridLayout:
+                        cols: 1
+                        rows: 2
+                        Label:
+                            text: 'Arduino USB:'
+                            font_size:'18sp'
+                        Label:
+                            id: ard_status 
+                    GridLayout:
+                        cols: 1
+                        rows: 2
+                        Label:
+                            text: 'Other:'
+                            font_size:'18sp'
+                        Label:
+                            id: eth_status      
+            ### END CONNECTION STATUS ####
+            ##############################
+
+
+
+            ##############################
+            ## MOTOR CONTROL #########
+            FloatLayout:
+                Bubble:
+                    size_hint: (None, None)
+                    width: '250dp'
+                    height: '65dp'
+                    pos_hint: {'x':.73,'y':.55}
+                    background_color:(1, 0, 0, .4)
+                    Label:
+                        text: 'Motor Control'
+                        font_size:'18sp'
+                        bold: True
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.76,'y':.42}
+                row_force_default: True
+                row_default_height:'50dp'
+                GridLayout: #Stop Motor
+                    cols: 2
+                    rows: 1
+                    row_force_default:True
+                    row_default_height:'30dp'
+                    col_default_width: '90dp'
+                    Label:
+                        text: 'Stop Motor'
+                        font_size:'16sp'
+                        bold: True
+                    Switch:
+                        id: motor_switchstop
+                        active: False
+                        on_active: root.motorStopSwitch()
+                GridLayout: #Manual Motor
+                    cols: 1
+                    rows: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    col_default_width: '210dp'
+                    Label:
+                        text: 'Manual Motor Adjustment'
+                        font_size:'16sp'
+                        bold: True
+                    Switch:
+                        id: motor_switchmanual
+                        active: False
+                        on_active: root.motorManualSwitch()
+            GridLayout:
+                cols: 2
+                rows: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.74,'y':.28}
+                row_force_default: True
+                row_default_height:'32dp'
+                col_default_width: '220dp'
+                Slider:
+                    id: motor_sliderX
+                    min:0.0
+                    max:360.0
+                    step:.5
+                GridLayout:
+                    cols: 1
+                    rows: 1
+                    row_force_default: True
+                    row_default_height:'35dp'
+                    col_force_default: True
+                    col_default_width: '60dp'
+                    TextInput:
+                        id: motor_sliderX_text
+                        readonly: False
+                        multiline: False
+                        font_size: '17sp'
+                        text: str(motor_sliderX.value)
+            GridLayout:
+                cols: 2
+                rows: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.74,'y':.23}
+                row_force_default: True
+                row_default_height:'32dp'
+                col_default_width: '220dp'
+                Slider:
+                    id: motor_sliderY
+                    min:0.0
+                    max:360.0
+                    step:.5
+                GridLayout:
+                    cols: 1
+                    rows: 1
+                    row_force_default: True
+                    row_default_height:'35dp'
+                    col_force_default: True
+                    col_default_width: '60dp'
+                    TextInput:
+                        id: motor_sliderY_text
+                        readonly: True
+                        multiline: False
+                        font_size: '17sp'
+                        text: str(motor_sliderY.value)
+
+            ### END MOTOR CONTROL ####
+            ##############################
+
+
+
+            ##############################
+            ## CONSOLE LOG ###############
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.55,'y':.18}
+                row_force_default: True
+                row_default_height:'40dp'
+                col_default_width: '30dp'
+                Label:
+                    text: 'Console Log'
+                    color: (1,1,0,1)
+                    font_size: '16sp'
+                GridLayout:
+                    cols: 1
+                    row_force_default:True
+                    row_default_height:'175dp'
+                    col_default_width: '510dp'
+                    TextInput:
+                        id: consolelog
+                        readonly: True
+                        multiline: True
+                        font_size: '20sp'
+                        text:""
+            ## END CONSOLE LOG ###########
+            ##############################
+
+            
+
+
+            GridLayout:
+                cols: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.2,'y':.3}
+                Gauge:
+                    size_gauge: 256
+                    value:1
+                    size_text:30
+
+
+
+
+##############################
+## ExitPopup Class ###########
+<ExitPopup>:
+    id: popup
+    title:"Confirm"
+    size_hint:(None,None)
+    size:(450,300)
+    auto_dismiss:False
+    title_size:15
+
+    FloatLayout:
+        Label:
+            text:"Are you sure?"
+            font_size:25
+            size_hint:(None,None)
+            pos_hint:{'x':.38,'y':.6}
+        Button:
+            text:"Yes"
+            size_hint:(None,None)
+            width:150
+            height:50
+            pos_hint:{'x':.55,'y':.4}
+            on_press: app.stop()
+        Button:
+            text:"No"
+            size_hint:(None,None)
+            width:150
+            height:50
+            pos_hint:{'x':.13,'y':.4}
+            on_press: popup.closePopup()
+##############################

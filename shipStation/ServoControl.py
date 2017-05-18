@@ -119,11 +119,12 @@ def degToServo(d):
         d = d % 360
     #convert if it is on the right hemisphere
     if d < 180:
-        res = int(round(127 - d(255/360))) #subtract from the 0 degree position
+        res = int(round(127 - d*(255.0/360.0))) #subtract from the 0 degree position
     #convert if it is on the left hemisphere
     else:
         d = 360 - d #get the degree position going left from center
-        res = int(round(127 + d(255/360))) # add from the 0 degree position
+        res = int(round(127 + d*(255.0/360.0))) # add from the 0 degree position
+    print "angle in servo: ", res
     return res
 
 

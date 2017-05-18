@@ -1,11 +1,12 @@
 import Arduino
 import ServoControl
-import Database
+# import Database
 import time
 import geomag
 
 tracker = None
 servos = None
+USELOCAL = True
 
 # Connect to the local arduino
 try:
@@ -21,16 +22,16 @@ except IOError:
     print "Could not find servos, will write output to screen instead."
 
 # Connect to MSU's irridium database
-try:
-    target = Database.DatabaseConnect()
-except:
-    print "Failure to connect to database."
+# try:
+    # target = Database.DatabaseConnect()
+# except:
+    # print "Failure to connect to database."
 
 while True:
     if USELOCAL:
-        target.latDeg = 44.602255
-        target.lonDeg = -123.130668
-        target.altMeters = 500
+        targetlatDeg = 44.587746
+        targetlonDeg = -123.096098
+        targetaltMeters = 200
         #lat = input('Enter latitude of target: ')
         #lon = input('Enter longitude of target: ')
         #alt = input('Enter altitude of target: ')
@@ -39,7 +40,7 @@ while True:
     tracker.update()
 
     bearing = ServoControl.bearing(
-        tracker.latDeg, tracker.lonDeg, target.latDeg, target.lonDeg
+        tracker.latDeg, tracker.lonDeg, targetlatDeg, targetlonDeg
     )
 
     if(bearing):
@@ -57,4 +58,4 @@ while True:
         print "Tracker needs to move ", solution
         print "In servo, that's ", ServoControl.degToServo(solution)
         print tracker.imuX, tracker.imuMag, tracker.imuSys
-        time.sleep(1)
+        time.sleep(5)
