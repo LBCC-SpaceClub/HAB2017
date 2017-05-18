@@ -19,6 +19,7 @@ from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.clock import Clock, mainthread
+from kivy.garden.gauge import Gauge
 
 
 from data.IntervalThread import *
@@ -69,14 +70,20 @@ class RootLayout(FloatLayout):
 
 
 	def startIridiumDatabase(self):
-		self.db_list.insert(0,DatabaseThread(self.configs))
-		self.poolLogMessages()
-		self.db_list[0].start()
-		self.db_check = True
-		self.ids.payload_connect.disabled = True
-		self.ids.payload_disconnect.disabled = False
-		self.checkDBStatus()
 		self.updateConsole("START Iridium database connection")
+		self.db_list.insert(0,DatabaseThread(self.configs))
+		self.db_check = True
+		self.poolLogMessages()
+		if(self.db_list):
+			try:
+				self.db_list[0].start()
+			except:
+				self.db_list.pop(0)
+				return
+			if(self.db_list[0].connected == True):
+				self.ids.payload_connect.disabled = True
+				self.ids.payload_disconnect.disabled = False
+				self.checkDBStatus()
 
 
 	def stopIridiumDatabase(self):
@@ -241,9 +248,8 @@ class RootLayout(FloatLayout):
 			self.updateConsole("MODE auto motor control")
 
 
+
 	def sliderXValue(self,instance,value):
-		# temp = str(value)
-		# temp = temp[:3]
 		self.ids.motor_sliderX_text.text = str(value)
 
 
@@ -299,6 +305,11 @@ class RootLayout(FloatLayout):
 		popup = ExitPopup()
 		popup.open()
 
+
+#-------------------------------#
+class GaugeApp(Widget):
+	increasing = NumericProperty(1)
+	step = NumericProperty(1)
 
 
 #-------------------------------#

@@ -2,3 +2,9 @@ PyMySQL==0.7.11
 Kivy==1.9.1
 pyserial==3.3
 configparser==3.5
+docutils==0.13.1
+kivy-garden==0.1.4
+
+# pip install docutils
+# pip install kivy-garden
+# garden install gauge

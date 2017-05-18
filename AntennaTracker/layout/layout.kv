@@ -474,7 +474,7 @@
                     size_hint: (None, None)
                     width: '250dp'
                     height: '70dp'
-                    pos_hint: {'x':.19,'y':.2}
+                    pos_hint: {'x':.11,'y':.22}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Calculations'
@@ -484,7 +484,7 @@
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.17,'y':.05}
+                pos_hint: {'x':.05,'y':.05}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '2dp'
@@ -652,7 +652,7 @@
                     col_default_width: '60dp'
                     TextInput:
                         id: motor_sliderX_text
-                        readonly: True
+                        readonly: False
                         multiline: False
                         font_size: '17sp'
                         text: str(motor_sliderX.value)
@@ -715,6 +715,18 @@
                         text:""
             ## END CONSOLE LOG ###########
             ##############################
+
+            
+
+
+            GridLayout:
+                cols: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.2,'y':.3}
+                Gauge:
+                    size_gauge: 256
+                    value:1
+                    size_text:30
 
 
 
