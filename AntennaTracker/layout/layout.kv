@@ -794,7 +794,7 @@
             ## CONSOLE LOG ###############
             GridLayout:
                 cols: 1
-                rows: 2
+                rows: 3
                 size_hint: (None, None)
                 pos_hint: {'x':.55,'y':.16}
                 row_force_default: True
@@ -805,16 +805,21 @@
                     color: (1,1,0,1)
                     font_size: '16sp'
                 GridLayout:
-                    cols: 1
+                    cols: 3
                     row_force_default:True
                     row_default_height:'165dp'
                     col_default_width: '510dp'
-                    TextInput:
+
+                    RstDocument:
                         id: consolelog
-                        readonly: True
-                        multiline: True
-                        font_size: '20sp'
-                        text:""
+                        text: root.rst_doc
+
+                    # TextInput:
+                    #     id: consolelog
+                    #     readonly: True
+                    #     multiline: True
+                    #     font_size: '20sp'
+                    #     text:""
             ## END CONSOLE LOG ###########
             ##############################
 
