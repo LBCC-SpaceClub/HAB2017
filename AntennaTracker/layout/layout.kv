@@ -474,7 +474,7 @@
                     size_hint: (None, None)
                     width: '250dp'
                     height: '70dp'
-                    pos_hint: {'x':.18,'y':.22}
+                    pos_hint: {'x':.17,'y':.22}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Calculations'
@@ -482,9 +482,9 @@
                         bold: True
             GridLayout: #Text fields
                 cols: 1
-                rows: 5
+                rows: 3
                 size_hint: (None, None)
-                pos_hint: {'x':.05,'y':.05}
+                pos_hint: {'x':.07,'y':.07}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '2dp'
@@ -500,8 +500,8 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        row_default_height:'30dp'
+                        col_default_width: '180dp'
                         TextInput:
                             id: calculationA
                             readonly: True
@@ -519,17 +519,36 @@
                     GridLayout:
                         cols: 1
                         row_force_default:True
-                        row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        row_default_height:'30dp'
+                        col_default_width: '180dp'
                         TextInput:
                             id: calculationB
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        id: calculationC_lbl
+                        text: 'Value C'
+                        bold: True
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'30dp'
+                        col_default_width: '180dp'
+                        TextInput:
+                            id: calculationC
                             readonly: True
                             multiline: False
                             font_size: '18sp'
             GridLayout:
                 cols: 1
                 size_hint: (None, None)
-                pos_hint: {'x':.30,'y':.03}
+                pos_hint: {'x':.29,'y':.03}
                 Gauge:
                     size_gauge: 100
                     value: root.x_value/3.6
@@ -537,7 +556,7 @@
             GridLayout:
                 cols: 1
                 size_hint: (None, None)
-                pos_hint: {'x':.39,'y':.08}
+                pos_hint: {'x':.38,'y':.08}
                 Gauge:
                     size_gauge: 100
                     value: root.y_value/3.6
