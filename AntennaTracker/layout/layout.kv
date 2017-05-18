@@ -532,7 +532,7 @@
                 pos_hint: {'x':.30,'y':.03}
                 Gauge:
                     size_gauge: 100
-                    value: 1
+                    value: root.x_value/3.6
                     size_text:25
             GridLayout:
                 cols: 1
@@ -540,7 +540,7 @@
                 pos_hint: {'x':.39,'y':.08}
                 Gauge:
                     size_gauge: 100
-                    value: 1
+                    value: root.y_value/3.6
                     size_text:25
                     canvas.before:
                         PushMatrix
@@ -551,7 +551,6 @@
                         PopMatrix
             ## END CALCULATIONS ##########
             ##############################
-
 
 
             
@@ -653,80 +652,6 @@
                         id: motor_switchmanual
                         active: False
                         on_active: root.motorManualSwitch()
-            # GridLayout:
-            #     cols: 2
-            #     rows: 1
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.74,'y':.28}
-            #     row_force_default: True
-            #     row_default_height:'32dp'
-            #     col_default_width: '220dp'
-            #     Slider:
-            #         id: motor_sliderX
-            #         min:0.0
-            #         max:360.0
-            #         step:.5
-            #     GridLayout:
-            #         cols: 1
-            #         rows: 1
-            #         row_force_default: True
-            #         row_default_height:'35dp'
-            #         col_force_default: True
-            #         col_default_width: '60dp'
-            #         TextInput:
-            #             id: motor_sliderX_text
-            #             readonly: False
-            #             multiline: False
-            #             font_size: '17sp'
-            #             text: str(motor_sliderX.value)
-            # GridLayout:
-            #     cols: 1
-            #     rows: 2
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.75,'y':.30}
-            #     row_force_default: True
-            #     row_default_height:'30dp'
-            #     col_default_width: '240dp'
-            #     Label:
-            #         text:'elevation'
-            #     GridLayout:
-            #         cols: 2
-            #         rows: 1
-            #         row_force_default: True
-            #         row_default_height:'22dp'
-            #         col_default_width: '240dp'
-            #         Slider:
-            #             id: motor_sliderX
-            #             min:0.0
-            #             max:360.0
-            #             step:.5
-            #             value: root.x_value
-            #             on_value: root.x_value = self.value
-            #         GridLayout:
-            #             cols: 3
-            #             rows: 1
-            #             row_force_default: True
-            #             row_default_height:'35dp'
-            #             col_force_default: True
-            #             col_default_width: '20dp'
-            #             Label:
-            #                 font_size: '17sp'
-            #                 text: str(motor_sliderX.value)
-            # GridLayout:
-            #     cols: 1
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.815,'y':.165}
-            #     row_force_default: True
-            #     row_default_height:'30dp'
-            #     col_force_default: True
-            #     col_default_width: '50dp'
-            #     TextInput:
-            #         id: motor_sliderX_text
-            #         readonly: False
-            #         multiline: False
-            #         font_size: '17sp'
-            #         text: str(root.x_value)
-            #         on_text: root.x_value = float(self.text)
             GridLayout:
                 cols: 1
                 rows: 2
@@ -841,22 +766,6 @@
                             Label:
                                 font_size: '17sp'
                                 text: str(motor_sliderY.value)
-            # GridLayout:
-            #     cols: 1
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.815,'y':.165}
-            #     row_force_default: True
-            #     row_default_height:'30dp'
-            #     col_force_default: True
-            #     col_default_width: '50dp'
-            #     TextInput:
-            #         id: motor_sliderY_text
-            #         readonly: False
-            #         multiline: False
-            #         font_size: '17sp'
-            #         text: str(root.y_value)
-            #         on_text: root.y_value = float(self.text)
-
             ### END MOTOR CONTROL ####
             ##############################
 
