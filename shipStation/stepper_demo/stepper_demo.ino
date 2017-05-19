@@ -15,8 +15,8 @@
 #define STEPANGLE 0.002094395
 #define PI 3.1415926535897932384626433832795
 
-AccelStepper xAxis(1,9,8);
-AccelStepper yAxis(1,11,10);
+AccelStepper xAxis(1,12,11);
+AccelStepper yAxis(1,10,9);
 //MultiStepper steppers;
 
 float angle = 0;          // Radians, used to find x,y on a circle
@@ -45,7 +45,7 @@ void moveRandomly(){
     xPos = random(30000) - 15000;
     xAxis.moveTo(xPos);
     
-    yPos = random(30000) - 15000;
+    yPos = random(20000) - 10000;
     yAxis.moveTo(yPos);
     
     curTime = millis();
