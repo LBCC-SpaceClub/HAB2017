@@ -7,4 +7,5 @@ kivy-garden==0.1.4
 
 # pip install docutils
 # pip install kivy-garden
-# garden install gauge
+# pip install futures requests
+# garden install mapview

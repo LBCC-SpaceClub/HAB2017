@@ -30,20 +30,20 @@ class ArduinoThread(Thread):
 
     def run(self):
         if(self.connectToArduino()):
-            self.setLog("SUCCESS arduino connected, parsing data")
+            self.setLog(" **SUCCESS** arduino connected, parsing data")
             self.connected = True
             
             while(self.stop):
                 self.update()
         else:
-            self.setLog("ERROR failed to connect to arudino usb")
+            self.setLog(" **ERROR** failed to connect to arudino usb")
             self.connected = False
 
 
     def __del__(self):
         ''' Cleans up when this object is destroyed '''
         if self.usb:
-            self.setLog("STOP closing port")
+            self.setLog(" **STOP** closing port")
             self.usb.close()
 
 
@@ -68,11 +68,11 @@ class ArduinoThread(Thread):
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Arduino' in p[1]:
-                self.setLog("Found arduino on ", self.p[0])
+                self.setLog(" **UPDATE** found arduino on ", self.p[0])
                 self.connected = True
                 return p[0]
             else:
-                self.setLog("ERROR could not find an attached arduino") 
+                self.setLog(" **ERROR** could not find an attached arduino") 
     
 
     def calibrateIMU(self):
@@ -104,9 +104,9 @@ class ArduinoThread(Thread):
                 elif line[:5] == '[GPS]':
                     self.updateGPS(line[5:])
                 else:
-                    self.setLog("Error reading line: "+line)
+                    self.setLog(" **ERROR** reading line: "+line)
             except ValueError:
-                self.setLog("Error parsing "+line)
+                self.setLog(" **ERROR** parsing "+line)
         '''
         print "Most up-to-date Lat: {}, Long: {}, Alt (m): {}".format(
             self.latDeg,

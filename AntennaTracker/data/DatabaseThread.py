@@ -25,30 +25,30 @@ class DatabaseThread(Thread):
 
 	def run(self):
 		if(self.connectToDB()):
-			self.setLog("SUCCESS iridium database connected, parsing data")
+			self.setLog(" **SUCCESS** iridium database connected, parsing data")
 			self.connected = True
 			
 			while(self.stop):
 				self.update()
 		else:
-			self.setLog("ERROR failed to connect to MySQL database")
+			self.setLog(" **ERROR** failed to connect to MySQL database")
 			self.connected = False
 
 
 	def connectToDB(self):
 		try:
-			cfg = configparser.ConfigParser()
-			cfg.read(self.cfg_file)
+			self.cfg = configparser.ConfigParser()
+			self.cfg.read(self.cfg_file)
 		except:
-			self.setLog("ERROR could not read database config file")
+			self.setLog(" **ERROR** could not read database config file")
 			return False
 		
 		try:
 			self.db = pymysql.connect(
-				host=cfg["MySQL"]["Host"],
-				user=cfg["MySQL"]["User"],
-				password=cfg["MySQL"]["Password"],
-				db=cfg["MySQL"]["Database"],
+				host= self.cfg["MySQL"]["Host"],
+				user= self.cfg["MySQL"]["User"],
+				password= self.cfg["MySQL"]["Password"],
+				db= self.cfg["MySQL"]["Database"],
 				charset='utf8mb4',
 				cursorclass=pymysql.cursors.DictCursor
 			)
@@ -72,23 +72,18 @@ class DatabaseThread(Thread):
 	def parseData(self):
 		try:
 			sql = self.db.cursor()
-			query = "select gps_fltDate,gps_time,gps_lat,gps_long,gps_alt from gps order by pri_key DESC"
+			query = self.cfg["MySQL"]["Query"]
 			sql.execute(query)
 			try:
 				result = sql.fetchone()
-				if not self.querysuccess:
-					self.setLog("UPDATE parsing data successful")
-					self.querysuccess = True
-				else:
-					self.setLog("UPDATE Iridium database data")
+				self.setLog(" **UPDATE** parsing data successful")
 				return result
 			except:
-				self.setLog("ERROR failed to get data from database")
-				self.querysuccess = False
+				self.setLog(" **ERROR** failed to get data from database")
 				sql.close()
 				return
 		except:
-			self.setLog("ERROR failed to parse data, check internet connection")
+			self.setLog(" **ERROR** failed to parse data, check internet connection")
 
 
 	def setLog(self, txt):

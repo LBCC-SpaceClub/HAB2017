@@ -1,5 +1,6 @@
 <RootLayout>:
     ExitPopup: #this gives RootLayout class a reference to the ExitPopup class
+    AboutPopup:
     
     #############################################
     ## TOP NAVBAR ###############################
@@ -19,10 +20,11 @@
                 	with_previous: False
                 ActionButton:
                     text: 'About'
+                    on_press: root.aboutPopup()
                 ActionButton:
                 	id: btnExit
                 	text: 'Exit'
-                	on_press: root.confirmExit()
+                	on_press: root.exitPopup()
     #############################################
 
         #############################################
@@ -35,7 +37,7 @@
                     size_hint: (None, None)
                     width: '250dp'
                     height: '65dp'
-                    pos_hint: {'x':.11,'y':.89}
+                    pos_hint: {'x':.07,'y':.89}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Station GPS Data'
@@ -45,7 +47,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.24,'y':.74}
+                pos_hint: {'x':.19,'y':.725}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '4dp'
@@ -61,7 +63,7 @@
                 cols: 1
                 rows: 4
                 size_hint:(None, None)
-                pos_hint: {'x':.13,'y':.76}
+                pos_hint: {'x':.08,'y':.76}
                 row_force_default:True
                 row_default_height:'32dp'
                 GridLayout:
@@ -115,11 +117,11 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.12,'y':.59}
+                pos_hint: {'x':.222,'y':.56}
                 row_force_default:True
                 row_default_height:'30dp'
                 Label:
-                    text: 'Manually Enter Values'
+                    text: 'Enter Values'
                     font_size:'16sp'
                     color: (0, 1, 1, 1)
                 Switch:
@@ -130,7 +132,7 @@
             GridLayout:
                 cols: 1
                 size_hint: (None, None)
-                pos_hint: {'x':.23,'y':.58}
+                pos_hint: {'x':.215,'y':.47}
                 row_force_default:True
                 row_default_height:'40dp'
                 col_default_width: '120dp'
@@ -144,7 +146,7 @@
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.10,'y':.48}
+                pos_hint: {'x':.04,'y':.58}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '2dp'
@@ -156,17 +158,16 @@
                     Label:
                         id: station_lat_lbl
                         text: 'Latitude'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: station_lat
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -175,17 +176,16 @@
                     Label:
                         id: station_long_lbl
                         text: 'Longitude'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: station_long
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -194,17 +194,16 @@
                     Label:
                         id: station_alt_lbl
                         text: 'Altitude'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: station_alt
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -212,17 +211,16 @@
                     spacing:'20dp'
                     Label:
                         text: 'Date'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: station_date
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -230,17 +228,16 @@
                     spacing:'20dp'
                     Label:
                         text: 'Time'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: station_time
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
             ## END STATION GPS DATA ######
             ##############################
             
@@ -254,7 +251,7 @@
                     size_hint: (None, None)
                     width: '250dp'
                     height: '65dp'
-                    pos_hint: {'x':.43,'y':.89}
+                    pos_hint: {'x':.36,'y':.89}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Payload GPS Data'
@@ -264,7 +261,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.57,'y':.74}
+                pos_hint: {'x':.51,'y':.725}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '4dp'
@@ -281,7 +278,7 @@
                 cols: 1
                 rows: 4
                 size_hint:(None, None)
-                pos_hint: {'x':.47,'y':.76}
+                pos_hint: {'x':.40,'y':.755}
                 row_force_default:True
                 row_default_height:'32dp'
                 GridLayout:
@@ -335,11 +332,11 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.46,'y':.59}
+                pos_hint: {'x':.53,'y':.56}
                 row_force_default:True
                 row_default_height:'30dp'
                 Label:
-                    text: 'Manually Enter Values'
+                    text: 'Enter Values'
                     font_size:'16sp'
                     color: (0, 1, 1, 1)
                 Switch:
@@ -350,7 +347,7 @@
             GridLayout:
                 cols: 1
                 size_hint: (None, None)
-                pos_hint: {'x':.57,'y':.58}
+                pos_hint: {'x':.523,'y':.47}
                 row_force_default:True
                 row_default_height:'40dp'
                 col_default_width: '120dp'
@@ -360,11 +357,24 @@
                     disabled: True
                     on_press: root.payloadSetManualValues()
 
+            GridLayout:
+                cols: 1
+                size_hint: (None, None)
+                pos_hint: {'x':.523,'y':.41}
+                row_force_default:True
+                row_default_height:'40dp'
+                col_default_width: '120dp'
+                Button:
+                    id: payload_setgps
+                    text: 'Update Map'
+                    disabled: True
+                    on_press: root.payloadSetGPSValues()
+
             GridLayout: #Text fields
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.43,'y':.48}
+                pos_hint: {'x':.35,'y':.58}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '2dp'
@@ -376,17 +386,16 @@
                     Label:
                         id: payload_lat_lbl
                         text: 'Latitude'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: payload_lat
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -395,17 +404,16 @@
                     Label:
                         id: payload_long_lbl
                         text: 'Longitude'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: payload_long
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -414,17 +422,16 @@
                     Label:
                         id: payload_alt_lbl
                         text: 'Altitude'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: payload_alt
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -432,17 +439,16 @@
                     spacing:'20dp'
                     Label:
                         text: 'Date'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: payload_date
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -450,126 +456,150 @@
                     spacing:'20dp'
                     Label:
                         text: 'Time'
-                        bold: True
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
-                        col_default_width: '220dp'
+                        col_default_width: '140dp'
                         TextInput:
                             id: payload_time
                             readonly: True
                             multiline: False
-                            font_size: '18sp'
+                            font_size: '20sp'
             ## END PAYLOAD GPS DATA ######
             ##############################
 
 
 
 
-            ##############################
-            ## CALCULATIONS ##############
-            FloatLayout:
-                Bubble:
-                    size_hint: (None, None)
-                    width: '250dp'
-                    height: '70dp'
-                    pos_hint: {'x':.17,'y':.22}
-                    background_color:(1, 0, 0, .4)
-                    Label:
-                        text: 'Calculations'
-                        font_size:'20sp'
-                        bold: True
-            GridLayout: #Text fields
+            # ##############################
+            # ## CALCULATIONS ##############
+            # FloatLayout:
+            #     Bubble:
+            #         size_hint: (None, None)
+            #         width: '250dp'
+            #         height: '70dp'
+            #         pos_hint: {'x':.17,'y':.22}
+            #         background_color:(1, 0, 0, .4)
+            #         Label:
+            #             text: 'Calculations'
+            #             font_size:'20sp'
+            #             bold: True
+            # GridLayout: #Text fields
+            #     cols: 1
+            #     rows: 3
+            #     size_hint: (None, None)
+            #     pos_hint: {'x':.07,'y':.07}
+            #     row_force_default:True
+            #     row_default_height:'40dp'
+            #     spacing: '2dp'
+            #     GridLayout:
+            #         cols: 2
+            #         row_force_default:True
+            #         row_default_height:'35dp'
+            #         spacing:'20dp'
+            #         Label:
+            #             id: calculationA_lbl
+            #             text: 'Value A'
+            #             bold: True
+            #         GridLayout:
+            #             cols: 1
+            #             row_force_default:True
+            #             row_default_height:'30dp'
+            #             col_default_width: '180dp'
+            #             TextInput:
+            #                 id: calculationA
+            #                 readonly: True
+            #                 multiline: False
+            #                 font_size: '18sp'
+            #     GridLayout:
+            #         cols: 2
+            #         row_force_default:True
+            #         row_default_height:'35dp'
+            #         spacing:'20dp'
+            #         Label:
+            #             id: calculationB_lbl
+            #             text: 'Value B'
+            #             bold: True
+            #         GridLayout:
+            #             cols: 1
+            #             row_force_default:True
+            #             row_default_height:'30dp'
+            #             col_default_width: '180dp'
+            #             TextInput:
+            #                 id: calculationB
+            #                 readonly: True
+            #                 multiline: False
+            #                 font_size: '18sp'
+            #     GridLayout:
+            #         cols: 2
+            #         row_force_default:True
+            #         row_default_height:'35dp'
+            #         spacing:'20dp'
+            #         Label:
+            #             id: calculationC_lbl
+            #             text: 'Value C'
+            #             bold: True
+            #         GridLayout:
+            #             cols: 1
+            #             row_force_default:True
+            #             row_default_height:'30dp'
+            #             col_default_width: '180dp'
+            #             TextInput:
+            #                 id: calculationC
+            #                 readonly: True
+            #                 multiline: False
+            #                 font_size: '18sp'
+            # GridLayout:
+            #     cols: 1
+            #     size_hint: (None, None)
+            #     pos_hint: {'x':.29,'y':.03}
+            #     Gauge:
+            #         size_gauge: 100
+            #         value: root.x_value/3.6
+            #         size_text:25
+            # GridLayout:
+            #     cols: 1
+            #     size_hint: (None, None)
+            #     pos_hint: {'x':.38,'y':.08}
+            #     Gauge:
+            #         size_gauge: 100
+            #         value: root.y_value/3.6
+            #         size_text:25
+            #         canvas.before:
+            #             PushMatrix
+            #             Rotate:
+            #                 angle:-90
+            #                 origin: self.center
+            #         canvas.after:
+            #             PopMatrix
+            # ## END CALCULATIONS ##########
+            # ##############################
+
+
+
+
+            ###############################
+            ## MAP VIEW ###################
+            GridLayout:
                 cols: 1
-                rows: 3
                 size_hint: (None, None)
-                pos_hint: {'x':.07,'y':.07}
+                pos_hint: {'x':.64,'y':.85}
                 row_force_default:True
-                row_default_height:'40dp'
-                spacing: '2dp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        id: calculationA_lbl
-                        text: 'Value A'
-                        bold: True
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'30dp'
-                        col_default_width: '180dp'
-                        TextInput:
-                            id: calculationA
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        id: calculationB_lbl
-                        text: 'Value B'
-                        bold: True
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'30dp'
-                        col_default_width: '180dp'
-                        TextInput:
-                            id: calculationB
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        id: calculationC_lbl
-                        text: 'Value C'
-                        bold: True
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'30dp'
-                        col_default_width: '180dp'
-                        TextInput:
-                            id: calculationC
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-            GridLayout:
-                cols: 1
-                size_hint: (None, None)
-                pos_hint: {'x':.29,'y':.03}
-                Gauge:
-                    size_gauge: 100
-                    value: root.x_value/3.6
-                    size_text:25
-            GridLayout:
-                cols: 1
-                size_hint: (None, None)
-                pos_hint: {'x':.38,'y':.08}
-                Gauge:
-                    size_gauge: 100
-                    value: root.y_value/3.6
-                    size_text:25
-                    canvas.before:
-                        PushMatrix
-                        Rotate:
-                            angle:-90
-                            origin: self.center
-                    canvas.after:
-                        PopMatrix
-            ## END CALCULATIONS ##########
+                row_default_height:'380dp'
+                col_default_width: '415dp'
+                RelativeLayout:
+                    MapView:
+                        id: mapview
+                        lat: root.map_lat
+                        lon: root.map_long
+                        zoom: 14
+                        pause_on_action: False
+                        snap_to_zoom: False
+                        disabled: True
+            ## END MAP VIEW ##############
             ##############################
+
 
 
             
@@ -580,25 +610,27 @@
                     size_hint: (None, None)
                     width: '250dp'
                     height: '65dp'
-                    pos_hint: {'x':.73,'y':.89}
+                    pos_hint: {'x':.70,'y':.40}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Connection Status'
                         font_size:'18sp'
                         bold: True
                 GridLayout:
-                    cols: 1
-                    rows: 3
-                    spacing: '10dp'
+                    cols: 2
+                    rows: 2
+                    spacing: '15dp'
                     size_hint: (None, None)
-                    pos_hint: {'x':.79,'y':.76}
+                    pos_hint: {'x':.675,'y':.26}
                     row_force_default:True
                     row_default_height:'40dp'
+                    col_force_default: True
+                    col_default_width: '160dp'
                     GridLayout:
                         cols: 1
                         rows: 2
                         Label:
-                            text: 'Iridium Database:'
+                            text: 'Iridium Database'
                             font_size:'18sp'
                         Label:
                             id: db_status
@@ -606,7 +638,7 @@
                         cols: 1
                         rows: 2
                         Label:
-                            text: 'Arduino USB:'
+                            text: 'Arduino USB'
                             font_size:'18sp'
                         Label:
                             id: ard_status 
@@ -614,7 +646,7 @@
                         cols: 1
                         rows: 2
                         Label:
-                            text: 'Other:'
+                            text: 'Other'
                             font_size:'18sp'
                         Label:
                             id: eth_status      
@@ -623,14 +655,15 @@
 
 
 
-            ##############################
-            ## MOTOR CONTROL #########
+
+            #############################
+            # MOTOR CONTROL #########
             FloatLayout:
                 Bubble:
                     size_hint: (None, None)
                     width: '250dp'
                     height: '65dp'
-                    pos_hint: {'x':.73,'y':.58}
+                    pos_hint: {'x':.10,'y':.34}
                     background_color:(1, 0, 0, .4)
                     Label:
                         text: 'Motor Control'
@@ -640,7 +673,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.76,'y':.45}
+                pos_hint: {'x':.12,'y':.21}
                 row_force_default: True
                 row_default_height:'50dp'
                 GridLayout: #Stop Motor
@@ -675,7 +708,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.695,'y':.30}
+                pos_hint: {'x':.05,'y':.07}
                 row_force_default: True
                 row_default_height:'30dp'
                 col_default_width: '240dp'
@@ -732,7 +765,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.695,'y':.23}
+                pos_hint: {'x':.05,'y':.00}
                 row_force_default: True
                 row_default_height:'30dp'
                 col_default_width: '240dp'
@@ -786,7 +819,7 @@
                                 font_size: '17sp'
                                 text: str(root.truncate(motor_sliderY.value))
             ### END MOTOR CONTROL ####
-            ##############################
+            #############################
 
 
 
@@ -796,7 +829,7 @@
                 cols: 1
                 rows: 3
                 size_hint: (None, None)
-                pos_hint: {'x':.55,'y':.16}
+                pos_hint: {'x':.635,'y':.125}
                 row_force_default: True
                 row_default_height:'40dp'
                 col_default_width: '30dp'
@@ -807,16 +840,95 @@
                 GridLayout:
                     cols: 3
                     row_force_default:True
-                    row_default_height:'165dp'
-                    col_default_width: '510dp'
+                    row_default_height:'125dp'
+                    col_default_width: '420dp'
                     RstDocument:
                         id: consolelog
                         text: root.rst_doc
             ## END CONSOLE LOG ###########
             ##############################
 
+            
+            ## END COMPASS ###########
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.34,'y':.32}
+                row_force_default: True
+                row_default_height:'50dp'
+                col_default_width: '150dp'
+                Label:
+                    text: "azimuth"
+                GridLayout:
+                    cols: 1
+                    row_force_default: True
+                    row_default_height:'150dp'
+                    col_default_width: '150dp'
+                    MyKnob:
+                        size:               150, 150
+                        min:                0
+                        max:                360
+                        step:               1
+                        slope:              0
+                        value:              root.x_value                  
+                        knobimg_source:     "img/compass_out.png"   
+                        show_marker:        True                   
+                        marker_img:         "img/compass_in.png"        
+                        knob_size:          0.4                    
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.48,'y':.32}
+                row_force_default: True
+                row_default_height:'50dp'
+                col_default_width: '150dp'
+                Label:
+                    text: "elevation"
+                GridLayout:
+                    cols: 1
+                    row_force_default: True
+                    row_default_height:'150dp'
+                    col_default_width: '150dp'
+                    MyKnob:
+                        size:               150, 150
+                        min:                0
+                        max:                360
+                        step:               1
+                        slope:              0
+                        value:              root.y_value                      
+                        knobimg_source:     "img/compass_out.png"    
+                        show_marker:        True                    
+                        marker_img:         "img/compass_in.png"         
+                        knob_size:          0.4               
 
 
+
+##############################
+## AboutPopup Class ##########
+<AboutPopup>:
+    id: aboutpopup
+    title:"About"
+    size_hint:(None,None)
+    size:(450,300)
+    auto_dismiss:False
+    title_size:16
+
+    FloatLayout:
+        Label:
+            text:"Kyle Prouty\nkyle@prouty.io\n\nLevi Willmeth\nlevi.willmeth@gmail.com"
+            font_size:18
+            size_hint:(None,None)
+            pos_hint:{'x':.22,'y':.38}
+        Button:
+            text:"Back"
+            size_hint:(None,None)
+            width:130
+            height:60
+            pos_hint:{'x':.6,'y':.49}
+            on_press: aboutpopup.closePopup()
+##############################
 
 ##############################
 ## ExitPopup Class ###########
