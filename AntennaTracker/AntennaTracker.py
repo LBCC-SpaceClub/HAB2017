@@ -20,10 +20,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.uix.rst import RstDocument
 from kivy.clock import Clock, mainthread
-#from kivy.garden.gauge import Gauge 
 from kivy.garden.mapview import *
-#from kivy.garden.knob import *
-
 
 from data.IntervalThread import *
 from data.DatabaseThread import *
