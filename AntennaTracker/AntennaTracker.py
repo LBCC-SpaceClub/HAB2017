@@ -7,7 +7,6 @@ from os.path import dirname, join
 from kivy.lang import Builder
 from kivy.properties import NumericProperty,StringProperty,BooleanProperty
 from kivy.properties import ListProperty,ReferenceListProperty,ObjectProperty
-from kivy.clock import Clock
 from kivy.animation import Animation
 from kivy.uix.screenmanager import Screen
 from kivy.core.window import Window
@@ -21,12 +20,15 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.uix.rst import RstDocument
 from kivy.clock import Clock, mainthread
-from kivy.garden.gauge import Gauge
+#from kivy.garden.gauge import Gauge 
+from kivy.garden.mapview import *
+#from kivy.garden.knob import *
 
 
 from data.IntervalThread import *
 from data.DatabaseThread import *
 from data.ArduinoThread import *
+from data.MyKnob import *
 
 
 
@@ -44,6 +46,9 @@ class RootLayout(FloatLayout):
 	arduino_check = False
 	db_list = []
 	arduino_list = []
+	map_list = []
+	map_lat = 44.5637806 #OSU Lat/Long
+	map_long= -123.2794442
 
 
 	def __init__(self, **kwargs):
@@ -58,6 +63,7 @@ class RootLayout(FloatLayout):
 	#######################
 	### INITIAL SETTING ###
 	def run(self, args):
+		self.updateConsole(" **WELCOME** setting initialized")
 		self.ids.db_status.text = "Not Connected"
 		self.ids.db_status.color = (1,0,0,1) #green(0,1,0,1)red(1,0,0,1)
 		self.ids.ard_status.text = "Not Connected"
@@ -66,10 +72,10 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
 		self.ids.station_disconnect.disabled = True
-		self.updateConsole(" **WELCOME** setting initialized")
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
 		self.motorManualSwitch()
+		self.mapUpdate()
 
 
 	def startIridiumDatabase(self):
@@ -123,6 +129,7 @@ class RootLayout(FloatLayout):
 
 	def stopArduinoUSB(self):
 		if(self.arduino_list):
+			self.updateConsole(" **STOP** arduino usb")
 			self.ids.station_lat.text = ""
 			self.ids.station_long.text = ""
 			self.ids.station_alt.text = ""
@@ -136,7 +143,7 @@ class RootLayout(FloatLayout):
 			self.ids.ard_status.color = (1,0,0,1)
 			self.ids.station_disconnect.disabled = True
 			self.ids.station_connect.disabled = False
-			self.updateConsole(" **STOP** arduino usb")
+
 
 
 	def payloadConnect(self):
@@ -151,37 +158,44 @@ class RootLayout(FloatLayout):
 	def payloadSetManualValues(self):
 		self.updateConsole(" **SET** payload ("+self.ids.payload_lat.text+", "
 			+self.ids.payload_long.text+", "+self.ids.payload_alt.text+")")
+		
 
+	def payloadSetGPSValues(self):
+		self.updateConsole(" **SET** map gps (Lat: "+self.ids.payload_lat.text+", Long: "
+			+self.ids.payload_long.text+")")
+		try:
+			self.map_lat = float(self.ids.payload_lat.text)
+			self.map_long = float(self.ids.payload_long.text)
+		except:
+			pass
+		self.mapUpdate()
 
+	
 	def payloadManualSwitch(self):
 		if(self.ids.payload_switchmanual.active):
+			self.updateConsole(" **MODE** manual payload")
 			self.ids.payload_setvalues.disabled = False
+			self.ids.payload_setgps.disabled = False
 			self.ids.payload_lat.readonly = False
 			self.ids.payload_long.readonly = False
 			self.ids.payload_alt.readonly = False
-			self.ids.payload_lat.background_color = (.7, .7, .7, 1)
-			self.ids.payload_long.background_color = (.7, .7, .7, 1)
-			self.ids.payload_alt.background_color = (.7, .7, .7, 1)
 			self.ids.payload_lat_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_long_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_connect.disabled = True
 			self.ids.payload_disconnect.disabled = True
 			self.stopIridiumDatabase()
-			self.updateConsole(" **MODE** manual payload")
 		else:
+			self.updateConsole(" **MODE** auto payload")
 			self.ids.payload_setvalues.disabled = True
+			self.ids.payload_setgps.disabled = True
 			self.ids.payload_lat.readonly = True
 			self.ids.payload_long.readonly = True
 			self.ids.payload_alt.readonly = True
-			self.ids.payload_lat.background_color = (1, 1, 1, 1)
-			self.ids.payload_long.background_color = (1, 1, 1, 1)
-			self.ids.payload_alt.background_color = (1, 1, 1, 1)
 			self.ids.payload_lat_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_long_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_alt_lbl.color = (1, 1, 1, 1)
 			self.ids.payload_connect.disabled = False
-			self.updateConsole(" **MODE** auto payload")
 
 
 	def stationConnect(self):
@@ -200,32 +214,43 @@ class RootLayout(FloatLayout):
 
 	def stationManualSwitch(self):
 		if(self.ids.station_switchmanual.active):
+			self.updateConsole(" **MODE** manual station")
 			self.ids.station_setvalues.disabled = False
 			self.ids.station_lat.readonly = False
 			self.ids.station_long.readonly = False
 			self.ids.station_alt.readonly = False
-			self.ids.station_lat.background_color = (.7, .7, .7, 1)
-			self.ids.station_long.background_color = (.7, .7, .7, 1)
-			self.ids.station_alt.background_color = (.7, .7, .7, 1)
 			self.ids.station_lat_lbl.color = (0, 1, 1, 1)
 			self.ids.station_long_lbl.color = (0, 1, 1, 1)
 			self.ids.station_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.station_connect.disabled = True
 			self.ids.station_disconnect.disabled = True
-			self.updateConsole(" **MODE** manual station")
 		else:
+			self.updateConsole(" **MODE** auto station")
 			self.ids.station_setvalues.disabled = True
 			self.ids.station_lat.readonly = True
 			self.ids.station_long.readonly = True
 			self.ids.station_alt.readonly = True
-			self.ids.station_lat.background_color = (1, 1, 1, 1)
-			self.ids.station_long.background_color = (1, 1, 1, 1)
-			self.ids.station_alt.background_color = (1, 1, 1, 1)
 			self.ids.station_lat_lbl.color = (1, 1, 1, 1)
 			self.ids.station_long_lbl.color = (1, 1, 1, 1)
 			self.ids.station_alt_lbl.color = (1, 1, 1, 1)
 			self.ids.station_connect.disabled = False
-			self.updateConsole(" **MODE** auto station")
+
+
+	def mapUpdate(self):
+		try:
+			self.updateConsole(" **UPDATE** map latitude and longitude")
+			self.ids.mapview.center_on(self.map_lat, self.map_long)
+			if self.map_list:
+				self.ids.mapview.remove_marker(self.map_list[0])
+				self.map_list.pop(0)
+			if not self.map_list:
+				try:
+					self.map_list.insert(0, MapMarker(lon=self.map_long, lat=self.map_lat))
+					self.ids.mapview.add_marker(self.map_list[0])
+				except:
+					pass
+		except:
+			self.updateConsole(" **ERROR** invalid latitude and longitude")
 
 
 	def motorStopSwitch(self):
@@ -235,17 +260,17 @@ class RootLayout(FloatLayout):
 
 	def motorManualSwitch(self):
 		if(self.ids.motor_switchmanual.active):
+			self.updateConsole(" **MODE** manual motor control")
 			self.ids.motor_sliderX.disabled = False
 			self.ids.motor_sliderX_text.disabled = False
 			self.ids.motor_sliderY.disabled = False
 			self.ids.motor_sliderY_text.disabled = False
-			self.updateConsole(" **MODE** manual motor control")
 		else:
+			self.updateConsole(" **MODE** auto motor control")
 			self.ids.motor_sliderX.disabled = True
 			self.ids.motor_sliderX_text.disabled = True
 			self.ids.motor_sliderY.disabled = True
 			self.ids.motor_sliderY_text.disabled = True
-			self.updateConsole(" **MODE** auto motor control")
 
 
 	def sliderValidate(self, value):
@@ -279,20 +304,24 @@ class RootLayout(FloatLayout):
 
 
 	## Pooling the status of connections / updates DB values
-	@interval_threadB.setInterval(12)
+	@interval_threadB.setInterval(4)
 	def poolDatabaseStatus(self):
 		if(self.db_list):
 			if(self.db_list[0].connected):
 				self.ids.db_status.text = "Connected"
 				self.ids.db_status.color = (0,1,0,1)
+				self.ids.payload_disconnect.disabled = False
 				self.ids.payload_lat.text = self.db_list[0].latDeg
 				self.ids.payload_long.text = self.db_list[0].lonDeg
 				self.ids.payload_alt.text = self.db_list[0].altMeters
 				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
+				self.map_lat = float(self.db_list[0].latDeg)
+				self.map_long = float(self.db_list[0].lonDeg)
+				self.mapUpdate()
 			else:
 				#self.db_list.pop(0)
-				self.ids.payload_connect.disabled = False
+				self.ids.payload_connect.disabled = True
 				self.ids.payload_disconnect.disabled = True
 
 
@@ -309,7 +338,12 @@ class RootLayout(FloatLayout):
 				self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
 
 
-	def confirmExit(self):
+	def aboutPopup(self):
+		popup = AboutPopup()
+		popup.open()
+
+
+	def exitPopup(self):
 		popup = ExitPopup()
 		popup.open()
 
@@ -318,6 +352,12 @@ class RootLayout(FloatLayout):
 class GaugeApp(Widget):
 	increasing = NumericProperty(1)
 	step = NumericProperty(1)
+
+
+#-------------------------------#
+class AboutPopup(Popup):
+	def closePopup(self, *args):
+		self.dismiss()
 
 
 #-------------------------------#
