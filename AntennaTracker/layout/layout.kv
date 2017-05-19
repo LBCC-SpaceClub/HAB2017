@@ -829,10 +829,11 @@
                 cols: 1
                 rows: 3
                 size_hint: (None, None)
-                pos_hint: {'x':.635,'y':.125}
+                pos_hint: {'x':.675,'y':.125}
                 row_force_default: True
                 row_default_height:'40dp'
-                col_default_width: '30dp'
+                col_default_width: '325dp'
+
                 Label:
                     text: 'Console Log'
                     color: (1,1,0,1)
@@ -841,7 +842,7 @@
                     cols: 3
                     row_force_default:True
                     row_default_height:'125dp'
-                    col_default_width: '420dp'
+                    col_default_width: '370dp'
                     RstDocument:
                         id: consolelog
                         text: root.rst_doc
@@ -854,53 +855,53 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.34,'y':.32}
+                pos_hint: {'x':.31,'y':.32}
                 row_force_default: True
-                row_default_height:'50dp'
-                col_default_width: '150dp'
+                row_default_height:'40dp'
+                col_default_width: '200dp'
                 Label:
                     text: "azimuth"
                 GridLayout:
                     cols: 1
                     row_force_default: True
-                    row_default_height:'150dp'
-                    col_default_width: '150dp'
+                    row_default_height:'210dp'
+                    col_default_width: '210dp'
                     MyKnob:
-                        size:               150, 150
+                        size:               210, 210
                         min:                0
                         max:                360
                         step:               1
                         slope:              0
                         value:              root.x_value                  
-                        knobimg_source:     "img/compass_out.png"   
+                        knobimg_source:     "img/compass-needle.png"   
                         show_marker:        True                   
-                        marker_img:         "img/compass_in.png"        
+                        marker_img:         "img/compass-outside.png"        
                         knob_size:          0.4                    
             GridLayout:
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.48,'y':.32}
+                pos_hint: {'x':.49,'y':.32}
                 row_force_default: True
-                row_default_height:'50dp'
-                col_default_width: '150dp'
+                row_default_height:'40dp'
+                col_default_width: '200dp'
                 Label:
                     text: "elevation"
                 GridLayout:
                     cols: 1
                     row_force_default: True
-                    row_default_height:'150dp'
-                    col_default_width: '150dp'
+                    row_default_height:'210dp'
+                    col_default_width: '210dp'
                     MyKnob:
-                        size:               150, 150
+                        size:               210, 210
                         min:                0
                         max:                360
                         step:               1
                         slope:              0
                         value:              root.y_value                      
-                        knobimg_source:     "img/compass_out.png"    
+                        knobimg_source:     "img/compass-needle.png"    
                         show_marker:        True                    
-                        marker_img:         "img/compass_in.png"         
+                        marker_img:         "img/compass-outside.png"         
                         knob_size:          0.4               
 
 
