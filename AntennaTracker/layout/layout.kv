@@ -472,113 +472,6 @@
 
 
 
-            # ##############################
-            # ## CALCULATIONS ##############
-            # FloatLayout:
-            #     Bubble:
-            #         size_hint: (None, None)
-            #         width: '250dp'
-            #         height: '70dp'
-            #         pos_hint: {'x':.17,'y':.22}
-            #         background_color:(1, 0, 0, .4)
-            #         Label:
-            #             text: 'Calculations'
-            #             font_size:'20sp'
-            #             bold: True
-            # GridLayout: #Text fields
-            #     cols: 1
-            #     rows: 3
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.07,'y':.07}
-            #     row_force_default:True
-            #     row_default_height:'40dp'
-            #     spacing: '2dp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'35dp'
-            #         spacing:'20dp'
-            #         Label:
-            #             id: calculationA_lbl
-            #             text: 'Value A'
-            #             bold: True
-            #         GridLayout:
-            #             cols: 1
-            #             row_force_default:True
-            #             row_default_height:'30dp'
-            #             col_default_width: '180dp'
-            #             TextInput:
-            #                 id: calculationA
-            #                 readonly: True
-            #                 multiline: False
-            #                 font_size: '18sp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'35dp'
-            #         spacing:'20dp'
-            #         Label:
-            #             id: calculationB_lbl
-            #             text: 'Value B'
-            #             bold: True
-            #         GridLayout:
-            #             cols: 1
-            #             row_force_default:True
-            #             row_default_height:'30dp'
-            #             col_default_width: '180dp'
-            #             TextInput:
-            #                 id: calculationB
-            #                 readonly: True
-            #                 multiline: False
-            #                 font_size: '18sp'
-            #     GridLayout:
-            #         cols: 2
-            #         row_force_default:True
-            #         row_default_height:'35dp'
-            #         spacing:'20dp'
-            #         Label:
-            #             id: calculationC_lbl
-            #             text: 'Value C'
-            #             bold: True
-            #         GridLayout:
-            #             cols: 1
-            #             row_force_default:True
-            #             row_default_height:'30dp'
-            #             col_default_width: '180dp'
-            #             TextInput:
-            #                 id: calculationC
-            #                 readonly: True
-            #                 multiline: False
-            #                 font_size: '18sp'
-            # GridLayout:
-            #     cols: 1
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.29,'y':.03}
-            #     Gauge:
-            #         size_gauge: 100
-            #         value: root.x_value/3.6
-            #         size_text:25
-            # GridLayout:
-            #     cols: 1
-            #     size_hint: (None, None)
-            #     pos_hint: {'x':.38,'y':.08}
-            #     Gauge:
-            #         size_gauge: 100
-            #         value: root.y_value/3.6
-            #         size_text:25
-            #         canvas.before:
-            #             PushMatrix
-            #             Rotate:
-            #                 angle:-90
-            #                 origin: self.center
-            #         canvas.after:
-            #             PopMatrix
-            # ## END CALCULATIONS ##########
-            # ##############################
-
-
-
-
             ###############################
             ## MAP VIEW ###################
             GridLayout:
@@ -818,6 +711,59 @@
                             Label:
                                 font_size: '17sp'
                                 text: str(root.truncate(motor_sliderY.value))
+            ## COMPASS ###########
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.31,'y':.32}
+                row_force_default: True
+                row_default_height:'40dp'
+                col_default_width: '209dp'
+                Label:
+                    text: "azimuth"
+                GridLayout:
+                    cols: 1
+                    row_force_default: True
+                    row_default_height:'210dp'
+                    col_default_width: '210dp'
+                    MyKnob:
+                        size:               210, 210
+                        min:                0
+                        max:                360
+                        step:               1
+                        slope:              0
+                        value:              root.x_value                  
+                        knobimg_source:     "img/compass-needle.png"   
+                        show_marker:        True                   
+                        marker_img:         "img/compass-outside.png"        
+                        knob_size:          0.4                    
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.49,'y':.32}
+                row_force_default: True
+                row_default_height:'40dp'
+                col_default_width: '210dp'
+                Label:
+                    text: "elevation"
+                GridLayout:
+                    cols: 1
+                    row_force_default: True
+                    row_default_height:'210dp'
+                    col_default_width: '210dp'
+                    MyKnob:
+                        size:               210, 210
+                        min:                0
+                        max:                360
+                        step:               1
+                        slope:              0
+                        value:              root.y_value                      
+                        knobimg_source:     "img/compass-needle.png"    
+                        show_marker:        True                    
+                        marker_img:         "img/compass-outside.png"         
+                        knob_size:          0.4               
             ### END MOTOR CONTROL ####
             #############################
 
@@ -850,59 +796,7 @@
             ##############################
 
             
-            ## END COMPASS ###########
-            GridLayout:
-                cols: 1
-                rows: 2
-                size_hint: (None, None)
-                pos_hint: {'x':.31,'y':.32}
-                row_force_default: True
-                row_default_height:'40dp'
-                col_default_width: '200dp'
-                Label:
-                    text: "azimuth"
-                GridLayout:
-                    cols: 1
-                    row_force_default: True
-                    row_default_height:'210dp'
-                    col_default_width: '210dp'
-                    MyKnob:
-                        size:               210, 210
-                        min:                0
-                        max:                360
-                        step:               1
-                        slope:              0
-                        value:              root.x_value                  
-                        knobimg_source:     "img/compass-needle.png"   
-                        show_marker:        True                   
-                        marker_img:         "img/compass-outside.png"        
-                        knob_size:          0.4                    
-            GridLayout:
-                cols: 1
-                rows: 2
-                size_hint: (None, None)
-                pos_hint: {'x':.49,'y':.32}
-                row_force_default: True
-                row_default_height:'40dp'
-                col_default_width: '200dp'
-                Label:
-                    text: "elevation"
-                GridLayout:
-                    cols: 1
-                    row_force_default: True
-                    row_default_height:'210dp'
-                    col_default_width: '210dp'
-                    MyKnob:
-                        size:               210, 210
-                        min:                0
-                        max:                360
-                        step:               1
-                        slope:              0
-                        value:              root.y_value                      
-                        knobimg_source:     "img/compass-needle.png"    
-                        show_marker:        True                    
-                        marker_img:         "img/compass-outside.png"         
-                        knob_size:          0.4               
+            
 
 
 
@@ -915,7 +809,6 @@
     size:(450,300)
     auto_dismiss:False
     title_size:16
-
     FloatLayout:
         Label:
             text:"Kyle Prouty\nkyle@prouty.io\n\nLevi Willmeth\nlevi.willmeth@gmail.com"

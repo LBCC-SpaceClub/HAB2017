@@ -3,9 +3,7 @@ Kivy==1.9.1
 pyserial==3.3
 configparser==3.5
 docutils==0.13.1
-kivy-garden==0.1.4
-
-# pip install docutils
-# pip install kivy-garden
-# pip install futures requests
-# garden install mapview
+functools32==3.2.3.post2
+futures==3.1.1
+requests==2.9.1
+Kivy-Garden==0.1.4

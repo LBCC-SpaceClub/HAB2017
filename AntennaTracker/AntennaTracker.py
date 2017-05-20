@@ -20,12 +20,13 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.uix.rst import RstDocument
 from kivy.clock import Clock, mainthread
-from kivy.garden.mapview import *
+from kivy.uix.videoplayer import VideoPlayer
 
 from data.IntervalThread import *
 from data.DatabaseThread import *
 from data.ArduinoThread import *
 from data.MyKnob import *
+from data.libs.garden.mapview import *
 
 
 
@@ -44,8 +45,9 @@ class RootLayout(FloatLayout):
 	db_list = []
 	arduino_list = []
 	map_list = []
-	map_lat = 44.5637806 #OSU Lat/Long
-	map_long= -123.2794442
+	map_coords = [] #OSU Lat/Long
+	map_lat  = 44.5637806
+	map_long = -123.2794442
 
 
 	def __init__(self, **kwargs):
@@ -92,8 +94,8 @@ class RootLayout(FloatLayout):
 	def stopIridiumDatabase(self):
 		if(self.db_list):
 			self.updateConsole(" **STOP** iridium database connection")
-			self.ids.payload_lat.text = ""
-			self.ids.payload_long.text = ""
+			self.ids.payload_lat.text = "0.0"
+			self.ids.payload_long.text = "0.0"
 			self.ids.payload_alt.text = ""
 			self.ids.payload_date.text = ""
 			self.ids.payload_time.text = ""
@@ -234,6 +236,7 @@ class RootLayout(FloatLayout):
 
 
 	def mapUpdate(self):
+		#check cords to see if they changed..if they have then print update
 		try:
 			self.updateConsole(" **UPDATE** map latitude and longitude")
 			self.ids.mapview.center_on(self.map_lat, self.map_long)
@@ -248,6 +251,7 @@ class RootLayout(FloatLayout):
 					pass
 		except:
 			self.updateConsole(" **ERROR** invalid latitude and longitude")
+
 
 
 	def motorStopSwitch(self):
@@ -313,8 +317,11 @@ class RootLayout(FloatLayout):
 				self.ids.payload_alt.text = self.db_list[0].altMeters
 				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
-				self.map_lat = float(self.db_list[0].latDeg)
-				self.map_long = float(self.db_list[0].lonDeg)
+				try:
+					self.map_lat = float(self.db_list[0].latDeg)
+					self.map_long = float(self.db_list[0].lonDeg)
+				except:
+					pass
 				self.mapUpdate()
 			else:
 				#self.db_list.pop(0)
