@@ -1,28 +1,30 @@
-#!/usr/bin/env python
 import serial
 import serial.tools.list_ports
-from threading import Thread
 import time
+from threading import Thread
+from data.ServoControl import *
+
 
 class ArduinoThread(Thread):
-    ''' Methods to get information from the arduino (gps and IMU) '''
+    
+    arduinoBaud = 115200
+    arduinoTimeout = 5
+    arduinoCOM = None
+    servo_control = ServoControl()
+    
+
     def __init__(self):
         Thread.__init__(self)
         self.stop = True
         self.log = ""
         self.usb = None
         self.connected = False
-        self.arduinoCOM = None
-        self.arduinoBaud = 115200
-        self.arduinoTimeout = 5
-        # GPS fields
         self.gpsTime = ""
         self.gpsDate = ""
         self.latDeg = ""
         self.lonDeg = ""
         self.altMeters = ""
         self.ser = None
-        # IMU fields
         self.imuX = None
         self.imuY = None
         self.imuZ = None
@@ -34,19 +36,24 @@ class ArduinoThread(Thread):
             self.connected = True
             
             while(self.stop):
-                self.update()
+                self.updateData()
         else:
             self.setLog(" **ERROR** failed to connect to arudino usb")
             self.connected = False
 
 
     def __del__(self):
-        ''' Cleans up when this object is destroyed '''
         if self.usb:
             self.setLog(" **STOP** closing port")
             self.usb.close()
 
 
+    
+    ##################################################
+    ### 
+    ###     Connection Methods
+    ###
+    ##################################################
     def connectToArduino(self):
         try:
             self.arduinoCOM = self.findComPort()
@@ -63,8 +70,8 @@ class ArduinoThread(Thread):
             return False
 
 
+
     def findComPort(self):
-        # find the actual com port of the arduino (windows only?)
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
             if 'Arduino' in p[1]:
@@ -73,10 +80,21 @@ class ArduinoThread(Thread):
                 return p[0]
             else:
                 self.setLog(" **ERROR** could not find an attached arduino") 
+
+
+
+    ##################################################
+    ### 
+    ###     Calibration Methods
+    ###
+    ##################################################
+    def runCalibrateIMU(self):
+        self.thread = Thread(target=calibrateIMU)
+        self.thread.start()
+        self.thread.join()
     
 
     def calibrateIMU(self):
-        ''' Poorly named as it doesn't force the arduino to DO anything '''
         calibration = 0
         calibrationGoal = 8
         temp_arduino = None
@@ -94,8 +112,34 @@ class ArduinoThread(Thread):
         usb.flushInput()
 
 
-    def update(self):
-        ''' Read in new data from the arduino '''
+
+    ##################################################
+    ### 
+    ###     Servo Control
+    ###
+    ##################################################
+    def servoMoveToCenter(self):
+        if self.usb:
+            self.servo_control.moveToCenterPos(self.usb)
+
+
+    def servoMoveTilt(self, degrees):
+        if self.usb:
+            self.servo_control.moveTiltServo(degrees ,self.usb)
+
+
+    def servoMovePan(self, pos):
+        if self.usb:
+            self.servo_control.movePanServo(pos ,self.usb)
+
+
+
+    ##################################################
+    ### 
+    ###     Update Values Methods
+    ###
+    ##################################################
+    def updateData(self): 
         while self.usb.inWaiting():
             line = self.usb.readline()
             try:
@@ -107,14 +151,6 @@ class ArduinoThread(Thread):
                     self.setLog(" **ERROR** reading line: "+line)
             except ValueError:
                 self.setLog(" **ERROR** parsing "+line)
-        '''
-        print "Most up-to-date Lat: {}, Long: {}, Alt (m): {}".format(
-            self.latDeg,
-            self.lonDeg,
-            self.altMeters
-        )
-        print "Heading: ", self.imuX
-        '''
 
 
     def updateIMU(self, line):
@@ -135,6 +171,12 @@ class ArduinoThread(Thread):
         self.altMeters = float(line[2])
 
 
+
+    ##################################################
+    ### 
+    ###     Logging Methods
+    ###
+    ##################################################
     def setLog(self, txt):
         self.log= self.log+""+txt
 
@@ -149,6 +191,3 @@ class ArduinoThread(Thread):
     def clearLog(self):
         self.log = ""
 
-
-if __name__ == "__main__":
-    print ("Arduino is not a standalone Python program.")

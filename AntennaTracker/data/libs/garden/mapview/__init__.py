@@ -9,6 +9,7 @@ MapView is a Kivy widget that display maps.
 """
 '''
 	Modified by Kyle Prouty so that it runs embedded in application
+	kyle@prouty.io
 '''
 
 __all__ = ["Coordinate", "Bbox", "MapView", "MapSource", "MapMarker",

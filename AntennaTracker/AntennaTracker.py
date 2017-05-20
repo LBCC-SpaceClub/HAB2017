@@ -1,33 +1,8 @@
-import kivy
-from kivy.config import Config
-kivy.config.Config.set('graphics','resizable', False) #config needs to be set before kivy.app is imported
-from kivy.app import App
-from time import time
-from os.path import dirname, join
-from kivy.lang import Builder
-from kivy.properties import NumericProperty,StringProperty,BooleanProperty
-from kivy.properties import ListProperty,ReferenceListProperty,ObjectProperty
-from kivy.animation import Animation
-from kivy.uix.screenmanager import Screen
-from kivy.core.window import Window
-from kivy.uix.widget import Widget
-from kivy.uix.bubble import Bubble
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.label import Label
-from kivy.uix.popup import Popup
-from kivy.uix.button import Button
-from kivy.uix.rst import RstDocument
-from kivy.clock import Clock, mainthread
-from kivy.uix.videoplayer import VideoPlayer
-
-from data.IntervalThread import *
-from data.DatabaseThread import *
-from data.ArduinoThread import *
-from data.MyKnob import *
-from data.libs.garden.mapview import *
-
+"""
+	Author: Kyle Prouty <kyle@prouty.io>
+						<proutyky@oregonstate.edu>
+"""
+from data.libs.Dependencies import *
 
 
 class RootLayout(FloatLayout):
@@ -45,8 +20,8 @@ class RootLayout(FloatLayout):
 	db_list = []
 	arduino_list = []
 	map_list = []
-	map_coords = [] #OSU Lat/Long
-	map_lat  = 44.5637806
+	map_oldcoords = [] 
+	map_lat  = 44.5637806#OSU Lat/Long
 	map_long = -123.2794442
 
 
@@ -55,12 +30,12 @@ class RootLayout(FloatLayout):
 		Clock.schedule_once(self.run)
 
 
-	def updateConsole(self, text):
-		self.rst_doc=(self.rst_doc+"\n"+"> "+text+"\n")
-
-
-	#######################
-	### INITIAL SETTING ###
+	
+	##################################################
+	### 
+	###		Start-up Setting
+	###
+	##################################################
 	def run(self, args):
 		self.updateConsole(" **WELCOME** setting initialized")
 		self.ids.db_status.text = "Not Connected"
@@ -77,6 +52,12 @@ class RootLayout(FloatLayout):
 		self.mapUpdate()
 
 
+
+	##################################################
+	### 
+	###		Iridium Database Methods
+	###
+	##################################################
 	def startIridiumDatabase(self):
 		self.updateConsole(" **START** iridium database connection")
 		self.ids.payload_connect.disabled = True
@@ -89,8 +70,8 @@ class RootLayout(FloatLayout):
 				self.db_list[0].start()
 			except:
 				return
-				
 
+	
 	def stopIridiumDatabase(self):
 		if(self.db_list):
 			self.updateConsole(" **STOP** iridium database connection")
@@ -109,6 +90,12 @@ class RootLayout(FloatLayout):
 			self.ids.payload_connect.disabled = False
 
 
+
+	##################################################
+	### 
+	###		Arduino Methods
+	###
+	##################################################
 	def startArduinoUSB(self):
 		self.updateConsole(" **START** arduino usb connection")
 		self.arduino_list.insert(0,ArduinoThread())
@@ -125,7 +112,7 @@ class RootLayout(FloatLayout):
 				self.ids.station_disconnect.disabled = False
 				self.checkArduinoStatus()
 
-
+	
 	def stopArduinoUSB(self):
 		if(self.arduino_list):
 			self.updateConsole(" **STOP** arduino usb")
@@ -145,6 +132,11 @@ class RootLayout(FloatLayout):
 
 
 
+	##################################################
+	### 
+	###		Payload Methods
+	###
+	##################################################
 	def payloadConnect(self):
 		if(self.ids.cbox_database.active):
 			self.startIridiumDatabase()
@@ -197,6 +189,12 @@ class RootLayout(FloatLayout):
 			self.ids.payload_connect.disabled = False
 
 
+
+	##################################################
+	### 
+	###		Station Methods
+	###
+	##################################################
 	def stationConnect(self):
 		if(self.ids.cbox_arduino_usb.active):
 			self.startArduinoUSB()
@@ -235,10 +233,16 @@ class RootLayout(FloatLayout):
 			self.ids.station_connect.disabled = False
 
 
+
+	##################################################
+	### 
+	###		Map Methods
+	###
+	##################################################
 	def mapUpdate(self):
 		#check cords to see if they changed..if they have then print update
 		try:
-			self.updateConsole(" **UPDATE** map latitude and longitude")
+			self.updateConsole(" **UPDATE** map latitude and longitude.")
 			self.ids.mapview.center_on(self.map_lat, self.map_long)
 			if self.map_list:
 				self.ids.mapview.remove_marker(self.map_list[0])
@@ -254,6 +258,11 @@ class RootLayout(FloatLayout):
 
 
 
+	##################################################
+	### 
+	###		Motor Control Methods
+	###
+	##################################################
 	def motorStopSwitch(self):
 		if(self.ids.motor_switchstop.active):
 			self.updateConsole(" **STOP** motors")
@@ -274,19 +283,41 @@ class RootLayout(FloatLayout):
 			self.ids.motor_sliderY_text.disabled = True
 
 
+
+	##################################################
+	### 
+	###		Helper Methods
+	###
+	##################################################
+	def updateConsole(self, text):
+		self.rst_doc=(self.rst_doc+"\n"+"> "+text+"\n")
+
 	def sliderValidate(self, value):
 		if(value > 360.0):
 			return 360.0
 		else:
 			return value
 
-
 	def truncate(self,val):
 		f = '%.12f' % val
 		a,b,c = f.partition('.')
 		return '.'.join([a, (c+'0'*2)[:2]])
 
+	def aboutPopup(self):
+		popup = AboutPopup()
+		popup.open()
 
+	def exitPopup(self):
+		popup = ExitPopup()
+		popup.open()
+
+
+
+	##################################################
+	### 
+	###		Pooling Threads
+	###
+	##################################################
 	## Pooling Log Messages
 	@interval_threadA.setInterval(1)
 	def poolLogMessages(self):
@@ -340,22 +371,11 @@ class RootLayout(FloatLayout):
 				self.ids.station_alt.text = self.arduino_list[0].altMeters
 				self.ids.station_date.text = str(self.arduino_list[0].gpsDate)
 				self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
-
-
-	def aboutPopup(self):
-		popup = AboutPopup()
-		popup.open()
-
-
-	def exitPopup(self):
-		popup = ExitPopup()
-		popup.open()
+				self.arduino_list[0].servoMoveTilt(x_value, self.arduino_list[0].usb)
 
 
 #-------------------------------#
-class GaugeApp(Widget):
-	increasing = NumericProperty(1)
-	step = NumericProperty(1)
+
 
 
 #-------------------------------#

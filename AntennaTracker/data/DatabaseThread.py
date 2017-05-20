@@ -58,7 +58,6 @@ class DatabaseThread(Thread):
 
 
 	def update(self):
-		''' Read in new data from the database '''
 		if time.time() - self.lastChecked > 30: # don't hammer db
 			data = self.parseData()
 			self.latDeg = data["gps_lat"]
