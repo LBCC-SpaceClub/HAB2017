@@ -70,7 +70,7 @@ class RootLayout(FloatLayout):
 			self.poolDatabaseStatus()
 			self.db_list[0].start()
 		except:
-			self.updateConsole(" **ERROR** Could not run startIridiumDatabase()")
+			self.updateConsole(" **ERROR** could not run startIridiumDatabase()")
 
 
 	def stopIridiumDatabase(self):
@@ -158,9 +158,9 @@ class RootLayout(FloatLayout):
 		try:
 			self.map_lat = float(self.ids.payload_lat.text)
 			self.map_long = float(self.ids.payload_long.text)
+			self.mapUpdate()
 		except:
 			pass
-		self.mapUpdate()
 
 
 	def payloadManualSwitch(self):
@@ -351,10 +351,10 @@ class RootLayout(FloatLayout):
 					self.ids.payload_alt.text = self.db_list[0].altMeters
 					self.ids.payload_date.text = str(self.db_list[0].gpsDate)
 					self.ids.payload_time.text = str(self.db_list[0].gpsTime)
-					self.mapUpdate()
 					try:
 						self.map_lat = float(self.db_list[0].latDeg)
 						self.map_long = float(self.db_list[0].lonDeg)
+						self.mapUpdate()
 					except:
 						self.updateConsole(
 							" **ERROR** Could not update map coordinates."
