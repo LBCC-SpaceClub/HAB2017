@@ -1,4 +1,12 @@
 all: install
 
+install_linux:
+	# run with sudo
+	add-apt-repository ppa:kivy-team/kivy
+	apt-get update
+	apt-get install python3-kivy
+	apt-get install python3-pip
+	pip3 install -r requirements.txt
+
 install:
-	pip install -r requirements.txt
+	pip3 install -r requirements.txt

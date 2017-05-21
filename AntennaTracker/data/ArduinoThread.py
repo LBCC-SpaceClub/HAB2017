@@ -62,13 +62,9 @@ class ArduinoThread(Thread):
                 baudrate = self.arduinoBaud,
                 timeout = self.arduinoTimeout
             )
-            if not self.usb:
-                return True
-            else:
-                return False
+            return not self.usb
         except:
             return False
-
 
 
     def findComPort(self):
@@ -178,7 +174,7 @@ class ArduinoThread(Thread):
     ###
     ##################################################
     def setLog(self, txt):
-        self.log= self.log+""+txt
+        self.log = self.log+""+txt
 
 
     def getLog(self):

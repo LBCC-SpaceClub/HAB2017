@@ -1,6 +1,8 @@
+#!/usr/bin/python3
 """
-	Author: Kyle Prouty <kyle@prouty.io>
-						<proutyky@oregonstate.edu>
+	Authors:	Kyle Prouty 	<kyle@prouty.io>
+								<proutyky@oregonstate.edu>
+				Levi Willmeth 	<levi.willmeth@gmail.com>
 """
 from data.libs.Dependencies import *
 
@@ -20,7 +22,7 @@ class RootLayout(FloatLayout):
 	db_list = []
 	arduino_list = []
 	map_list = []
-	map_oldcoords = [] 
+	map_oldcoords = []
 	map_lat  = 44.5637806#OSU Lat/Long
 	map_long = -123.2794442
 
@@ -30,9 +32,9 @@ class RootLayout(FloatLayout):
 		Clock.schedule_once(self.run)
 
 
-	
+
 	##################################################
-	### 
+	###
 	###		Start-up Setting
 	###
 	##################################################
@@ -54,24 +56,23 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Iridium Database Methods
 	###
 	##################################################
 	def startIridiumDatabase(self):
 		self.updateConsole(" **START** iridium database connection")
-		self.ids.payload_connect.disabled = True
-		self.db_check = True
-		self.db_list.insert(0,DatabaseThread(self.configs))
-		self.poolLogMessages()
-		self.poolDatabaseStatus()
-		if(self.db_list):
-			try:
-				self.db_list[0].start()
-			except:
-				return
+		try:
+			self.ids.payload_connect.disabled = True
+			self.db_check = True
+			self.db_list.insert(0,DatabaseThread(self.configs))
+			self.poolLogMessages()
+			self.poolDatabaseStatus()
+			self.db_list[0].start()
+		except:
+			self.updateConsole(" **ERROR** Could not run startIridiumDatabase()")
 
-	
+
 	def stopIridiumDatabase(self):
 		if(self.db_list):
 			self.updateConsole(" **STOP** iridium database connection")
@@ -92,7 +93,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Arduino Methods
 	###
 	##################################################
@@ -112,7 +113,7 @@ class RootLayout(FloatLayout):
 				self.ids.station_disconnect.disabled = False
 				self.checkArduinoStatus()
 
-	
+
 	def stopArduinoUSB(self):
 		if(self.arduino_list):
 			self.updateConsole(" **STOP** arduino usb")
@@ -133,7 +134,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Payload Methods
 	###
 	##################################################
@@ -149,7 +150,7 @@ class RootLayout(FloatLayout):
 	def payloadSetManualValues(self):
 		self.updateConsole(" **SET** payload ("+self.ids.payload_lat.text+", "
 			+self.ids.payload_long.text+", "+self.ids.payload_alt.text+")")
-		
+
 
 	def payloadSetGPSValues(self):
 		self.updateConsole(" **SET** map gps (Lat: "+self.ids.payload_lat.text+", Long: "
@@ -161,7 +162,7 @@ class RootLayout(FloatLayout):
 			pass
 		self.mapUpdate()
 
-	
+
 	def payloadManualSwitch(self):
 		if(self.ids.payload_switchmanual.active):
 			self.updateConsole(" **MODE** manual payload")
@@ -191,7 +192,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Station Methods
 	###
 	##################################################
@@ -235,7 +236,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Map Methods
 	###
 	##################################################
@@ -259,7 +260,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Motor Control Methods
 	###
 	##################################################
@@ -285,7 +286,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Helper Methods
 	###
 	##################################################
@@ -314,7 +315,7 @@ class RootLayout(FloatLayout):
 
 
 	##################################################
-	### 
+	###
 	###		Pooling Threads
 	###
 	##################################################
@@ -336,24 +337,28 @@ class RootLayout(FloatLayout):
 
 
 	## Pooling the status of connections / updates DB values
-	@interval_threadB.setInterval(4)
+	@interval_threadB.setInterval(5)
 	def poolDatabaseStatus(self):
 		if(self.db_list):
 			if(self.db_list[0].connected):
+				self.db_list[0].update()
 				self.ids.db_status.text = "Connected"
 				self.ids.db_status.color = (0,1,0,1)
 				self.ids.payload_disconnect.disabled = False
-				self.ids.payload_lat.text = self.db_list[0].latDeg
-				self.ids.payload_long.text = self.db_list[0].lonDeg
-				self.ids.payload_alt.text = self.db_list[0].altMeters
-				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
-				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
-				try:
-					self.map_lat = float(self.db_list[0].latDeg)
-					self.map_long = float(self.db_list[0].lonDeg)
-				except:
-					pass
-				self.mapUpdate()
+				if self.ids.payload_time.text != str(self.db_list[0].gpsTime):
+					self.ids.payload_lat.text = self.db_list[0].latDeg
+					self.ids.payload_long.text = self.db_list[0].lonDeg
+					self.ids.payload_alt.text = self.db_list[0].altMeters
+					self.ids.payload_date.text = str(self.db_list[0].gpsDate)
+					self.ids.payload_time.text = str(self.db_list[0].gpsTime)
+					self.mapUpdate()
+					try:
+						self.map_lat = float(self.db_list[0].latDeg)
+						self.map_long = float(self.db_list[0].lonDeg)
+					except:
+						self.updateConsole(
+							" **ERROR** Could not update map coordinates."
+						)
 			else:
 				#self.db_list.pop(0)
 				self.ids.payload_connect.disabled = True
