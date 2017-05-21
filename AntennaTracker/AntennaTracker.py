@@ -70,7 +70,7 @@ class RootLayout(FloatLayout):
 			self.poolDatabaseStatus()
 			self.db_list[0].start()
 		except:
-			self.updateConsole(" **ERROR** Could not run startIridiumDatabase")
+			self.updateConsole(" **ERROR** Could not run startIridiumDatabase()")
 
 
 	def stopIridiumDatabase(self):

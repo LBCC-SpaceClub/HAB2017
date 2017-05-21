@@ -27,7 +27,6 @@ class DatabaseThread(Thread):
 		if(self.connectToDB()):
 			self.connected = True
 			self.setLog(" **SUCCESS** Loaded iridium database config file")
-			self.update()
 		else:
 			self.connected = False
 
@@ -57,19 +56,20 @@ class DatabaseThread(Thread):
 
 	def update(self):
 		if time.time() - self.lastChecked > 30: # don't hammer db
-			try:
-				data = self.parseData()
-				self.latDeg = data["gps_lat"]
-				self.lonDeg = data["gps_long"]
-				self.altMeters = data["gps_alt"]
-				self.gpsDate = str(data["gps_fltDate"])
-				self.gpsTime = str(data["gps_time"])
-				self.lastChecked = time.time()
-				self.setLog(" **UPDATE** parsed new database info")
-			except:
-				# a botched parse deserves a smaller delay
-				self.lastChecked = time.time() - 20
-				self.setLog(" **ERROR** failed to parse data, check internet connection")
+			data = self.parseData()
+			if data:
+				try:
+					self.latDeg = data["gps_lat"]
+					self.lonDeg = data["gps_long"]
+					self.altMeters = data["gps_alt"]
+					self.gpsDate = str(data["gps_fltDate"])
+					self.gpsTime = str(data["gps_time"])
+					self.lastChecked = time.time()
+					self.setLog(" **UPDATE** updated location from iridium database")
+				except:
+					# a botched parse deserves a smaller delay
+					self.lastChecked = time.time() - 20
+					self.setLog(" **ERROR** failed to parse data, check internet connection")
 
 
 	def parseData(self):
@@ -78,11 +78,9 @@ class DatabaseThread(Thread):
 			query = self.cfg["MySQL"]["Query"]
 			sql.execute(query)
 			result = sql.fetchone()
-			sql.close()
 			return result
 		except:
-			self.setLog(" **ERROR** failed to get data from database")
-			sql.close()
+			self.setLog(" **ERROR** failed to fetch data from iridium database")
 
 
 	def setLog(self, txt):
