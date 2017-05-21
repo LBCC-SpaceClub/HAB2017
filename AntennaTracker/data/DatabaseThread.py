@@ -54,7 +54,7 @@ class DatabaseThread(Thread):
 			)
 			return True
 		except:
-			self.setLog(" **ERROR** failed to connect to MySQL database")
+			self.setLog(" **ERROR** could not connect to iridium database")
 			return False
 
 
@@ -75,19 +75,9 @@ class DatabaseThread(Thread):
 					except:
 						# a botched parse deserves a smaller delay
 						self.lastChecked = time.time() - 20
-						self.setLog(" **ERROR** failed to parse data, check internet connection")
+						self.setLog(" **ERROR** failed to parse line from database")
 			except:
 				self.setLog(" **ERROR** failed to fetch data from iridium database")
-
-
-	def parseData(self):
-		try:
-			with db.cursor() as cursor:
-				query = self.cfg["MySQL"]["Query"]
-				cursor.execute(query)
-				return sql.fetchone()
-		except:
-			self.setLog(" **ERROR** failed to fetch data from iridium database")
 
 
 	def setLog(self, txt):
