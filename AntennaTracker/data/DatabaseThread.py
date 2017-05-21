@@ -21,17 +21,14 @@ class DatabaseThread(Thread):
 		self.daemon = True #stops thread on app exit, important
 		self.log = ""
 		self.connected = False
-		
+
 
 	def run(self):
 		if(self.connectToDB()):
-			self.setLog(" **SUCCESS** iridium database connected, parsing data")
 			self.connected = True
-			
-			while(self.stop):
-				self.update()
+			self.setLog(" **SUCCESS** Loaded iridium database config file")
+			self.update()
 		else:
-			self.setLog(" **ERROR** failed to connect to MySQL database")
 			self.connected = False
 
 
@@ -42,7 +39,7 @@ class DatabaseThread(Thread):
 		except:
 			self.setLog(" **ERROR** could not read database config file")
 			return False
-		
+
 		try:
 			self.db = pymysql.connect(
 				host= self.cfg["MySQL"]["Host"],
@@ -54,18 +51,25 @@ class DatabaseThread(Thread):
 			)
 			return True
 		except:
+			self.setLog(" **ERROR** failed to connect to MySQL database")
 			return False
 
 
 	def update(self):
 		if time.time() - self.lastChecked > 30: # don't hammer db
-			data = self.parseData()
-			self.latDeg = data["gps_lat"]
-			self.lonDeg = data["gps_long"]
-			self.altMeters = data["gps_alt"]
-			self.gpsDate = str(data["gps_fltDate"])
-			self.gpsTime = str(data["gps_time"])
-			self.lastChecked = time.time()
+			try:
+				data = self.parseData()
+				self.latDeg = data["gps_lat"]
+				self.lonDeg = data["gps_long"]
+				self.altMeters = data["gps_alt"]
+				self.gpsDate = str(data["gps_fltDate"])
+				self.gpsTime = str(data["gps_time"])
+				self.lastChecked = time.time()
+				self.setLog(" **UPDATE** parsed new database info")
+			except:
+				# a botched parse deserves a smaller delay
+				self.lastChecked = time.time() - 20
+				self.setLog(" **ERROR** failed to parse data, check internet connection")
 
 
 	def parseData(self):
@@ -73,16 +77,12 @@ class DatabaseThread(Thread):
 			sql = self.db.cursor()
 			query = self.cfg["MySQL"]["Query"]
 			sql.execute(query)
-			try:
-				result = sql.fetchone()
-				self.setLog(" **UPDATE** parsing data successful")
-				return result
-			except:
-				self.setLog(" **ERROR** failed to get data from database")
-				sql.close()
-				return
+			result = sql.fetchone()
+			sql.close()
+			return result
 		except:
-			self.setLog(" **ERROR** failed to parse data, check internet connection")
+			self.setLog(" **ERROR** failed to get data from database")
+			sql.close()
 
 
 	def setLog(self, txt):
