@@ -23,10 +23,14 @@ class DatabaseThread(Thread):
 		self.connected = False
 
 
+	def __del__(self):
+		# Clean up the db connection when this thread exits
+		self.db.close()
+
 	def run(self):
 		if(self.connectToDB()):
 			self.connected = True
-			self.setLog(" **SUCCESS** Loaded iridium database config file")
+			# self.setLog(" **SUCCESS** Loaded iridium database config file")
 		else:
 			self.connected = False
 
@@ -36,7 +40,7 @@ class DatabaseThread(Thread):
 			self.cfg = configparser.ConfigParser()
 			self.cfg.read(self.cfg_file)
 		except:
-			self.setLog(" **ERROR** could not read database config file")
+			self.setLog(" **ERROR** could not read /cfg/Configs.ini")
 			return False
 
 		try:
@@ -56,29 +60,32 @@ class DatabaseThread(Thread):
 
 	def update(self):
 		if time.time() - self.lastChecked > 30: # don't hammer db
-			data = self.parseData()
-			if data:
-				try:
-					self.latDeg = data["gps_lat"]
-					self.lonDeg = data["gps_long"]
-					self.altMeters = data["gps_alt"]
-					self.gpsDate = str(data["gps_fltDate"])
-					self.gpsTime = str(data["gps_time"])
-					self.lastChecked = time.time()
-					self.setLog(" **UPDATE** updated location from iridium database")
-				except:
-					# a botched parse deserves a smaller delay
-					self.lastChecked = time.time() - 20
-					self.setLog(" **ERROR** failed to parse data, check internet connection")
+			try:
+				with self.db.cursor() as sql:
+					sql.execute(self.cfg["MySQL"]["Query"])
+					data = sql.fetchone()
+					try:
+						self.latDeg = data["gps_lat"]
+						self.lonDeg = data["gps_long"]
+						self.altMeters = data["gps_alt"]
+						self.gpsDate = str(data["gps_fltDate"])
+						self.gpsTime = str(data["gps_time"])
+						self.lastChecked = time.time()
+						self.setLog(" **UPDATE** updated location from iridium database")
+					except:
+						# a botched parse deserves a smaller delay
+						self.lastChecked = time.time() - 20
+						self.setLog(" **ERROR** failed to parse data, check internet connection")
+			except:
+				self.setLog(" **ERROR** failed to fetch data from iridium database")
 
 
 	def parseData(self):
 		try:
-			sql = self.db.cursor()
-			query = self.cfg["MySQL"]["Query"]
-			sql.execute(query)
-			result = sql.fetchone()
-			return result
+			with db.cursor() as cursor:
+				query = self.cfg["MySQL"]["Query"]
+				cursor.execute(query)
+				return sql.fetchone()
 		except:
 			self.setLog(" **ERROR** failed to fetch data from iridium database")
 
