@@ -5,7 +5,7 @@ from threading import Thread
 from data.ServoControl import *
 
 
-class ArduinoThread(Thread):
+class ArduinoServoThread(Thread):
 
     arduinoBaud = 115200
     arduinoTimeout = 5

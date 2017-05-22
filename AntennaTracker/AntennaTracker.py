@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """
-	Authors:	Kyle Prouty 	<kyle@prouty.io>
+	Authors:
+				Kyle Prouty 	<kyle@prouty.io>
 								<proutyky@oregonstate.edu>
 				Levi Willmeth 	<levi.willmeth@gmail.com>
 """
@@ -97,26 +98,43 @@ class RootLayout(FloatLayout):
 	###		Arduino Methods
 	###
 	##################################################
-	def startArduinoUSB(self):
-		self.updateConsole(" **START** arduino usb connection")
-		self.arduino_list.insert(0,ArduinoThread())
-		self.arduino_check = True
-		self.poolLogMessages()
-		if(self.arduino_list):
-			try:
-				self.arduino_list[0].start()
-			except:
-				self.arduino_list.pop(0)
-				return
-			if(self.arduino_list[0].connected == True):
-				self.ids.station_connect.disabled = True
-				self.ids.station_disconnect.disabled = False
-				self.checkArduinoStatus()
+	def startArduino(self):
+		if(self.ids.cbox_servos.active):
+			self.updateConsole(" **START** arduino servo connection")
+			self.arduino_list.insert(0,ArduinoServoThread())
+			self.arduino_check = True
+			self.poolLogMessages()
+			if(self.arduino_list):
+				try:
+					self.arduino_list[0].start()
+				except:
+					self.arduino_list.pop(0)
+					return
+				if(self.arduino_list[0].connected == True):
+					self.ids.station_connect.disabled = True
+					self.ids.station_disconnect.disabled = False
+					self.checkArduinoStatus()
+
+		elif(self.ids.cbox_steppers.active):
+			self.updateConsole(" **START** arduino stepper connection")
+			self.arduino_list.insert(0,ArduinoStepperThread())
+			self.arduino_check = True
+			self.poolLogMessages()
+			if(self.arduino_list):
+				try:
+					self.arduino_list[0].start()
+				except:
+					self.arduino_list.pop(0)
+					return
+				if(self.arduino_list[0].connected == True):
+					self.ids.station_connect.disabled = True
+					self.ids.station_disconnect.disabled = False
+					self.checkArduinoStatus()
 
 
-	def stopArduinoUSB(self):
+	def stopArduino(self):
 		if(self.arduino_list):
-			self.updateConsole(" **STOP** arduino usb")
+			self.updateConsole(" **STOP** arduino conection")
 			self.ids.station_lat.text = ""
 			self.ids.station_long.text = ""
 			self.ids.station_alt.text = ""
@@ -197,12 +215,11 @@ class RootLayout(FloatLayout):
 	###
 	##################################################
 	def stationConnect(self):
-		if(self.ids.cbox_arduino_usb.active):
-			self.startArduinoUSB()
+		self.startArduino()
 
 
 	def stationDisconnect(self):
-		self.stopArduinoUSB()
+		self.stopArduino()
 
 
 	def stationSetManualValues(self):

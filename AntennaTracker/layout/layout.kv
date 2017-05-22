@@ -75,10 +75,10 @@
                     rows: 1
                     spacing:'80dp'
                     Label:
-                        text: 'Arduino USB'
+                        text: 'Servos'
                         font_size: '16sp'
                     CheckBox:
-                        id: cbox_arduino_usb
+                        id: cbox_servos
                         active: True
                         group: 'gr2'
                 GridLayout:
@@ -86,12 +86,12 @@
                     rows: 1
                     spacing:'80dp'
                     Label:
-                        text: 'Arduino Ethernet'
+                        text: 'Steppers'
                         font_size: '16sp'
                     CheckBox:
-                        id: cbox_arduino_ethernet
+                        id: cbox_steppers
+						active: False
                         group: 'gr2'
-                        disabled: True
                 GridLayout:
                     cols: 2
                     rows: 1
