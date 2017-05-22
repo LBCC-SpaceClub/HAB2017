@@ -1,53 +1,50 @@
+import math
+from math import radians, degrees, sin, cos, atan2, tan
 import serial
-import serial.tools.list_ports
+import requests
 import time
-from threading import Thread
-from data.ServoControl import *
 
 
-class ArduinoThread(Thread):
+class StepperControl():
 
-	arduinoBaud = 115200
-	arduinoTimeout = 5
-	arduinoCOM = None
-	servo_control = ServoControl()
-
-
-	def __init__(self, servo=False, stepper=False):
-		self.useStepper = stepper
-		self.useServo = servo
-		self.stop = True
+	def __init__(self):
+		# General class fields
 		self.log = ""
-		self.usb = None
-		self.connected = False
-		self.gpsTime = ""
-		self.gpsDate = ""
-		self.station_trueHeading = None
-		self.latDeg = ""
-		self.lonDeg = ""
-		self.altMeters = ""
-		self.ser = None
-		self.imuX = None
-		self.imuY = None
-		self.imuZ = None
-		Thread.__init__(self)
+		self.run = True
 
+		# Arduino (USB) fields
+		self.arduinoBaud = 115200
+		self.arduinoTimeout = 5
+		self.arduinoCOM = None
 
-	def run(self):
-		if(self.useServo):
-			if(self.connectToArduino()):
-				self.setLog(" **SUCCESS** Arduino USB connected, parsing data")
-				self.connected = True
-				self.updateData()
-			else:
-				self.setLog(" **ERROR** Failed to connect to Arduino USB")
-				self.connected = False
+		# Servo (serial) fields
+		self.panOffset = 0     # + right, - left
+		self.tiltOffset = 0    # + raise, - lower
+		self.moveCommand = 0xFF
+		self.minPan = 0
+		self.maxPan = 255
+		self.minTilt = 70
+		self.maxTilt = 123
+		self.panChannel = 1
+		self.tiltChannel = 0
+
+		# Connect to the arduino and start a thread to keep this class updated
+		self.arduino = self.connectToArduino()
+		if self.arduino:
+			Thread.__init__(self)
 
 
 	def __del__(self):
-		if self.usb:
-			self.setLog(" **STOP** Closing port")
-			self.usb.close()
+		if self.arduino:
+			self.setLog(" **STOP** Closing arduino port")
+			self.arduino.close()
+
+
+	def run(self):
+		while(run):
+			print("Updating ServoControl..")
+			self.updateData()
+			sleep(1)
 
 
 
@@ -59,12 +56,12 @@ class ArduinoThread(Thread):
 	def connectToArduino(self):
 		try:
 			self.arduinoCOM = self.findComPort()
-			self.usb = serial.Serial(
+			self.arduino = serial.Serial(
 				self.arduinoCOM,
 				baudrate = self.arduinoBaud,
 				timeout = self.arduinoTimeout
 			)
-			return not self.usb
+			return not self.arduino
 		except:
 			return False
 
@@ -110,25 +107,22 @@ class ArduinoThread(Thread):
 		usb.flushInput()
 
 
-
-	##################################################
-	###
-	###     Servo Control
-	###
-	##################################################
-	def servoMoveToCenter(self):
-		if self.usb:
-			self.servo_control.moveToCenterPos(self.usb)
-
-
-	def servoMoveTilt(self, degrees):
-		if self.usb:
-			self.servo_control.moveTiltServo(degrees ,self.usb)
-
-
-	def servoMovePan(self, pos):
-		if self.usb:
-			self.servo_control.movePanServo(pos ,self.usb)
+	def configServos(self, usb):
+		self.setLog(" **UPDATE** configuring servos...")
+		accelCommand = 0x89		#Set acceleration rate for both servos
+		tiltAccel = 1
+		panAccel = 1
+		setAccel = [accelCommand,self.tiltChannel,tiltAccel,0]
+		usb.write(setAccel)
+		setAccel = [accelCommand,self.panChannel,panAccel,0]
+		usb.write(setAccel)
+		speedCommand = 0x87		  #Set rotation rate for both servos
+		tiltSpeed = 1
+		panSpeed = 3
+		setSpeed = [speedCommand,self.tiltChannel,tiltSpeed,0]
+		usb.write(setSpeed)
+		setSpeed = [speedCommand,self.panChannel,panSpeed,0]
+		usb.write(setSpeed)
 
 
 
@@ -138,8 +132,8 @@ class ArduinoThread(Thread):
 	###
 	##################################################
 	def updateData(self):
-		while self.usb.inWaiting():
-			line = self.usb.readline()
+		while self.arduino.inWaiting():
+			line = self.arduino.readline()
 			try:
 				if line[:5] == '[IMU]':
 					self.updateIMU(line[5:])
@@ -172,11 +166,49 @@ class ArduinoThread(Thread):
 
 	##################################################
 	###
+	###     Move Servos Methods
+	###
+	##################################################
+	def moveToCenterPos(self, usb):
+		moveTiltServo(127, usb)
+		movePanServo(127, usb)
+
+
+	def moveTiltServo(self, degrees, usb):
+		degInServo = 254.0 / 360 * degrees
+		if(degInServo < self.minTilt):
+		    degInServo = self.minTilt
+		elif(degInServo > self.maxTilt):
+		    degInServo = self.maxTilt
+		degInServo = int(round(degInServo))
+		moveTilt = [self.moveCommand, self.tiltChannel, chr(degInServo)]
+		usb.write(degInServo)
+
+
+	def movePanServo(self, position, usb):
+		movePan = [moveCommand,panChannel,chr(255-position)]
+		usb.write(movePan)
+
+
+	def degToServo(d):
+		if d >= 360:
+			d = d % 360
+		if d < 180:
+			res = int(round(127 - d*(255.0/360.0)))
+		else:
+			d = 360 - d
+			res = int(round(127 + d*(255.0/360.0)))
+		return res
+
+
+
+	##################################################
+	###
 	###     Logging Methods
 	###
 	##################################################
 	def setLog(self, txt):
-		self.log = self.log+""+txt
+		self.log= self.log+""+txt
 
 
 	def getLog(self):
@@ -184,7 +216,6 @@ class ArduinoThread(Thread):
 			return self.log
 		else:
 			return ""
-
 
 	def clearLog(self):
 		self.log = ""

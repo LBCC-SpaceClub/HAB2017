@@ -4,16 +4,10 @@ import serial
 import requests
 import time
 
-import serial
-import serial.tools.list_ports
-from threading import Thread
-from data.ServoControl import *
 
-
-class ServoControl():
+class StepperControl():
 
 	def __init__(self):
-		Thread.__init__(self)
 		# General class fields
 		self.log = ""
 		self.run = True
@@ -44,19 +38,7 @@ class ServoControl():
 	def __del__(self):
 		if self.arduino:
 			self.setLog(" **STOP** closing arduino port")
-			# self.arduino.close()
-
-	def run(self):
-		while True:
-			print("Inside ServoControl run()")
-			if(self.connectToArduino()):
-				self.setLog(" **SUCCESS** Arduino USB connected, parsing data")
-				self.connected = True
-				while(self.run):
-					self.updateData()
-			else:
-				self.setLog(" **ERROR** Failed to connect to Arduino USB")
-				self.connected = False
+			self.arduino.close()
 
 
 

@@ -101,12 +101,14 @@ class RootLayout(FloatLayout):
 	def startArduino(self):
 		if(self.ids.cbox_servos.active):
 			self.updateConsole(" **START** arduino servo connection")
-			self.arduino_list.insert(0,ArduinoThread(servo=True))
+			self.arduino_list.insert(0, ServoControl())
 		elif(self.ids.cbox_steppers.active):
 			self.updateConsole(" **START** arduino stepper connection")
-			self.arduino_list.insert(0,ArduinoThread(stepper=True))
+			self.arduino_list.insert(0, StepperControl())
+
 		self.arduino_check = True
 		self.poolLogMessages()
+
 		if(self.arduino_list):
 			try:
 				self.arduino_list[0].start()
@@ -327,15 +329,12 @@ class RootLayout(FloatLayout):
 	@interval_threadA.setInterval(1)
 	def poolLogMessages(self):
 		if(self.db_check):
-			if (self.db_list[0].getLog() ==""):
-				pass
-			else:
+			if (self.db_list[0].getLog() != ""):
 				self.updateConsole(self.db_list[0].getLog())
 				self.db_list[0].clearLog()
 		if(self.arduino_check):
-			if(self.arduino_list[0].getLog() ==""):
-				pass
-			else:
+			print("Checking arduino in threadA")
+			if(self.arduino_list[0].getLog() != ""):
 				self.updateConsole(self.arduino_list[0].getLog())
 				self.arduino_list[0].clearLog()
 

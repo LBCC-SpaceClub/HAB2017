@@ -32,7 +32,8 @@ from kivy.uix.videoplayer import VideoPlayer
 '''
 from data.IntervalThread import *
 from data.DatabaseThread import *
-from data.ArduinoThread import *
+from data.StepperControl import *
+from data.ServoControl import *
 
 from data.libs.MyKnob import *
 from data.libs.garden.mapview import *
