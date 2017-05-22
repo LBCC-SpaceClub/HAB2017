@@ -101,35 +101,22 @@ class RootLayout(FloatLayout):
 	def startArduino(self):
 		if(self.ids.cbox_servos.active):
 			self.updateConsole(" **START** arduino servo connection")
-			self.arduino_list.insert(0,ArduinoServoThread())
-			self.arduino_check = True
-			self.poolLogMessages()
-			if(self.arduino_list):
-				try:
-					self.arduino_list[0].start()
-				except:
-					self.arduino_list.pop(0)
-					return
-				if(self.arduino_list[0].connected == True):
-					self.ids.station_connect.disabled = True
-					self.ids.station_disconnect.disabled = False
-					self.checkArduinoStatus()
-
+			self.arduino_list.insert(0,ArduinoThread(servo=True))
 		elif(self.ids.cbox_steppers.active):
 			self.updateConsole(" **START** arduino stepper connection")
-			self.arduino_list.insert(0,ArduinoStepperThread())
-			self.arduino_check = True
-			self.poolLogMessages()
-			if(self.arduino_list):
-				try:
-					self.arduino_list[0].start()
-				except:
-					self.arduino_list.pop(0)
-					return
-				if(self.arduino_list[0].connected == True):
-					self.ids.station_connect.disabled = True
-					self.ids.station_disconnect.disabled = False
-					self.checkArduinoStatus()
+			self.arduino_list.insert(0,ArduinoThread(stepper=True))
+		self.arduino_check = True
+		self.poolLogMessages()
+		if(self.arduino_list):
+			try:
+				self.arduino_list[0].start()
+			except:
+				self.arduino_list.pop(0)
+				return
+			if(self.arduino_list[0].connected == True):
+				self.ids.station_connect.disabled = True
+				self.ids.station_disconnect.disabled = False
+				self.checkArduinoStatus()
 
 
 	def stopArduino(self):
@@ -386,14 +373,40 @@ class RootLayout(FloatLayout):
 	def checkArduinoStatus(self):
 		if(self.arduino_check):
 			if(self.arduino_list[0].isConnected):
+				self.arduino_list[0].update()
+				try:
+					# This should be changed to only happen if new gps coordinates available
+					if(station_switchmanual.active):
+						# use manual value for station gps position
+						self.arduino_list[0].pointTo(
+							self.ids.payload_lat.text,
+							self.ids.payload_long.text,
+							self.ids.payload_alt.text,
+							self.ids.station_lat.text,
+							self.ids.station_long.text,
+							self.ids.station_alt.text,
+							self.ids.payload_time.text
+						)
+					else:
+						# use gps position from arduino
+						self.arduino_list[0].pointTo(
+							self.ids.payload_lat.text,
+							self.ids.payload_long.text,
+							self.ids.payload_alt.text,
+							self.ids.payload_time.text
+						)
+				except:
+					self.updateConsole(
+						" **ERROR** Could not update map coordinates."
+					)
 				self.ids.ard_status.text = "Connected"
 				self.ids.ard_status.color = (0,1,0,1)
 				self.ids.station_lat.text = self.arduino_list[0].latDeg
 				self.ids.station_long.text = self.arduino_list[0].lonDeg
 				self.ids.station_alt.text = self.arduino_list[0].altMeters
-				self.ids.station_date.text = str(self.arduino_list[0].gpsDate)
+				self.ids.station_trueHeading.text = str(self.arduino_list[0].trueHeading)
 				self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
-				self.arduino_list[0].servoMoveTilt(x_value, self.arduino_list[0].usb)
+				# self.arduino_list[0].servoMoveTilt(x_value, self.arduino_list[0].usb)
 
 
 #-------------------------------#
