@@ -6,12 +6,12 @@ from data.ServoControl import *
 
 
 class ArduinoThread(Thread):
-    
+
     arduinoBaud = 115200
     arduinoTimeout = 5
     arduinoCOM = None
     servo_control = ServoControl()
-    
+
 
     def __init__(self):
         Thread.__init__(self)
@@ -32,25 +32,25 @@ class ArduinoThread(Thread):
 
     def run(self):
         if(self.connectToArduino()):
-            self.setLog(" **SUCCESS** arduino connected, parsing data")
+            self.setLog(" **SUCCESS** Arduino USB connected, parsing data")
             self.connected = True
-            
+
             while(self.stop):
                 self.updateData()
         else:
-            self.setLog(" **ERROR** failed to connect to arudino usb")
+            self.setLog(" **ERROR** Failed to connect to Arduino USB")
             self.connected = False
 
 
     def __del__(self):
         if self.usb:
-            self.setLog(" **STOP** closing port")
+            self.setLog(" **STOP** Closing port")
             self.usb.close()
 
 
-    
+
     ##################################################
-    ### 
+    ###
     ###     Connection Methods
     ###
     ##################################################
@@ -66,9 +66,9 @@ class ArduinoThread(Thread):
                 return True
             else:
                 return False
+            return not self.usb
         except:
             return False
-
 
 
     def findComPort(self):
@@ -77,15 +77,17 @@ class ArduinoThread(Thread):
             print(p[1])
             if p[2]:
                 self.setLog(" **UPDATE** found arduino on ", self.p[2])
+            if 'Arduino' in p[1]:
+                self.setLog(" **UPDATE** Found Arduino on ", self.p[0])
                 self.connected = True
                 return p[2]
             else:
-                self.setLog(" **ERROR** could not find an attached arduino") 
+                self.setLog(" **ERROR** Could not find an attached Arduino")
 
 
 
     ##################################################
-    ### 
+    ###
     ###     Calibration Methods
     ###
     ##################################################
@@ -93,7 +95,7 @@ class ArduinoThread(Thread):
         self.thread = Thread(target=calibrateIMU)
         self.thread.start()
         self.thread.join()
-    
+
 
     def calibrateIMU(self):
         calibration = 0
@@ -115,7 +117,7 @@ class ArduinoThread(Thread):
 
 
     ##################################################
-    ### 
+    ###
     ###     Servo Control
     ###
     ##################################################
@@ -136,11 +138,11 @@ class ArduinoThread(Thread):
 
 
     ##################################################
-    ### 
+    ###
     ###     Update Values Methods
     ###
     ##################################################
-    def updateData(self): 
+    def updateData(self):
         while self.usb.inWaiting():
             line = self.usb.readline()
             try:
@@ -149,9 +151,9 @@ class ArduinoThread(Thread):
                 elif line[:5] == '[GPS]':
                     self.updateGPS(line[5:])
                 else:
-                    self.setLog(" **ERROR** reading line: "+line)
+                    self.setLog(" **ERROR** Reading line: "+line)
             except ValueError:
-                self.setLog(" **ERROR** parsing "+line)
+                self.setLog(" **ERROR** Parsing "+line)
 
 
     def updateIMU(self, line):
@@ -174,12 +176,12 @@ class ArduinoThread(Thread):
 
 
     ##################################################
-    ### 
+    ###
     ###     Logging Methods
     ###
     ##################################################
     def setLog(self, txt):
-        self.log= self.log+""+txt
+        self.log = self.log+""+txt
 
 
     def getLog(self):
@@ -191,4 +193,3 @@ class ArduinoThread(Thread):
 
     def clearLog(self):
         self.log = ""
-

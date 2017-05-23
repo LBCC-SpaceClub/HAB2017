@@ -41,7 +41,7 @@ class ServoControl():
 
 
 	##################################################
-	### 
+	###
 	###     Move Servos Methods
 	###
 	##################################################
@@ -62,13 +62,12 @@ class ServoControl():
 		usb.write(degInServo)
 
 
-
 	def movePanServo(self, position, usb):
 		movePan = [moveCommand,panChannel,chr(255-position)]
 		usb.write(movePan)
 
 
-	def degToServo(d): 
+	def degToServo(d):
 		if d >= 360:
 			d = d % 360
 		if d < 180:

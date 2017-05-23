@@ -5,7 +5,7 @@
 <RootLayout>:
     ExitPopup: #this gives RootLayout class a reference to the ExitPopup class
     AboutPopup:
-    
+
     #############################################
     ## TOP NAVBAR ###############################
     BoxLayout:
@@ -86,7 +86,7 @@
                     rows: 1
                     spacing:'80dp'
                     Label:
-                        text: 'Arudino Ethernet'
+                        text: 'Arduino Ethernet'
                         font_size: '16sp'
                     CheckBox:
                         id: cbox_arduino_ethernet
@@ -132,7 +132,7 @@
                     id: station_switchmanual
                     active: False
                     on_active: root.stationManualSwitch()
-            
+
             GridLayout:
                 cols: 1
                 size_hint: (None, None)
@@ -244,8 +244,8 @@
                             font_size: '18sp'
             ## END STATION GPS DATA ######
             ##############################
-            
-            
+
+
 
 
             ##############################
@@ -277,7 +277,7 @@
                     id: payload_disconnect
                     text: 'Disconnect'
                     on_press: root.payloadDisconnect()
-            
+
             GridLayout:
                 cols: 1
                 rows: 4
@@ -347,7 +347,7 @@
                     id: payload_switchmanual
                     active: False
                     on_active: root.payloadManualSwitch()
-            
+
             GridLayout:
                 cols: 1
                 size_hint: (None, None)
@@ -499,7 +499,7 @@
 
 
 
-            
+
             ##############################
             ## CONNECTION STATUS #########
             FloatLayout:
@@ -538,7 +538,7 @@
                             text: 'Arduino USB'
                             font_size:'18sp'
                         Label:
-                            id: ard_status 
+                            id: ard_status
                     GridLayout:
                         cols: 1
                         rows: 2
@@ -546,7 +546,7 @@
                             text: 'Other'
                             font_size:'18sp'
                         Label:
-                            id: eth_status      
+                            id: eth_status
             ### END CONNECTION STATUS ####
             ##############################
 
@@ -737,11 +737,11 @@
                         max:                360
                         step:               1
                         slope:              0
-                        value:              root.x_value                  
-                        knobimg_source:     "img/compass-needle.png"   
-                        show_marker:        True                   
-                        marker_img:         "img/compass-outside.png"        
-                        knob_size:          0.4                    
+                        value:              root.x_value
+                        knobimg_source:     "img/compass-needle.png"
+                        show_marker:        True
+                        marker_img:         "img/compass-outside.png"
+                        knob_size:          0.4
             GridLayout:
                 cols: 1
                 rows: 2
@@ -763,11 +763,11 @@
                         max:                360
                         step:               1
                         slope:              0
-                        value:              root.y_value                      
-                        knobimg_source:     "img/compass-needle.png"    
-                        show_marker:        True                    
-                        marker_img:         "img/compass-outside.png"         
-                        knob_size:          0.4               
+                        value:              root.y_value
+                        knobimg_source:     "img/compass-needle.png"
+                        show_marker:        True
+                        marker_img:         "img/compass-outside.png"
+                        knob_size:          0.4
             ### END MOTOR CONTROL ####
             #############################
 
@@ -799,8 +799,8 @@
             ## END CONSOLE LOG ###########
             ##############################
 
-            
-            
+
+
 
 
 
