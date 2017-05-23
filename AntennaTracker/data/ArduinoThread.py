@@ -56,13 +56,13 @@ class ArduinoThread(Thread):
     ##################################################
     def connectToArduino(self):
         try:
-            self.arduinoCOM = self.findComPort()
+            self.arduinoCOM = '/dev/ttyACM2'
             self.usb = serial.Serial(
                 self.arduinoCOM,
                 baudrate = self.arduinoBaud,
                 timeout = self.arduinoTimeout
             )
-            if not self.usb:
+            if self.usb:
                 return True
             else:
                 return False
@@ -74,10 +74,11 @@ class ArduinoThread(Thread):
     def findComPort(self):
         ports = list(serial.tools.list_ports.comports())
         for p in ports:
-            if 'Arduino' in p[1]:
-                self.setLog(" **UPDATE** found arduino on ", self.p[0])
+            print(p[1])
+            if p[2]:
+                self.setLog(" **UPDATE** found arduino on ", self.p[2])
                 self.connected = True
-                return p[0]
+                return p[2]
             else:
                 self.setLog(" **ERROR** could not find an attached arduino") 
 

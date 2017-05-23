@@ -58,6 +58,7 @@ class ServoControl():
 		    degInServo = self.maxTilt
 		degInServo = int(round(degInServo))
 		moveTilt = [self.moveCommand, self.tiltChannel, chr(degInServo)]
+		print("TEST")
 		usb.write(degInServo)
 
 
