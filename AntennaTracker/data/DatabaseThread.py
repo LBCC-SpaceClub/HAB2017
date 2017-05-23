@@ -64,6 +64,7 @@ class DatabaseThread(Thread):
 				with self.db.cursor() as sql:
 					sql.execute(self.cfg["MySQL"]["Query"])
 					data = sql.fetchone()
+					print(data)
 					try:
 						self.latDeg = data["gps_lat"]
 						self.lonDeg = data["gps_long"]

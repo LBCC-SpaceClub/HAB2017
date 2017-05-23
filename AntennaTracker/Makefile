@@ -1,7 +1,7 @@
 all: install
 
 install_linux:
-	# run with sudo
+	echo $("run with sudo")
 	add-apt-repository ppa:kivy-team/kivy
 	apt-get update
 	apt-get install python3-kivy
