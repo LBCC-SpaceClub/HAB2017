@@ -19,7 +19,6 @@ class DatabaseThread(Thread):
 		self.lastChecked = 0
 		self.querysuccess = False
 		self.daemon = True #stops thread on app exit, important
-		self.log = ""
 		self.parent = parent
 		self.connected = self.connectToDB()
 

@@ -76,7 +76,7 @@ class RootLayout(FloatLayout):
 
 
 	def stopIridiumDatabase(self):
-		if self.connectedDatabase:
+		try:
 			self.updateConsole(" **STOP** iridium database connection")
 			self.ids.payload_lat.text = "0.0"
 			self.ids.payload_long.text = "0.0"
@@ -89,6 +89,8 @@ class RootLayout(FloatLayout):
 			self.ids.db_status.color = (1,0,0,1)
 			self.ids.payload_disconnect.disabled = True
 			self.ids.payload_connect.disabled = False
+		except:
+			self.updateConsole(" **ERROR** Failed to stopIridiumDatabase")
 
 
 
@@ -110,7 +112,6 @@ class RootLayout(FloatLayout):
 
 			self.connectedArduino.start()
 			self.ids.station_connect.disabled = True
-			self.poolLogMessages()
 
 			if self.connectedArduino.connected:
 				self.ids.ard_status.text = "Connected"
@@ -121,12 +122,11 @@ class RootLayout(FloatLayout):
 
 		except:
 			self.updateConsole(" **ERROR** could not connect to local arduino")
-			# self.stopArduino()
+			self.stopArduino()
 
 
 	def stopArduino(self):
-		if self.connectedArduino:
-		# if(self.arduino_list):
+		try:
 			self.updateConsole(" **STOP** local arduino conection")
 			self.ids.station_lat.text = ""
 			self.ids.station_long.text = ""
@@ -141,6 +141,8 @@ class RootLayout(FloatLayout):
 			self.ids.ard_status.color = (1,0,0,1)
 			self.ids.station_disconnect.disabled = True
 			self.ids.station_connect.disabled = False
+		except:
+			self.updateConsole(" **ERROR** Failed to stopArduino")
 
 
 
@@ -321,25 +323,6 @@ class RootLayout(FloatLayout):
 	def exitPopup(self):
 		popup = ExitPopup()
 		popup.open()
-
-
-
-	##################################################
-	###
-	###		Pooling Threads
-	###
-	##################################################
-	# ## Pooling Log Messages
-	# @interval_threadA.setInterval(1)
-	# def poolLogMessages(self):
-	# 	if(connectedDatabase):
-	# 		if (self.connectedDatabase.getLog() != ""):
-	# 			self.updateConsole(self.connectedDatabase.getLog())
-	# 			self.connectedDatabase.clearLog()
-	# 	if(connectedArduino):
-	# 		if(self.connectedArduino.getLog() != ""):
-	# 			self.updateConsole(self.connectedArduino.getLog())
-	# 			self.connectedArduino.clearLog()
 
 
 #-------------------------------#

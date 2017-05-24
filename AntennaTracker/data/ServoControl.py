@@ -15,10 +15,10 @@ class ServoControl(Thread):
 	def __init__(self, parent):
 		Thread.__init__(self)
 		# General class fields
-		self.log = ""
 		self.parent = parent
 		self.connected = False
 		self.running = True
+		self.daemon = True		#stops thread on app exit, important
 
 		# Arduino (USB) fields
 		self.arduinoBaud = 115200
@@ -26,8 +26,8 @@ class ServoControl(Thread):
 		self.arduinoCOM = None
 
 		# Servo (serial) fields
-		self.panOffset = 0     # + right, - left
-		self.tiltOffset = 0    # + raise, - lower
+		self.panOffset = 0		# + right, - left
+		self.tiltOffset = 0		# + raise, - lower
 		self.moveCommand = 0xFF
 		self.minPan = 0
 		self.maxPan = 255
@@ -53,18 +53,15 @@ class ServoControl(Thread):
 		# Connect to the arduino and start a thread to keep this class updated
 		self.connected = self.connectToArduino()
 		self.arduino.flush()
-		print("All done!")
 
 
 	def __del__(self):
-		print("Dying:", self.connected)
 		if self.connected:
 			self.parent.updateConsole(" **STOP** closing arduino port")
 			self.arduino.close()
 
 
 	def run(self):
-		print("Running!")
 		while self.running:
 			self.update()
 			self.updateMain()
@@ -153,11 +150,10 @@ class ServoControl(Thread):
 				# self.parent.updateConsole(" **ERROR** Parsing line from arduino")
 
 	def updateMain(self):
-		print("Updating main")
 		self.parent.ids.station_lat.text = str(self.latDeg)
 		self.parent.ids.station_long.text = str(self.lonDeg)
 		self.parent.ids.station_alt.text = str(self.altMeters)
-		self.parent.ids.station_trueHeading.text = '0'
+		self.parent.ids.station_trueHeading.text = str(self.imuX)
 		self.parent.ids.station_time.text = str(self.gpsTime)
 
 
