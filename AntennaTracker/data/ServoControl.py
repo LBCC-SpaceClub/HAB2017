@@ -10,13 +10,15 @@ from threading import Thread
 from data.ServoControl import *
 
 
-class ServoControl():
+class ServoControl(Thread):
 
-	def __init__(self):
+	def __init__(self, parent):
 		Thread.__init__(self)
 		# General class fields
 		self.log = ""
-		self.run = True
+		self.parent = parent
+		self.connected = False
+		self.running = True
 
 		# Arduino (USB) fields
 		self.arduinoBaud = 115200
@@ -34,29 +36,39 @@ class ServoControl():
 		self.panChannel = 1
 		self.tiltChannel = 0
 
+		# Orientation fields
+		self.imuX = None
+		self.imuY = None
+		self.imuZ = None
+		self.imuSys = None
+		self.imuAcc = None
+		self.imuGyro = None
+		self.imuMag = None
+		self.latDeg = "Connecting.."
+		self.lonDeg = "Connecting.."
+		self.altMeters = None
+		self.gpsDate = None
+		self.gpsTime = None
+
 		# Connect to the arduino and start a thread to keep this class updated
-		self.arduino = self.connectToArduino()
-		if self.arduino:
-			self.setLog(" something ")
-		else:
-			self.setLog(" nothing ")
+		self.connected = self.connectToArduino()
+		self.arduino.flush()
+		print("All done!")
+
 
 	def __del__(self):
-		if self.arduino:
-			self.setLog(" **STOP** closing arduino port")
-			# self.arduino.close()
+		print("Dying:", self.connected)
+		if self.connected:
+			self.parent.updateConsole(" **STOP** closing arduino port")
+			self.arduino.close()
+
 
 	def run(self):
-		while True:
-			print("Inside ServoControl run()")
-			if(self.connectToArduino()):
-				self.setLog(" **SUCCESS** Arduino USB connected, parsing data")
-				self.connected = True
-				while(self.run):
-					self.updateData()
-			else:
-				self.setLog(" **ERROR** Failed to connect to Arduino USB")
-				self.connected = False
+		print("Running!")
+		while self.running:
+			self.update()
+			self.updateMain()
+			time.sleep(1)
 
 
 
@@ -73,20 +85,24 @@ class ServoControl():
 				baudrate = self.arduinoBaud,
 				timeout = self.arduinoTimeout
 			)
-			return not self.arduino
+			# time.sleep(2)
+			return True
 		except:
+			self.parent.updateConsole(" **ERROR** could not find a servo arduino")
 			return False
 
 
 	def findComPort(self):
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
-			if 'Arduino' in p[1]:
-				self.setLog(" **UPDATE** found Arduino on ", self.p[0])
-				self.connected = True
+			print(p)
+			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
+				# self.parent.updateConsole(" **UPDATE** found Arduino on ", p[0])
+				# self.parent.updateConsole(" **UPDATE** found Arduino on ", p[0])
 				return p[0]
-			else:
-				self.setLog(" **ERROR** could not find an attached Arduino")
+
+		self.parent.updateConsole(" **ERROR** could not find an attached Arduino")
+		return None
 
 
 
@@ -96,7 +112,7 @@ class ServoControl():
 	###
 	##################################################
 	def configServos(self, usb):
-		self.setLog(" **UPDATE** configuring servos...")
+		self.parent.updateConsole(" **UPDATE** configuring servos...")
 		#Set acceleration rate for both servos
 		accelCommand = 0x89
 		tiltAccel = 1
@@ -123,16 +139,26 @@ class ServoControl():
 	##################################################
 	def update(self):
 		while self.arduino.inWaiting():
-			line = self.arduino.readline()
+			line = self.arduino.readline().decode("utf-8")
 			try:
 				if line[:5] == '[IMU]':
 					self.updateIMU(line[5:])
 				elif line[:5] == '[GPS]':
 					self.updateGPS(line[5:])
 				else:
-					self.setLog(" **ERROR** Reading line: "+line)
-			except ValueError:
-				self.setLog(" **ERROR** Parsing "+line)
+					print("Could not parse: ", line)
+				# self.parent.updateConsole(" **ERROR** Reading line: "+line)
+			except:
+				print("Exception on: ", line)
+				# self.parent.updateConsole(" **ERROR** Parsing line from arduino")
+
+	def updateMain(self):
+		print("Updating main")
+		self.parent.ids.station_lat.text = str(self.latDeg)
+		self.parent.ids.station_long.text = str(self.lonDeg)
+		self.parent.ids.station_alt.text = str(self.altMeters)
+		self.parent.ids.station_trueHeading.text = '0'
+		self.parent.ids.station_time.text = str(self.gpsTime)
 
 
 	def updateIMU(self, line):
@@ -189,23 +215,3 @@ class ServoControl():
 			deg = 360 - d
 			val = int(round(127 + deg*(255.0/360.0)))
 		return val
-
-
-
-	##################################################
-	###
-	###     Logging Methods
-	###
-	##################################################
-	def setLog(self, txt):
-		self.log= self.log+""+txt
-
-
-	def getLog(self):
-		if(self.log != ""):
-			return self.log
-		else:
-			return ""
-
-	def clearLog(self):
-		self.log = ""

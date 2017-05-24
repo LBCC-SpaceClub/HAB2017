@@ -18,10 +18,8 @@ class RootLayout(FloatLayout):
 	x_value = NumericProperty(0.0)
 	y_value = NumericProperty(0.0)
 	rst_doc = StringProperty('')
-	db_check = False
-	arduino_check = False
-	db_list = []
-	arduino_list = []
+	connectedDatabase = None
+	connectedArduino = None
 	map_list = []
 	map_oldcoords = []
 	map_lat  = 44.5637806#OSU Lat/Long
@@ -31,7 +29,6 @@ class RootLayout(FloatLayout):
 	def __init__(self, **kwargs):
 		super(RootLayout, self).__init__(**kwargs)
 		Clock.schedule_once(self.run)
-
 
 
 	##################################################
@@ -65,32 +62,29 @@ class RootLayout(FloatLayout):
 		self.updateConsole(" **START** iridium database connection")
 		try:
 			self.ids.payload_connect.disabled = True
-			self.db_check = True
-			self.db_list.insert(0,DatabaseThread(self, self.configs))
-			self.poolLogMessages()
-			# self.poolDatabaseStatus()
-			self.db_list[0].start()
-
+			self.connectedDatabase = DatabaseThread(self, self.configs)
+			self.connectedDatabase.daemon = True
+			self.connectedDatabase.setName('MSU Database Thread')
+			self.connectedDatabase.start()
 			self.ids.db_status.text = "Connected"
 			self.ids.db_status.color = (0,1,0,1)
 			self.ids.payload_disconnect.disabled = False
 
 		except:
 			self.updateConsole(" **ERROR** could not run startIridiumDatabase()")
+			self.stopIridiumDatabase()
 
 
 	def stopIridiumDatabase(self):
-		if(self.db_list):
+		if self.connectedDatabase:
 			self.updateConsole(" **STOP** iridium database connection")
 			self.ids.payload_lat.text = "0.0"
 			self.ids.payload_long.text = "0.0"
 			self.ids.payload_alt.text = ""
 			self.ids.payload_date.text = ""
 			self.ids.payload_time.text = ""
-			self.db_list[0].connected = False
-			self.db_list[0].stop = False #must happen before pop or thread wont get garbage collected
-			self.db_list.pop(0)
-			self.db_check = False
+			self.connectedDatabase.connected = False
+			self.connectedDatabase.stop = False #must happen before pop or thread wont get garbage collected
 			self.ids.db_status.text = "Not Connected"
 			self.ids.db_status.color = (1,0,0,1)
 			self.ids.payload_disconnect.disabled = True
@@ -104,40 +98,45 @@ class RootLayout(FloatLayout):
 	###
 	##################################################
 	def startArduino(self):
-		if(self.ids.cbox_servos.active):
-			self.updateConsole(" **START** arduino servo connection")
-			self.arduino_list.insert(0, ServoControl())
-		elif(self.ids.cbox_steppers.active):
-			self.updateConsole(" **START** arduino stepper connection")
-			self.arduino_list.insert(0, StepperControl())
+		try:
+			if(self.ids.cbox_servos.active):
+				self.updateConsole(" **START** local arduino servo connection")
+				self.connectedArduino = ServoControl(self)
+				self.connectedArduino.setName('Servo Thread')
+			elif(self.ids.cbox_steppers.active):
+				self.updateConsole(" **START** local arduino stepper connection")
+				self.connectedArduino = StepperControl(self)
+				self.connectedArduino.setName('Stepper Thread')
 
-		self.arduino_check = True
-		self.poolLogMessages()
+			self.connectedArduino.start()
+			self.ids.station_connect.disabled = True
+			self.poolLogMessages()
 
-		if(self.arduino_list):
-			try:
-				self.arduino_list[0].start()
-			except:
-				self.arduino_list.pop(0)
-				return
-			if(self.arduino_list[0].connected == True):
-				self.ids.station_connect.disabled = True
+			if self.connectedArduino.connected:
+				self.ids.ard_status.text = "Connected"
+				self.ids.ard_status.color = (0,1,0,1)
 				self.ids.station_disconnect.disabled = False
-				self.checkArduinoStatus()
+			else:
+				self.stopArduino()
+
+		except:
+			self.updateConsole(" **ERROR** could not connect to local arduino")
+			# self.stopArduino()
 
 
 	def stopArduino(self):
-		if(self.arduino_list):
-			self.updateConsole(" **STOP** arduino conection")
+		if self.connectedArduino:
+		# if(self.arduino_list):
+			self.updateConsole(" **STOP** local arduino conection")
 			self.ids.station_lat.text = ""
 			self.ids.station_long.text = ""
 			self.ids.station_alt.text = ""
-			self.ids.station_date.text = ""
+			self.ids.station_trueHeading.text = ""
 			self.ids.station_time.text = ""
-			self.arduino_list[0].isConnected = False
-			self.arduino_list[0].stop = False #must happen before pop or thread wont get garbage collected
-			self.arduino_list.pop(0)
-			self.arduino_check = False
+			# self.arduino_list[0].isConnected = False
+			# self.arduino_list[0].alive = False #must happen before pop or thread wont get garbage collected
+			# self.arduino_list.pop(0)
+			self.connectedArduino.running = False
 			self.ids.ard_status.text = "Not Connected"
 			self.ids.ard_status.color = (1,0,0,1)
 			self.ids.station_disconnect.disabled = True
@@ -330,91 +329,17 @@ class RootLayout(FloatLayout):
 	###		Pooling Threads
 	###
 	##################################################
-	## Pooling Log Messages
-	@interval_threadA.setInterval(1)
-	def poolLogMessages(self):
-		if(self.db_check):
-			if (self.db_list[0].getLog() != ""):
-				self.updateConsole(self.db_list[0].getLog())
-				self.db_list[0].clearLog()
-		if(self.arduino_check):
-			print("Checking arduino in threadA")
-			if(self.arduino_list[0].getLog() != ""):
-				self.updateConsole(self.arduino_list[0].getLog())
-				self.arduino_list[0].clearLog()
-
-
-	## Pooling the status of connections / updates DB values
-	# @interval_threadB.setInterval(5)
-	# def poolDatabaseStatus(self):
-	# 	if(self.db_list):
-	# 		if(self.db_list[0].connected):
-	# 			# self.db_list[0].update()
-	# 			self.ids.db_status.text = "Connected"
-	# 			self.ids.db_status.color = (0,1,0,1)
-	# 			self.ids.payload_disconnect.disabled = False
-	# 			if self.ids.payload_time.text != str(self.db_list[0].gpsTime):
-	# 				self.ids.payload_lat.text = self.db_list[0].latDeg
-	# 				self.ids.payload_long.text = self.db_list[0].lonDeg
-	# 				self.ids.payload_alt.text = self.db_list[0].altMeters
-	# 				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
-	# 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
-	# 				try:
-	# 					self.map_lat = float(self.db_list[0].latDeg)
-	# 					self.map_long = float(self.db_list[0].lonDeg)
-	# 					self.mapUpdate()
-	# 				except:
-	# 					self.updateConsole(
-	# 						" **ERROR** Could not update map coordinates."
-	# 					)
-	# 		else:
-	# 			#self.db_list.pop(0)
-	# 			self.ids.payload_connect.disabled = True
-	# 			self.ids.payload_disconnect.disabled = True
-
-
-	@interval_threadC.setInterval(1)
-	def checkArduinoStatus(self):
-		if(self.arduino_check):
-			if(self.arduino_list[0].isConnected):
-				self.arduino_list[0].update()
-				try:
-					# This should be changed to only happen if new gps coordinates available
-					if(station_switchmanual.active):
-						# use manual value for station gps position
-						self.arduino_list[0].pointTo(
-							self.ids.payload_lat.text,
-							self.ids.payload_long.text,
-							self.ids.payload_alt.text,
-							self.ids.station_lat.text,
-							self.ids.station_long.text,
-							self.ids.station_alt.text,
-							self.ids.payload_time.text
-						)
-					else:
-						# use gps position from arduino
-						self.arduino_list[0].pointTo(
-							self.ids.payload_lat.text,
-							self.ids.payload_long.text,
-							self.ids.payload_alt.text,
-							self.ids.payload_time.text
-						)
-				except:
-					self.updateConsole(
-						" **ERROR** Could not update map coordinates."
-					)
-				self.ids.ard_status.text = "Connected"
-				self.ids.ard_status.color = (0,1,0,1)
-				self.ids.station_lat.text = self.arduino_list[0].latDeg
-				self.ids.station_long.text = self.arduino_list[0].lonDeg
-				self.ids.station_alt.text = self.arduino_list[0].altMeters
-				self.ids.station_trueHeading.text = str(self.arduino_list[0].trueHeading)
-				self.ids.station_time.text = str(self.arduino_list[0].gpsTime)
-				# self.arduino_list[0].servoMoveTilt(x_value, self.arduino_list[0].usb)
-
-
-#-------------------------------#
-
+	# ## Pooling Log Messages
+	# @interval_threadA.setInterval(1)
+	# def poolLogMessages(self):
+	# 	if(connectedDatabase):
+	# 		if (self.connectedDatabase.getLog() != ""):
+	# 			self.updateConsole(self.connectedDatabase.getLog())
+	# 			self.connectedDatabase.clearLog()
+	# 	if(connectedArduino):
+	# 		if(self.connectedArduino.getLog() != ""):
+	# 			self.updateConsole(self.connectedArduino.getLog())
+	# 			self.connectedArduino.clearLog()
 
 
 #-------------------------------#
