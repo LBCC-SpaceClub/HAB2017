@@ -66,10 +66,15 @@ class RootLayout(FloatLayout):
 		try:
 			self.ids.payload_connect.disabled = True
 			self.db_check = True
-			self.db_list.insert(0,DatabaseThread(self.configs))
+			self.db_list.insert(0,DatabaseThread(self, self.configs))
 			self.poolLogMessages()
-			self.poolDatabaseStatus()
+			# self.poolDatabaseStatus()
 			self.db_list[0].start()
+
+			self.ids.db_status.text = "Connected"
+			self.ids.db_status.color = (0,1,0,1)
+			self.ids.payload_disconnect.disabled = False
+
 		except:
 			self.updateConsole(" **ERROR** could not run startIridiumDatabase()")
 
@@ -340,32 +345,32 @@ class RootLayout(FloatLayout):
 
 
 	## Pooling the status of connections / updates DB values
-	@interval_threadB.setInterval(5)
-	def poolDatabaseStatus(self):
-		if(self.db_list):
-			if(self.db_list[0].connected):
-				self.db_list[0].update()
-				self.ids.db_status.text = "Connected"
-				self.ids.db_status.color = (0,1,0,1)
-				self.ids.payload_disconnect.disabled = False
-				if self.ids.payload_time.text != str(self.db_list[0].gpsTime):
-					self.ids.payload_lat.text = self.db_list[0].latDeg
-					self.ids.payload_long.text = self.db_list[0].lonDeg
-					self.ids.payload_alt.text = self.db_list[0].altMeters
-					self.ids.payload_date.text = str(self.db_list[0].gpsDate)
-					self.ids.payload_time.text = str(self.db_list[0].gpsTime)
-					try:
-						self.map_lat = float(self.db_list[0].latDeg)
-						self.map_long = float(self.db_list[0].lonDeg)
-						self.mapUpdate()
-					except:
-						self.updateConsole(
-							" **ERROR** Could not update map coordinates."
-						)
-			else:
-				#self.db_list.pop(0)
-				self.ids.payload_connect.disabled = True
-				self.ids.payload_disconnect.disabled = True
+	# @interval_threadB.setInterval(5)
+	# def poolDatabaseStatus(self):
+	# 	if(self.db_list):
+	# 		if(self.db_list[0].connected):
+	# 			# self.db_list[0].update()
+	# 			self.ids.db_status.text = "Connected"
+	# 			self.ids.db_status.color = (0,1,0,1)
+	# 			self.ids.payload_disconnect.disabled = False
+	# 			if self.ids.payload_time.text != str(self.db_list[0].gpsTime):
+	# 				self.ids.payload_lat.text = self.db_list[0].latDeg
+	# 				self.ids.payload_long.text = self.db_list[0].lonDeg
+	# 				self.ids.payload_alt.text = self.db_list[0].altMeters
+	# 				self.ids.payload_date.text = str(self.db_list[0].gpsDate)
+	# 				self.ids.payload_time.text = str(self.db_list[0].gpsTime)
+	# 				try:
+	# 					self.map_lat = float(self.db_list[0].latDeg)
+	# 					self.map_long = float(self.db_list[0].lonDeg)
+	# 					self.mapUpdate()
+	# 				except:
+	# 					self.updateConsole(
+	# 						" **ERROR** Could not update map coordinates."
+	# 					)
+	# 		else:
+	# 			#self.db_list.pop(0)
+	# 			self.ids.payload_connect.disabled = True
+	# 			self.ids.payload_disconnect.disabled = True
 
 
 	@interval_threadC.setInterval(1)

@@ -7,7 +7,7 @@ import time
 
 class DatabaseThread(Thread):
 
-	def __init__(self, cfg_file):
+	def __init__(self, main, cfg_file):
 		Thread.__init__(self)
 		self.cfg_file = cfg_file
 		self.stop = True
@@ -20,30 +20,33 @@ class DatabaseThread(Thread):
 		self.querysuccess = False
 		self.daemon = True #stops thread on app exit, important
 		self.log = ""
-		self.connected = False
-
+		self.parent = main
+		self.connected = self.connectToDB()
+		print("payload_connect = ", main.ids.payload_connect.disabled)
 
 	def __del__(self):
 		# Clean up the db connection when this thread exits
-		self.db.close()
+		try:
+			if self.db:
+				self.db.close()
+		except:
+			# nothing to clean up
+			pass
 
 	def run(self):
-		if(self.connectToDB()):
-			self.connected = True
-			# self.setLog(" **SUCCESS** Loaded iridium database config file")
-		else:
-			self.connected = False
-
+		while self.connected:
+			self.update()
+			time.sleep(1)
 
 	def connectToDB(self):
-		try:
+		try:	# to open config file
 			self.cfg = configparser.ConfigParser()
 			self.cfg.read(self.cfg_file)
 		except:
 			self.setLog(" **ERROR** could not read /cfg/Configs.ini")
 			return False
 
-		try:
+		try:	# to connect to db
 			self.db = pymysql.connect(
 				host= self.cfg["MySQL"]["Host"],
 				user= self.cfg["MySQL"]["User"],
@@ -64,7 +67,6 @@ class DatabaseThread(Thread):
 				with self.db.cursor() as sql:
 					sql.execute(self.cfg["MySQL"]["Query"])
 					data = sql.fetchone()
-					print(data)
 					try:
 						self.latDeg = data["gps_lat"]
 						self.lonDeg = data["gps_long"]
@@ -73,12 +75,22 @@ class DatabaseThread(Thread):
 						self.gpsTime = str(data["gps_time"])
 						self.lastChecked = time.time()
 						self.setLog(" **UPDATE** updated location from iridium database")
+						self.updateMain()
 					except:
 						# a botched parse deserves a smaller delay
 						self.lastChecked = time.time() - 20
 						self.setLog(" **ERROR** failed to parse line from database")
 			except:
 				self.setLog(" **ERROR** failed to fetch data from iridium database")
+
+
+	def updateMain(self):
+		print("Updating main")
+		self.parent.ids.payload_lat.text = self.latDeg
+		self.parent.ids.payload_long.text = self.lonDeg
+		self.parent.ids.payload_alt.text = self.altMeters
+		self.parent.ids.payload_date.text = str(self.gpsDate)
+		self.parent.ids.payload_time.text = str(self.gpsTime)
 
 
 	def setLog(self, txt):
