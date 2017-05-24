@@ -7,8 +7,7 @@ import time
 import serial
 import serial.tools.list_ports
 from threading import Thread
-from data.ServoControl import *
-
+from data.ServoOutput import *
 
 class ServoControl(Thread):
 
@@ -19,22 +18,6 @@ class ServoControl(Thread):
 		self.connected = False
 		self.running = True
 		self.daemon = True		#stops thread on app exit, important
-
-		# Arduino (USB) fields
-		self.arduinoBaud = 115200
-		self.arduinoTimeout = 5
-		self.arduinoCOM = None
-
-		# Servo (serial) fields
-		self.panOffset = 0		# + right, - left
-		self.tiltOffset = 0		# + raise, - lower
-		self.moveCommand = 0xFF
-		self.minPan = 0
-		self.maxPan = 255
-		self.minTilt = 70
-		self.maxTilt = 123
-		self.panChannel = 1
-		self.tiltChannel = 0
 
 		# Orientation fields
 		self.imuX = None
@@ -54,6 +37,9 @@ class ServoControl(Thread):
 		self.connected = self.connectToArduino()
 		self.arduino.flush()
 
+		# Connect to the tracking servos
+		# self.servos = ServoOutput.ServoOutput()
+
 
 	def __del__(self):
 		if self.connected:
@@ -69,63 +55,6 @@ class ServoControl(Thread):
 
 
 
-	##################################################
-	###
-	###     Connection Methods
-	###
-	##################################################
-	def connectToArduino(self):
-		try:
-			self.arduinoCOM = self.findComPort()
-			self.arduino = serial.Serial(
-				self.arduinoCOM,
-				baudrate = self.arduinoBaud,
-				timeout = self.arduinoTimeout
-			)
-			# time.sleep(2)
-			return True
-		except:
-			self.parent.updateConsole(" **ERROR** could not find a servo arduino")
-			return False
-
-
-	def findComPort(self):
-		ports = list(serial.tools.list_ports.comports())
-		for p in ports:
-			print(p)
-			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
-				# self.parent.updateConsole(" **UPDATE** found Arduino on ", p[0])
-				# self.parent.updateConsole(" **UPDATE** found Arduino on ", p[0])
-				return p[0]
-
-		self.parent.updateConsole(" **ERROR** could not find an attached Arduino")
-		return None
-
-
-
-	##################################################
-	###
-	###     Calibration Methods
-	###
-	##################################################
-	def configServos(self, usb):
-		self.parent.updateConsole(" **UPDATE** configuring servos...")
-		#Set acceleration rate for both servos
-		accelCommand = 0x89
-		tiltAccel = 1
-		panAccel = 1
-		setAccel = [accelCommand,self.tiltChannel,tiltAccel,0]
-		usb.write(setAccel)
-		setAccel = [accelCommand,self.panChannel,panAccel,0]
-		usb.write(setAccel)
-		#Set rotation rate for both servos
-		speedCommand = 0x87
-		tiltSpeed = 1
-		panSpeed = 3
-		setSpeed = [speedCommand,self.tiltChannel,tiltSpeed,0]
-		usb.write(setSpeed)
-		setSpeed = [speedCommand,self.panChannel,panSpeed,0]
-		usb.write(setSpeed)
 
 
 
@@ -211,3 +140,76 @@ class ServoControl(Thread):
 			deg = 360 - d
 			val = int(round(127 + deg*(255.0/360.0)))
 		return val
+
+class Arduino(object):
+
+	def __init__(self):
+		# Arduino (USB) fields
+		self.arduinoBaud = 115200
+		self.arduinoTimeout = 5
+		self.arduinoCOM = None
+
+	def __del__(self):
+		if self.connected:
+			self.parent.updateConsole(" **STOP** closing arduino port")
+			self.arduino.close()
+
+
+
+	##################################################
+	###
+	###     Connection Methods
+	###
+	##################################################
+	def connectToArduino(self):
+		try:
+			self.arduinoCOM = self.findComPort()
+			self.arduino = serial.Serial(
+				self.arduinoCOM,
+				baudrate = self.arduinoBaud,
+				timeout = self.arduinoTimeout
+			)
+			# time.sleep(2)
+			return True
+		except:
+			self.parent.updateConsole(" **ERROR** could not find a servo arduino")
+			return False
+
+
+	def findComPort(self):
+		ports = list(serial.tools.list_ports.comports())
+		for p in ports:
+			print(p)
+			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
+				# self.parent.updateConsole(" **UPDATE** found Arduino on ", p[0])
+				# self.parent.updateConsole(" **UPDATE** found Arduino on ", p[0])
+				return p[0]
+
+		self.parent.updateConsole(" **ERROR** could not find an attached Arduino")
+		return None
+
+
+
+	##################################################
+	###
+	###     Calibration Methods
+	###
+	##################################################
+	def configServos(self, usb):
+		self.parent.updateConsole(" **UPDATE** configuring servos...")
+		#Set acceleration rate for both servos
+		accelCommand = 0x89
+		tiltAccel = 1
+		panAccel = 1
+		setAccel = [accelCommand,self.tiltChannel,tiltAccel,0]
+		usb.write(setAccel)
+		setAccel = [accelCommand,self.panChannel,panAccel,0]
+		usb.write(setAccel)
+		#Set rotation rate for both servos
+		speedCommand = 0x87
+		tiltSpeed = 1
+		panSpeed = 3
+		setSpeed = [speedCommand,self.tiltChannel,tiltSpeed,0]
+		usb.write(setSpeed)
+		setSpeed = [speedCommand,self.panChannel,panSpeed,0]
+		usb.write(setSpeed)
