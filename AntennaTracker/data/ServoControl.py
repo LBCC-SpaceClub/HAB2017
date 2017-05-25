@@ -48,12 +48,16 @@ class ServoControl(Thread):
 			if not self.parent.ids.station_switchmanual.active:
 				self.update()
 				self.updateMain()
+
+			# Update the gui compasses if both gps positions available
 			if(
 				(self.parent.ids.station_connect.disabled or self.parent.ids.station_switchmanual.active)
 				and
 				(self.parent.ids.payload_connect.disabled or self.parent.ids.payload_switchmanual.active)
 			):
 				self.updateGuiCompass()
+				if self.servos.connected:
+					self.moveServos()
 			time.sleep(1)
 
 
@@ -71,6 +75,18 @@ class ServoControl(Thread):
 			except Exception as e:
 				print("Exception on line from arduino: ", e)
 
+
+	def moveServos(self):
+		if self.parent.ids.motor_switchstop.active:
+			return		# Don't move if the safety lockout is engaged!
+		if self.servos.connected:
+			# print("Moving servos to ele = {:.3f}, az = {:.3f} degrees.".format(
+			# 	self.targetEleDeg, self.targetAzDeg)
+			# )
+			self.servos.moveEle(float(self.targetEleDeg))
+			self.servos.moveAz(float(self.targetAzDeg))
+
+
 	def updateMain(self):
 		self.parent.ids.station_lat.text = str(self.latDeg)
 		self.parent.ids.station_long.text = str(self.lonDeg)
@@ -82,7 +98,7 @@ class ServoControl(Thread):
 	def updateGuiCompass(self):
 		if self.parent.ids.station_switchmanual.active:
 			self.updateTargetSolution()
-		# print("dist = ",self.targetDistanceM)
+
 		self.parent.x_value = self.targetAzDeg
 		self.parent.y_value = self.targetEleDeg
 
@@ -149,7 +165,7 @@ class ServoControl(Thread):
 		''' Returns degrees from perpendicular to Earth surface, to payload '''
 		try:
 			deltaAlt = payloadAlt - stationAlt
-			return math.degrees(math.atan2(deltaAlt, distance))
+			return float(math.degrees(math.atan2(deltaAlt, distance)))
 		except ValueError:
 			return 0
 
@@ -164,7 +180,7 @@ class ServoControl(Thread):
 			a = math.sin(dLat/2)*math.sin(dLat/2)+math.cos(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.sin(dLon/2)*math.sin(dLon/2)
 			c = 2*math.atan2(math.sqrt(a),math.sqrt(1-a))
 			d = R*c
-			return d
+			return int(d)
 			# return d*3280.839895 # multiply distance in Km by 3280 for feet
 		except ValueError:
 			return 0
@@ -181,7 +197,7 @@ class ServoControl(Thread):
 			tempBearing = math.degrees(math.atan2(y,x))		# returns the bearing from true north
 			if (tempBearing < 0):
 				tempBearing = tempBearing + 360
-			return tempBearing
+			return float(tempBearing)
 		except ValueError:
 			return 0
 
@@ -206,7 +222,7 @@ class Servo(object):
 		self.minAz = 0
 		self.maxAz = 255
 		self.minEle = 70
-		self.maxEle = 123
+		self.maxEle = 180
 		# Pan and tilt servos on different channels
 		self.panChannel = 1
 		self.tiltChannel = 0
@@ -242,6 +258,7 @@ class Servo(object):
 		self.parent.updateConsole(" **WARNING** could not find a maestro port")
 		return None
 
+
 	def configServos(self):
 		#Set acceleration rate for both servos
 		accelCommand = 0x89
@@ -261,35 +278,60 @@ class Servo(object):
 		self.usb.write(setSpeed)
 
 
-		def moveToCenter():
-			moveTilt(127)
-			movePan(127)
+	def degToServo(self, deg):
+		''' Converts 0-360 degrees to 0-255 servo positions '''
+		# remove any extra 360s
+		deg = abs(deg % 360)
+
+		#convert if it is on the right hemisphere
+		if deg < 180:
+			#subtract from the 0 degree position
+			position = round(127 - deg * (255.0 / 360.0))
+
+		#convert if it is on the left hemisphere
+		else:
+			#get the degree position going left from center
+			deg = 360 - deg
+			# add from the 0 degree position
+			position = round(127 + deg * (255.0 / 360.0))
+		return int(position)
 
 
-		def moveAz(position):
-			if parent.ids.motor_switchstop.active:
-				# Don't move if the safety lockout is engaged!
-				return
-			if(position < self.minAz):          #80 degrees upper limit
-				cmd = [self.moveCommand, self.tiltChannel, chr(self.minAz)]
-			elif(position > self.maxAz):       #5 degrees lower limit
-				cmd = [self.moveCommand, self.tiltChannel, chr(self.maxAz)]
-			else:
-				cmd = [self.moveCommand, self.tiltChannel, chr(position)]
-			self.usb.write(cmd)
+	def moveToCenter(self):
+		moveTilt(127)
+		movePan(127)
 
 
-		def moveEle(position):
-			if parent.ids.motor_switchstop.active:
-				# Don't move if the safety lockout is engaged!
-				return
-			if(position < self.minAz):
-				cmd = [self.moveCommand, self.panChannel, chr(self.minAz)]
-			elif(position > self.maxAz):
-				cmd = [self.moveCommand, self.panChannel, chr(self.maxAz)]
-			else:
-				cmd = [self.moveCommand, self.panChannel, chr(position)]
-			self.usb.write(cmd)
+	def moveAz(self, deg):
+		if self.parent.ids.motor_switchstop.active:
+			return		# Don't move if the safety lockout is engaged!
+
+		position = self.degToServo(deg)
+		if(position < self.minAz):
+			print("Servo Warning: {} < minAz=={}.".format(position, self.minAz))
+			cmd = [self.moveCommand, self.tiltChannel, self.minAz]
+		elif(position > self.maxAz):
+			print("Servo Warning: {} > maxAz=={}.".format(position, self.maxAz))
+			cmd = [self.moveCommand, self.tiltChannel, self.maxAz]
+		else:
+			cmd = [self.moveCommand, self.tiltChannel, position]
+		self.usb.write(cmd)
+
+
+	def moveEle(self, deg):
+		if self.parent.ids.motor_switchstop.active:
+			return		# Don't move if the safety lockout is engaged!
+
+		position = self.degToServo(deg)
+		if(position < self.minEle):
+			print("Servo Warning: {} < minEle=={}.".format(position, self.minEle))
+			cmd = [self.moveCommand, self.panChannel, self.minEle]
+		elif(position > self.maxEle):
+			print("Servo Warning: {} > maxEle=={}.".format(position, self.maxEle))
+			cmd = [self.moveCommand, self.panChannel, self.maxEle]
+		else:
+			cmd = [self.moveCommand, self.panChannel, position]
+		self.usb.write(cmd)
 
 
 ##################################################
@@ -325,6 +367,7 @@ class Arduino(object):
 		self.usb.flush()
 		self.connected = True
 		self.parent.updateConsole("\tConnected to servo arduino on port "+self.arduinoCOM)
+
 
 	def findComPort(self):
 		ports = list(serial.tools.list_ports.comports())
