@@ -1,12 +1,11 @@
 import math
 from math import radians, degrees, sin, cos, atan2, tan
 import serial
-import requests
 import time
-
 import serial
 import serial.tools.list_ports
 from threading import Thread
+import geomag
 
 class ServoControl(Thread):
 
@@ -45,8 +44,10 @@ class ServoControl(Thread):
 
 	def run(self):
 		while self.running:
-			self.update()
-			self.updateMain()
+			if not self.parent.ids.station_switchmanual.active:
+				self.update()
+				self.updateMain()
+			self.updateGuiCompass()
 			time.sleep(1)
 
 
@@ -61,7 +62,7 @@ class ServoControl(Thread):
 				elif line.startswith('Time: '):
 					self.parseTime(line)
 			except:
-				print("Exception on: ", line)
+				print("Exception on line from arduino")
 				# self.parent.updateConsole(" **ERROR** Parsing line from arduino")
 
 	def updateMain(self):
@@ -71,6 +72,10 @@ class ServoControl(Thread):
 		self.parent.ids.station_trueHeading.text = str(self.imuX)
 		self.parent.ids.station_time.text = str(self.gpsTime)
 
+
+	def updateGuiCompass(self):
+		b = self.getAzAngle()
+		self.parent.x_value = b
 
 	def parseIMU(self, line):
 		line = line.split(',')
@@ -96,43 +101,62 @@ class ServoControl(Thread):
 		self.gpsDate = line[3]
 
 
-	##################################################
-	###
-	###     Move Servos Methods
-	###
-	##################################################
-	def moveToCenterPos(self, arduino):
-		moveTiltServo(127, arduino)
-		movePanServo(127, arduino)
+	def getAzAngle(self):
+		''' Find degrees from true North at tracker, to payload '''
+		# Regardless of source, all payload GPS values go into the GUI
+		pLat = self.parent.ids.payload_lat.text
+		pLon = self.parent.ids.payload_long.text
 
-
-	def moveTiltServo(self, degrees, arduino):
-		degInServo = 254.0 / 360 * degrees
-		if(degInServo < self.minTilt):
-		    degInServo = self.minTilt
-		elif(degInServo > self.maxTilt):
-		    degInServo = self.maxTilt
-		degInServo = int(round(degInServo))
-		moveTilt = [self.moveCommand, self.tiltChannel, chr(degInServo)]
-		arduino.write(degInServo)
-
-
-	def movePanServo(self, position, arduino):
-		movePan = [moveCommand,panChannel,chr(255-position)]
-		arduino.write(movePan)
-
-
-	def degToServo(deg):
-		if deg >= 360:
-			deg = d % 360
-		if deg < 180:
-			val = int(round(127 - deg*(255.0/360.0)))
+		if self.parent.ids.station_switchmanual.active:
+			# Use manually entered GPS values
+			tLat = self.parent.ids.station_lat.text
+			tLon = self.parent.ids.station_long.text
 		else:
-			deg = 360 - d
-			val = int(round(127 + deg*(255.0/360.0)))
-		return val
+			# Use latest values (should be the same?)
+			tLat = self.latDeg
+			tLon = self.lonDeg
+		print('Using values: tLat {} tLon {} pLat {} pLon {}.\n'.format(
+			tLat, tLon, pLat, pLon
+		))
+		return self.bearing(tLat, tLon, pLat, pLon)
 
 
+
+	def bearing(self, trackerLat, trackerLon, payloadLat, payloadLon):
+		''' Returns bearing in degrees, from tracker to payload '''
+		# http://www.movable-type.co.uk/scripts/latlong.html
+		'''
+		# Formula: θ = atan2( sin Δλ ⋅ cos φ2 , cos φ1 ⋅ sin φ2 − sin φ1 ⋅ cos φ2 ⋅ cos Δλ )
+		# where φ1,λ1 is the start point,
+		# φ2,λ2 the end point and Δλ is the difference in longitude
+		'''
+
+		try:
+			startLat = math.radians(float(trackerLat))
+			startLong = math.radians(float(trackerLon))
+			endLat = math.radians(float(payloadLat))
+			endLong = math.radians(float(payloadLon))
+
+			dLong = endLong - startLong
+
+			dPhi = math.log(math.tan(endLat/2.0+math.pi/4.0)/math.tan(startLat/2.0+math.pi/4.0))
+			if abs(dLong) > math.pi:
+				if dLong > 0.0:
+					dLong = -(2.0 * math.pi - dLong)
+				else:
+					dLong = (2.0 * math.pi + dLong)
+
+			rads = math.atan2(dLong, dPhi)
+			degs = (math.degrees(rads) + 360.0) % 360.0;
+
+			declination = geomag.declination(dlat=startLat, dlon=startLong)
+			d2 = geomag.declination(dlat=self.latDeg, dlon=self.lonDeg)
+
+			print('Bearing in radians: {:f} and degrees: {:f} + declination: {:f} + d2: {:f}'.format(rads, degs, declination, d2))
+			return degs+declination
+
+		except ValueError:
+			return 0
 
 ##################################################
 ###
@@ -151,10 +175,10 @@ class Servo(object):
 		self.servoCOM = self.findComPort()
 		# Servo ranges
 		self.moveCommand = 0xFF
-		self.minPan = 0
-		self.maxPan = 255
-		self.minTilt = 70
-		self.maxTilt = 123
+		self.minAz = 0
+		self.maxAz = 255
+		self.minEle = 70
+		self.maxEle = 123
 		# Pan and tilt servos on different channels
 		self.panChannel = 1
 		self.tiltChannel = 0
@@ -213,18 +237,23 @@ class Servo(object):
 
 
 		def moveAz(position):
-			if(position < 70):          #80 degrees upper limit
-				moveTilt = [moveCommand,tiltChannel,chr(70)]
-			elif(position > 123):       #5 degrees lower limit
-				moveTilt = [moveCommand,tiltChannel,chr(123)]
+			if(position < self.minAz):          #80 degrees upper limit
+				cmd = [self.moveCommand, self.tiltChannel, chr(self.minAz)]
+			elif(position > self.maxAz):       #5 degrees lower limit
+				cmd = [self.moveCommand, self.tiltChannel, chr(self.maxAz)]
 			else:
-				moveTilt = [moveCommand,tiltChannel,chr(position)]
-			s.write(moveTilt)
+				cmd = [self.moveCommand, self.tiltChannel, chr(position)]
+			self.usb.write(cmd)
 
 
 		def moveEle(position):
-			movePan = [moveCommand,panChannel,chr(255-position)]
-			s.write(movePan)
+			if(position < self.minAz):
+				cmd = [self.moveCommand, self.panChannel, chr(self.minAz)]
+			elif(position > self.maxAz):
+				cmd = [self.moveCommand, self.panChannel, chr(self.maxAz)]
+			else:
+				cmd = [self.moveCommand, self.panChannel, chr(position)]
+			self.usb.write(cmd)
 
 
 ##################################################

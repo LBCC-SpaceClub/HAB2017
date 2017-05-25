@@ -4,3 +4,4 @@ pyserial==3.3
 configparser==3.5
 docutils==0.13.1
 Kivy-Garden==0.1.4
+geomag==0.9.2015

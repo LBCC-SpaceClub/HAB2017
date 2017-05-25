@@ -30,7 +30,6 @@ from kivy.uix.videoplayer import VideoPlayer
 '''
 	Project imports
 '''
-from data.IntervalThread import *
 from data.DatabaseThread import *
 from data.StepperControl import *
 from data.ServoControl import *

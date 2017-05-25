@@ -11,10 +11,6 @@ from data.libs.Dependencies import *
 class RootLayout(FloatLayout):
 
 	configs = "cfg/Configs.ini"
-	interval_threadA = IntervalThread()
-	interval_threadB = IntervalThread()
-	interval_threadC = IntervalThread()
-	interval_threadD = IntervalThread()
 	x_value = NumericProperty(0.0)
 	y_value = NumericProperty(0.0)
 	rst_doc = StringProperty('')
@@ -211,6 +207,7 @@ class RootLayout(FloatLayout):
 	def stationSetManualValues(self):
 		self.updateConsole(" **SET** station ("+self.ids.station_lat.text+", "
 			+self.ids.station_long.text+", "+self.ids.station_alt.text+")")
+		print(self.ids.station_lat.text)
 
 
 	def stationManualSwitch(self):
@@ -223,8 +220,8 @@ class RootLayout(FloatLayout):
 			self.ids.station_lat_lbl.color = (0, 1, 1, 1)
 			self.ids.station_long_lbl.color = (0, 1, 1, 1)
 			self.ids.station_alt_lbl.color = (0, 1, 1, 1)
-			self.ids.station_connect.disabled = True
-			self.ids.station_disconnect.disabled = True
+			# self.ids.station_connect.disabled = True
+			# self.ids.station_disconnect.disabled = True
 		else:
 			self.updateConsole(" **MODE** auto station")
 			self.ids.station_setvalues.disabled = True
@@ -234,7 +231,8 @@ class RootLayout(FloatLayout):
 			self.ids.station_lat_lbl.color = (1, 1, 1, 1)
 			self.ids.station_long_lbl.color = (1, 1, 1, 1)
 			self.ids.station_alt_lbl.color = (1, 1, 1, 1)
-			self.ids.station_connect.disabled = False
+			# self.ids.station_connect.disabled = False
+			# self.ids.station_connect.disabled = False
 
 
 
