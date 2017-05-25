@@ -74,11 +74,6 @@ class RootLayout(FloatLayout):
 	def stopIridiumDatabase(self):
 		try:
 			self.updateConsole(" **STOP** iridium database connection")
-			self.ids.payload_lat.text = "0.0"
-			self.ids.payload_long.text = "0.0"
-			self.ids.payload_alt.text = ""
-			self.ids.payload_date.text = ""
-			self.ids.payload_time.text = ""
 			self.connectedDatabase.connected = False
 			self.connectedDatabase.stop = False #must happen before pop or thread wont get garbage collected
 			self.ids.db_status.text = "Not Connected"
@@ -123,11 +118,6 @@ class RootLayout(FloatLayout):
 	def stopArduino(self):
 		try:
 			self.updateConsole(" **STOP** local arduino conection")
-			self.ids.station_lat.text = ""
-			self.ids.station_long.text = ""
-			self.ids.station_alt.text = ""
-			self.ids.station_trueHeading.text = ""
-			self.ids.station_time.text = ""
 			self.connectedArduino.running = False
 			self.ids.ard_status.text = "Not Connected"
 			self.ids.ard_status.color = (1,0,0,1)
@@ -181,7 +171,7 @@ class RootLayout(FloatLayout):
 			self.ids.payload_alt_lbl.color = (0, 1, 1, 1)
 			self.ids.payload_connect.disabled = True
 			self.ids.payload_disconnect.disabled = True
-			self.stopIridiumDatabase()
+			# self.stopIridiumDatabase()
 		else:
 			self.updateConsole(" **MODE** auto payload")
 			self.ids.payload_setvalues.disabled = True

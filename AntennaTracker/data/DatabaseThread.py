@@ -31,8 +31,9 @@ class DatabaseThread(Thread):
 
 	def run(self):
 		while self.connected:
-			self.update()
-			time.sleep(1)
+			if not self.parent.ids.payload_switchmanual.active:
+				self.update()
+			time.sleep(5)
 
 
 	def connectToDB(self):

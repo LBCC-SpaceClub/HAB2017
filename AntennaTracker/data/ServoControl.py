@@ -31,6 +31,11 @@ class ServoControl(Thread):
 		self.gpsDate = None
 		self.gpsTime = None
 
+		# Targetting solution fields:
+		self.targetAzDeg = 0
+		self.targetEleDeg = 0
+		self.targetDistanceM = 0
+
 		# Connect to the arduino
 		self.arduino = Arduino(parent)
 
@@ -60,6 +65,7 @@ class ServoControl(Thread):
 					self.parseIMU(line[5:])
 				elif line[:5] == '[GPS]':
 					self.parseGPS(line[5:])
+					self.updateTargetSolution()
 				elif line.startswith('Time: '):
 					self.parseTime(line)
 			except Exception as e:
@@ -74,8 +80,12 @@ class ServoControl(Thread):
 
 
 	def updateGuiCompass(self):
-		b = self.getAzAngle()
-		self.parent.x_value = b
+		if self.parent.ids.station_switchmanual.active:
+			self.updateTargetSolution()
+		# print("dist = ",self.targetDistanceM)
+		self.parent.x_value = self.targetAzDeg
+		self.parent.y_value = self.targetEleDeg
+
 
 	def parseIMU(self, line):
 		line = line.split(',')
@@ -101,62 +111,81 @@ class ServoControl(Thread):
 		self.gpsDate = line[3]
 
 
-	def getAzAngle(self):
-		''' Find degrees from true North at tracker, to payload '''
-		# Regardless of source, all payload GPS values go into the GUI
-		pLat = self.parent.ids.payload_lat.text
-		pLon = self.parent.ids.payload_long.text
-
-		if self.parent.ids.station_switchmanual.active:
-			# Use manually entered GPS values
-			tLat = self.parent.ids.station_lat.text
-			tLon = self.parent.ids.station_long.text
-		else:
-			# Use latest values (should be the same?)
-			tLat = self.latDeg
-			tLon = self.lonDeg
-		print('Using values: tLat {} tLon {} pLat {} pLon {}.\n'.format(
-			tLat, tLon, pLat, pLon
-		))
-		return self.bearing(tLat, tLon, pLat, pLon)
-
-
-
-	def bearing(self, trackerLat, trackerLon, payloadLat, payloadLon):
-		''' Returns bearing in degrees, from tracker to payload '''
-		# http://www.movable-type.co.uk/scripts/latlong.html
-		'''
-		# Formula: θ = atan2( sin Δλ ⋅ cos φ2 , cos φ1 ⋅ sin φ2 − sin φ1 ⋅ cos φ2 ⋅ cos Δλ )
-		# where φ1,λ1 is the start point,
-		# φ2,λ2 the end point and Δλ is the difference in longitude
-		'''
-
+	def updateTargetSolution(self):
 		try:
-			startLat = math.radians(float(trackerLat))
-			startLong = math.radians(float(trackerLon))
-			endLat = math.radians(float(payloadLat))
-			endLong = math.radians(float(payloadLon))
+			pLat = float(self.parent.ids.payload_lat.text)
+			pLon = float(self.parent.ids.payload_long.text)
+			pAlt = float(self.parent.ids.payload_alt.text)
 
-			dLong = endLong - startLong
+			if self.parent.ids.station_switchmanual.active:
+				# Use manually entered GPS values
+				tLat = float(self.parent.ids.station_lat.text)
+				tLon = float(self.parent.ids.station_long.text)
+				tAlt = float(self.parent.ids.station_alt.text)
+			else:
+				# Use latest values (should be the same?)
+				tLat = self.latDeg
+				tLon = self.lonDeg
+				tAlt = self.altMeters
 
-			dPhi = math.log(math.tan(endLat/2.0+math.pi/4.0)/math.tan(startLat/2.0+math.pi/4.0))
-			if abs(dLong) > math.pi:
-				if dLong > 0.0:
-					dLong = -(2.0 * math.pi - dLong)
-				else:
-					dLong = (2.0 * math.pi + dLong)
+			self.targetDistanceM = self.getTargetDistance(
+				tLat, tLon, pLat, pLon
+			)
+			self.targetEleDeg = self.getEleDegrees(
+				pAlt, tAlt, self.targetDistanceM
+			)
+			self.targetAzDeg = self.getAzDegrees(
+				tLat, tLon, pLat, pLon
+			)
+		except ValueError as e:
+			print(e)
+			# defaults
+			self.targetDistanceM = 0
+			self.targetEleDeg = 0
+			self.targetAzDeg = 0
 
-			rads = math.atan2(dLong, dPhi)
-			degs = (math.degrees(rads) + 360.0) % 360.0;
 
-			declination = geomag.declination(dlat=startLat, dlon=startLong)
-			d2 = geomag.declination(dlat=self.latDeg, dlon=self.lonDeg)
-
-			print('Bearing in radians: {:f} and degrees: {:f} + declination: {:f} + d2: {:f}'.format(rads, degs, declination, d2))
-			return degs+declination
-
+	def getEleDegrees(self, payloadAlt, stationAlt, distance):
+		''' Returns degrees from perpendicular to Earth surface, to payload '''
+		try:
+			deltaAlt = payloadAlt - stationAlt
+			return math.degrees(math.atan2(deltaAlt, distance))
 		except ValueError:
 			return 0
+
+
+	def getTargetDistance(self, trackerLat, trackerLon, remoteLat, remoteLon):
+		''' Returns distance over a sphere, between two points '''
+		# haversine formula, see: http://www.movable-type.co.uk/scripts/latlong.html
+		try:
+			R = 6371000									# radius of earth in meters
+			dLat = math.radians(remoteLat-trackerLat)	# delta latitude in radians
+			dLon = math.radians(remoteLon-trackerLon)	# delta longitude in radians
+			a = math.sin(dLat/2)*math.sin(dLat/2)+math.cos(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.sin(dLon/2)*math.sin(dLon/2)
+			c = 2*math.atan2(math.sqrt(a),math.sqrt(1-a))
+			d = R*c
+			return d
+			# return d*3280.839895 # multiply distance in Km by 3280 for feet
+		except ValueError:
+			return 0
+
+
+	def getAzDegrees(self, trackerLat, trackerLon, remoteLat, remoteLon):
+		''' Returns degrees from true North, to payload '''
+		try:
+			dLat = math.radians(remoteLat-trackerLat)		# delta latitude in radians
+			dLon = math.radians(remoteLon-trackerLon)		# delta longitude in radians
+
+			y = math.sin(dLon)*math.cos(math.radians(remoteLat))
+			x = math.cos(math.radians(trackerLat))*math.sin(math.radians(remoteLat))-math.sin(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.cos(dLat)
+			tempBearing = math.degrees(math.atan2(y,x))		# returns the bearing from true north
+			if (tempBearing < 0):
+				tempBearing = tempBearing + 360
+			return tempBearing
+		except ValueError:
+			return 0
+
+
 
 ##################################################
 ###
@@ -238,6 +267,9 @@ class Servo(object):
 
 
 		def moveAz(position):
+			if parent.ids.motor_switchstop.active:
+				# Don't move if the safety lockout is engaged!
+				return
 			if(position < self.minAz):          #80 degrees upper limit
 				cmd = [self.moveCommand, self.tiltChannel, chr(self.minAz)]
 			elif(position > self.maxAz):       #5 degrees lower limit
@@ -248,6 +280,9 @@ class Servo(object):
 
 
 		def moveEle(position):
+			if parent.ids.motor_switchstop.active:
+				# Don't move if the safety lockout is engaged!
+				return
 			if(position < self.minAz):
 				cmd = [self.moveCommand, self.panChannel, chr(self.minAz)]
 			elif(position > self.maxAz):
