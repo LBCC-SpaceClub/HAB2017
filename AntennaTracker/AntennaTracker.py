@@ -100,29 +100,23 @@ class RootLayout(FloatLayout):
 	###
 	##################################################
 	def startArduino(self):
-		try:
-			if(self.ids.cbox_servos.active):
-				self.updateConsole(" **START** local arduino servo connection")
-				self.connectedArduino = ServoControl(self)
-				self.connectedArduino.setName('Servo Thread')
-			elif(self.ids.cbox_steppers.active):
-				self.updateConsole(" **START** local arduino stepper connection")
-				self.connectedArduino = StepperControl(self)
-				self.connectedArduino.setName('Stepper Thread')
+		# try:
+		if(self.ids.cbox_servos.active):
+			self.updateConsole(" **START** local arduino servo connection")
+			self.connectedArduino = ServoControl(self)
+			self.connectedArduino.setName('Servo Thread')
+		elif(self.ids.cbox_steppers.active):
+			self.updateConsole(" **START** local arduino stepper connection")
+			self.connectedArduino = StepperControl(self)
+			self.connectedArduino.setName('Stepper Thread')
 
-			self.connectedArduino.start()
-			self.ids.station_connect.disabled = True
-
-			if self.connectedArduino.connected:
-				self.ids.ard_status.text = "Connected"
-				self.ids.ard_status.color = (0,1,0,1)
-				self.ids.station_disconnect.disabled = False
-			else:
-				self.stopArduino()
-
-		except:
-			self.updateConsole(" **ERROR** could not connect to local arduino")
-			self.stopArduino()
+		self.connectedArduino.start()
+		self.ids.station_connect.disabled = True
+		self.ids.station_disconnect.disabled = False
+		self.ids.ard_status.text = "Connected"
+		self.ids.ard_status.color = (0,1,0,1)
+		# except:
+		# 	self.updateConsole(" **ERROR** could not connect to local arduino")
 
 
 	def stopArduino(self):
@@ -133,9 +127,6 @@ class RootLayout(FloatLayout):
 			self.ids.station_alt.text = ""
 			self.ids.station_trueHeading.text = ""
 			self.ids.station_time.text = ""
-			# self.arduino_list[0].isConnected = False
-			# self.arduino_list[0].alive = False #must happen before pop or thread wont get garbage collected
-			# self.arduino_list.pop(0)
 			self.connectedArduino.running = False
 			self.ids.ard_status.text = "Not Connected"
 			self.ids.ard_status.color = (1,0,0,1)
