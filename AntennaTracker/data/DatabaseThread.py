@@ -86,4 +86,5 @@ class DatabaseThread(Thread):
 		self.parent.ids.payload_alt.text = self.altMeters
 		self.parent.ids.payload_date.text = str(self.gpsDate)
 		self.parent.ids.payload_time.text = str(self.gpsTime)
+		self.parent.payloadSetGPSValues()
 		self.parent.updateConsole(" **UPDATE** updated location from iridium database")

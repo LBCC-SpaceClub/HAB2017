@@ -31,15 +31,11 @@ class ServoControl(Thread):
 		self.gpsDate = None
 		self.gpsTime = None
 
-		# Connect to the arduino and start a thread to keep this class updated
+		# Connect to the arduino
 		self.arduino = Arduino(parent)
-		if not self.arduino.connect():
-			raise IOError('Could not connect to arduino')
 
 		# Connect to the tracking servos
 		self.servos = Servo(parent)
-		if not self.servos.connected:
-			self.parent.updateConsole(" **WARNING** could not connect to maestro")
 
 
 	def run(self):
@@ -47,7 +43,12 @@ class ServoControl(Thread):
 			if not self.parent.ids.station_switchmanual.active:
 				self.update()
 				self.updateMain()
-			self.updateGuiCompass()
+			if(
+				(self.parent.ids.station_connect.disabled or self.parent.ids.station_switchmanual.active)
+				and
+				(self.parent.ids.payload_connect.disabled or self.parent.ids.payload_switchmanual.active)
+			):
+				self.updateGuiCompass()
 			time.sleep(1)
 
 
@@ -61,9 +62,8 @@ class ServoControl(Thread):
 					self.parseGPS(line[5:])
 				elif line.startswith('Time: '):
 					self.parseTime(line)
-			except:
-				print("Exception on line from arduino")
-				# self.parent.updateConsole(" **ERROR** Parsing line from arduino")
+			except Exception as e:
+				print("Exception on line from arduino: ", e)
 
 	def updateMain(self):
 		self.parent.ids.station_lat.text = str(self.latDeg)
@@ -168,11 +168,10 @@ class Servo(object):
 
 	def __init__(self, parent):
 		# Arduino (USB) fields
-		self.parent = parent
 		self.connected = False
+		self.parent = parent
 		self.servoBaud = 9600
 		self.servoTimeout = 1
-		self.servoCOM = self.findComPort()
 		# Servo ranges
 		self.moveCommand = 0xFF
 		self.minAz = 0
@@ -182,8 +181,11 @@ class Servo(object):
 		# Pan and tilt servos on different channels
 		self.panChannel = 1
 		self.tiltChannel = 0
-		self.connect()
-		self.configServos()
+		# Connect to maestro servo controller
+		self.servoCOM = self.findComPort()
+		if self.servoCOM:
+			self.connect()
+			self.configServos()
 
 
 	def __del__(self):
@@ -192,16 +194,15 @@ class Servo(object):
 
 
 	def connect(self):
-		try:
+		if self.servoCOM:
 			self.usb = serial.Serial(
 				self.servoCOM,
 				baudrate = self.servoBaud,
 				timeout = self.servoTimeout
 			)
+			self.usb.flush()
 			self.connected = True
-		except portNotOpenError:
-			self.parent.updateConsole(" **ERROR** could not find a maestro port")
-		return self.connected
+			self.parent.updateConsole("\tConnected to maestro on port "+self.servoCOM)
 
 
 	def findComPort(self):
@@ -209,10 +210,10 @@ class Servo(object):
 		for p in ports:
 			if 'Pololu Micro Maestro 6-Servo Controller' in p[1]:
 				return p[0]
-
+		self.parent.updateConsole(" **WARNING** could not find a maestro port")
+		return None
 
 	def configServos(self):
-		self.parent.updateConsole(" **UPDATE** configuring servos...")
 		#Set acceleration rate for both servos
 		accelCommand = 0x89
 		tiltAccel = 1
@@ -265,12 +266,14 @@ class Arduino(object):
 	''' Methods to connect to the USB arduino '''
 	def __init__(self, parent):
 		# Arduino (USB) fields
-		self.arduinoBaud = 115200
-		self.arduinoTimeout = 1
-		self.arduinoCOM = None
-		self.connected = False
-		self.usb = None
+		self.connected = False # default to not connected
 		self.parent = parent
+		self.arduinoBaud = 115200 # might be too high, I'm seeing some garbage
+		self.arduinoTimeout = 1
+		self.arduinoCOM = self.findComPort()
+		self.connect()
+		if not self.connected:
+			raise IOError('Could not connect to arduino')
 
 
 	def __del__(self):
@@ -279,28 +282,21 @@ class Arduino(object):
 
 
 	def connect(self):
-		try:
-			self.arduinoCOM = self.findComPort()
-			self.usb = serial.Serial(
-				self.arduinoCOM,
-				baudrate = self.arduinoBaud,
-				timeout = self.arduinoTimeout
-			)
-			self.usb.flush()
-			return True
-		except:
-			self.parent.updateConsole(" **ERROR** could not find arduino port")
-			return False
-
+		self.usb = serial.Serial(
+			self.arduinoCOM,
+			baudrate = self.arduinoBaud,
+			timeout = self.arduinoTimeout
+		)
+		self.usb.flush()
+		self.connected = True
+		self.parent.updateConsole("\tConnected to servo arduino on port "+self.arduinoCOM)
 
 	def findComPort(self):
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
 			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
 				return p[0]
-
-		self.parent.updateConsole(" **ERROR** manually select servo arduino port")
-		raise IOError('Could not connect to arduino')
+		raise IOError('Could not find arduino port')
 
 
 	def getLine(self):

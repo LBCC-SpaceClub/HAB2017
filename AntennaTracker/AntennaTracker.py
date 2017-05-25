@@ -96,11 +96,18 @@ class RootLayout(FloatLayout):
 	###
 	##################################################
 	def startArduino(self):
-		# try:
 		if(self.ids.cbox_servos.active):
 			self.updateConsole(" **START** local arduino servo connection")
-			self.connectedArduino = ServoControl(self)
-			self.connectedArduino.setName('Servo Thread')
+			try:
+				self.connectedArduino = ServoControl(self)
+				self.connectedArduino.setName('Servo Thread')
+			except IOError as e:
+				self.updateConsole(" **ERROR** "+e.args[0])
+				return
+			# except Exception as e:
+			# 	self.updateConsole(" **ERROR** Something unknown happened!")
+			# 	print(e)
+			# 	return
 		elif(self.ids.cbox_steppers.active):
 			self.updateConsole(" **START** local arduino stepper connection")
 			self.connectedArduino = StepperControl(self)
@@ -111,8 +118,6 @@ class RootLayout(FloatLayout):
 		self.ids.station_disconnect.disabled = False
 		self.ids.ard_status.text = "Connected"
 		self.ids.ard_status.color = (0,1,0,1)
-		# except:
-		# 	self.updateConsole(" **ERROR** could not connect to local arduino")
 
 
 	def stopArduino(self):
@@ -207,7 +212,6 @@ class RootLayout(FloatLayout):
 	def stationSetManualValues(self):
 		self.updateConsole(" **SET** station ("+self.ids.station_lat.text+", "
 			+self.ids.station_long.text+", "+self.ids.station_alt.text+")")
-		print(self.ids.station_lat.text)
 
 
 	def stationManualSwitch(self):
