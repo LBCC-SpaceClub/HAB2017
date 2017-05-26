@@ -45,20 +45,39 @@ class ServoControl(Thread):
 
 	def run(self):
 		while self.running:
-			if not self.parent.ids.station_switchmanual.active:
+			# Simplify by using some temp variables
+			stationConnected = self.parent.ids.station_connect.disabled
+			stationManualButton = self.parent.ids.station_switchmanual.active
+			payloadConnected = self.parent.ids.payload_connect.disabled
+			payloadManualButton = self.parent.ids.payload_switchmanual.active
+
+			# Unless Manual button enabled, check for new arduino gps
+			if not stationManualButton:
 				self.update()
 				self.updateMain()
 
 			# Update the gui compasses if both gps positions available
-			if(
-				(self.parent.ids.station_connect.disabled or self.parent.ids.station_switchmanual.active)
-				and
-				(self.parent.ids.payload_connect.disabled or self.parent.ids.payload_switchmanual.active)
-			):
-				self.updateGuiCompass()
+			hasStationGps = (stationConnected or stationManualButton)
+			hasPayloadGps = (payloadConnected or payloadManualButton)
+			if (hasStationGps and hasPayloadGps):
+				self.updateGuiCompass
+				# Only run servos if both gps positions AND motors are enabled
 				if self.servos.connected:
 					self.moveServos()
+
+			# No point updating faster than new data becomes available
 			time.sleep(1)
+
+
+	def moveServos(self):
+		if self.parent.ids.motor_switchstop.active:
+			return		# Don't move if the safety lockout is engaged!
+		if self.servos.connected:
+			# print("Moving servos to ele = {:.3f}, az = {:.3f} degrees.".format(
+			# 	self.targetEleDeg, self.targetAzDeg)
+			# )
+			self.servos.moveEle(float(self.targetEleDeg))
+			self.servos.moveAz(float(self.targetAzDeg))
 
 
 	def update(self):
@@ -74,17 +93,6 @@ class ServoControl(Thread):
 					self.parseTime(line)
 			except Exception as e:
 				print("Exception on line from arduino: ", e)
-
-
-	def moveServos(self):
-		if self.parent.ids.motor_switchstop.active:
-			return		# Don't move if the safety lockout is engaged!
-		if self.servos.connected:
-			# print("Moving servos to ele = {:.3f}, az = {:.3f} degrees.".format(
-			# 	self.targetEleDeg, self.targetAzDeg)
-			# )
-			self.servos.moveEle(float(self.targetEleDeg))
-			self.servos.moveAz(float(self.targetAzDeg))
 
 
 	def updateMain(self):
