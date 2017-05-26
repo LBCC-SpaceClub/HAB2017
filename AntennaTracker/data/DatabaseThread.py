@@ -7,7 +7,7 @@ import time
 
 class DatabaseThread(Thread):
 
-	def __init__(self, cfg_file):
+	def __init__(self, parent, cfg_file):
 		Thread.__init__(self)
 		self.cfg_file = cfg_file
 		self.stop = True
@@ -19,31 +19,32 @@ class DatabaseThread(Thread):
 		self.lastChecked = 0
 		self.querysuccess = False
 		self.daemon = True #stops thread on app exit, important
-		self.log = ""
-		self.connected = False
+		self.parent = parent
+		self.connected = self.connectToDB()
 
 
 	def __del__(self):
 		# Clean up the db connection when this thread exits
-		self.db.close()
+		if self.db:
+			self.db.close()
+
 
 	def run(self):
-		if(self.connectToDB()):
-			self.connected = True
-			# self.setLog(" **SUCCESS** Loaded iridium database config file")
-		else:
-			self.connected = False
+		while self.connected:
+			if not self.parent.ids.payload_switchmanual.active:
+				self.update()
+			time.sleep(5)
 
 
 	def connectToDB(self):
-		try:
+		try:	# to open config file
 			self.cfg = configparser.ConfigParser()
 			self.cfg.read(self.cfg_file)
 		except:
-			self.setLog(" **ERROR** could not read /cfg/Configs.ini")
+			self.parent.updateConsole(" **ERROR** could not read /cfg/Configs.ini")
 			return False
 
-		try:
+		try:	# to connect to db
 			self.db = pymysql.connect(
 				host= self.cfg["MySQL"]["Host"],
 				user= self.cfg["MySQL"]["User"],
@@ -54,7 +55,7 @@ class DatabaseThread(Thread):
 			)
 			return True
 		except:
-			self.setLog(" **ERROR** could not connect to iridium database")
+			self.parent.updateConsole(" **ERROR** could not connect to iridium database")
 			return False
 
 
@@ -71,24 +72,20 @@ class DatabaseThread(Thread):
 						self.gpsDate = str(data["gps_fltDate"])
 						self.gpsTime = str(data["gps_time"])
 						self.lastChecked = time.time()
-						self.setLog(" **UPDATE** updated location from iridium database")
+						self.updateparent()
 					except:
 						# a botched parse deserves a smaller delay
 						self.lastChecked = time.time() - 20
-						self.setLog(" **ERROR** failed to parse line from database")
+						self.parent.updateConsole(" **ERROR** failed to parse line from database")
 			except:
-				self.setLog(" **ERROR** failed to fetch data from iridium database")
+				self.parent.updateConsole(" **ERROR** failed to fetch data from iridium database")
 
 
-	def setLog(self, txt):
-		self.log= self.log+""+txt
-
-
-	def getLog(self):
-		if(self.log != ""):
-			return self.log
-		else:
-			return ""
-
-	def clearLog(self):
-		self.log = ""
+	def updateparent(self):
+		self.parent.ids.payload_lat.text = self.latDeg
+		self.parent.ids.payload_long.text = self.lonDeg
+		self.parent.ids.payload_alt.text = self.altMeters
+		self.parent.ids.payload_date.text = str(self.gpsDate)
+		self.parent.ids.payload_time.text = str(self.gpsTime)
+		self.parent.payloadSetGPSValues()
+		self.parent.updateConsole(" **UPDATE** updated location from iridium database")

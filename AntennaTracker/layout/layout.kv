@@ -75,10 +75,10 @@
                     rows: 1
                     spacing:'80dp'
                     Label:
-                        text: 'Arduino USB'
+                        text: 'Servos'
                         font_size: '16sp'
                     CheckBox:
-                        id: cbox_arduino_usb
+                        id: cbox_servos
                         active: True
                         group: 'gr2'
                 GridLayout:
@@ -86,12 +86,12 @@
                     rows: 1
                     spacing:'80dp'
                     Label:
-                        text: 'Arduino Ethernet'
+                        text: 'Steppers'
                         font_size: '16sp'
                     CheckBox:
-                        id: cbox_arduino_ethernet
+                        id: cbox_steppers
+						active: False
                         group: 'gr2'
-                        disabled: True
                 GridLayout:
                     cols: 2
                     rows: 1
@@ -214,14 +214,14 @@
                     row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
-                        text: 'Date'
+                        text: 'Heading'
                     GridLayout:
                         cols: 1
                         row_force_default:True
                         row_default_height:'35dp'
                         col_default_width: '140dp'
                         TextInput:
-                            id: station_date
+                            id: station_trueHeading
                             readonly: True
                             multiline: False
                             font_size: '18sp'
@@ -535,7 +535,7 @@
                         cols: 1
                         rows: 2
                         Label:
-                            text: 'Arduino USB'
+                            text: 'Local Arduino'
                             font_size:'18sp'
                         Label:
                             id: ard_status
