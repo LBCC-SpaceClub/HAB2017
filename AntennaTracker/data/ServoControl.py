@@ -63,13 +63,13 @@ class ServoControl(Thread):
 				self.updateGuiCompass
 				# Only run servos if both gps positions AND motors are enabled
 				if self.servos.connected:
-					self.moveServos()
+					self.moveMotors()
 
 			# No point updating faster than new data becomes available
 			time.sleep(1)
 
 
-	def moveServos(self):
+	def moveMotors(self):
 		if self.parent.ids.motor_switchstop.active:
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
