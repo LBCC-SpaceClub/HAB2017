@@ -104,7 +104,7 @@ class RootLayout(FloatLayout):
 			try:
 				self.connectedArduino = StepperControl(self)
 				self.connectedArduino.setName('Stepper Thread')
-			except IOError as e:
+			except (IOError, OSError) as e:
 				self.updateConsole(" **ERROR** "+e.args[0])
 				return
 		self.connectedArduino.start()

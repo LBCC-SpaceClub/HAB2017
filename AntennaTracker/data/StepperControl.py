@@ -7,6 +7,7 @@ import serial.tools.list_ports
 from threading import Thread
 import geomag
 
+
 class StepperControl(Thread):
 
 	def __init__(self, parent):
@@ -37,17 +38,12 @@ class StepperControl(Thread):
 		self.targetDistanceM = 0
 
 		# Connect to the arduino
-		try:
-			self.arduino = Arduino(parent)
-		except IOError as e:
-			self.arduino = None
-			self.parent.updateConsole(" **ERROR** "+e.args[0])
-
-
+		self.arduino = Arduino(parent)
+		print("Steppers created!")
 
 	def run(self):
 		while self.running:
-			print("Stepper running!")
+			print("Steppers Running!")
 			# Simplify by using some temp variables
 			stationConnected = self.parent.ids.station_connect.disabled
 			stationManualButton = self.parent.ids.station_switchmanual.active
@@ -63,7 +59,7 @@ class StepperControl(Thread):
 			hasStationGps = (stationConnected or stationManualButton)
 			hasPayloadGps = (payloadConnected or payloadManualButton)
 			if (hasStationGps and hasPayloadGps):
-				self.updateGuiCompass
+				self.updateGuiCompass()
 				# Only run motors if both gps positions AND motors are enabled
 				if self.arduino.connected:
 					self.moveMotors()
@@ -79,8 +75,9 @@ class StepperControl(Thread):
 			# print("Moving motors to ele = {:.3f}, az = {:.3f} degrees.".format(
 			# 	self.targetEleDeg, self.targetAzDeg)
 			# )
-			self.arduino.moveEle(float(self.targetEleDeg))
-			self.arduino.moveAz(float(self.targetAzDeg))
+			self.arduino.moveBoth(float(self.targetEleDeg), float(self.targetAzDeg))
+			# self.arduino.moveEle(float(self.targetEleDeg))
+			# self.arduino.moveAz(float(self.targetAzDeg))
 
 
 	def update(self):
@@ -220,17 +217,19 @@ class StepperControl(Thread):
 ###
 ##################################################
 class Arduino(object):
-	''' Methods to connect to the Stepper arduino '''
+	''' Methods to connect to the USB arduino '''
 	def __init__(self, parent):
-		# Arduino fields
+		# Arduino (USB) fields
 		self.connected = False # default to not connected
 		self.parent = parent
 		self.arduinoBaud = 115200 # might be too high, I'm seeing some garbage
 		self.arduinoTimeout = 1
 		self.arduinoCOM = self.findComPort()
 		self.connect()
+		self.prevAziSteps = 0
+		self.prevEleSteps = 0
 		if not self.connected:
-			raise IOError('Could not connect to stepper arduino')
+			raise IOError('Could not connect to arduino')
 
 
 	def __del__(self):
@@ -249,12 +248,41 @@ class Arduino(object):
 		self.parent.updateConsole("\tConnected to stepper arduino on port "+self.arduinoCOM)
 
 
+	def degToStepper(self, deg):
+		# Assuming 0 degrees is straight ahead
+		steps = (int)(deg * 48960 / 360)
+		return steps
+
+
+	def moveToCenter(self):
+		self.moveBoth(0, 0)
+
+
+	def moveAz(self, deg):
+		pass
+
+
+	def moveEle(self, deg):
+		pass
+
+
+	def moveBoth(self, eleDeg, aziDeg):
+		if self.connected and not self.parent.ids.motor_switchstop.active:
+			aziSteps = self.degToStepper(aziDeg)
+			eleSteps = self.degToStepper(eleDeg)
+			cmd = "<{},{}>".format(eleSteps, aziSteps)
+			if self.prevAziSteps != aziSteps and self.prevEleSteps != eleSteps:
+				print(cmd)
+			cmd = str.encode(cmd)
+			self.usb.write(cmd)
+
+
 	def findComPort(self):
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
 			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
 				return p[0]
-		raise IOError('Could not find stepper arduino port')
+		raise IOError('Could not find arduino port')
 
 
 	def getLine(self):
@@ -263,40 +291,3 @@ class Arduino(object):
 
 	def hasLines(self):
 		return self.usb.inWaiting()
-
-
-	def moveToCenter(self):
-		moveTilt(0)
-		movePan(0)
-
-
-	def moveAz(self, deg):
-		if self.parent.ids.motor_switchstop.active:
-			return		# Don't move if the safety lockout is engaged!
-
-		position = self.degToStepper(deg)
-		if(position < self.minAz):
-			print("Stepper Warning: {} < minAz=={}.".format(position, self.minAz))
-			cmd = [self.moveCommand, self.tiltChannel, self.minAz]
-		elif(position > self.maxAz):
-			print("Stepper Warning: {} > maxAz=={}.".format(position, self.maxAz))
-			cmd = [self.moveCommand, self.tiltChannel, self.maxAz]
-		else:
-			cmd = [self.moveCommand, self.tiltChannel, position]
-		self.usb.write(cmd)
-
-
-	def moveEle(self, deg):
-		if self.parent.ids.motor_switchstop.active:
-			return		# Don't move if the safety lockout is engaged!
-
-		position = self.degToStepper(deg)
-		if(position < self.minEle):
-			print("Stepper Warning: {} < minEle=={}.".format(position, self.minEle))
-			cmd = [self.moveCommand, self.panChannel, self.minEle]
-		elif(position > self.maxEle):
-			print("Stepper Warning: {} > maxEle=={}.".format(position, self.maxEle))
-			cmd = [self.moveCommand, self.panChannel, self.maxEle]
-		else:
-			cmd = [self.moveCommand, self.panChannel, position]
-		self.usb.write(cmd)

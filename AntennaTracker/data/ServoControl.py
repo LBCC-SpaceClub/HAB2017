@@ -60,7 +60,7 @@ class ServoControl(Thread):
 			hasStationGps = (stationConnected or stationManualButton)
 			hasPayloadGps = (payloadConnected or payloadManualButton)
 			if (hasStationGps and hasPayloadGps):
-				self.updateGuiCompass
+				self.updateGuiCompass()
 				# Only run servos if both gps positions AND motors are enabled
 				if self.servos.connected:
 					self.moveMotors()
@@ -306,8 +306,8 @@ class Servo(object):
 
 
 	def moveToCenter(self):
-		moveTilt(127)
-		movePan(127)
+		moveAz(127)
+		moveEle(127)
 
 
 	def moveAz(self, deg):
