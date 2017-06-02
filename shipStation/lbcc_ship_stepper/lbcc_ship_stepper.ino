@@ -9,7 +9,7 @@
 
 #define DEBUGGING true
 
-static const int RXPin = 8, TXPin = 7;
+static const uint8_t RXPin = 8, TXPin = 7;
 static const uint32_t GPSBaud = 9600;
 uint32_t gpsTimer = millis();
 uint32_t imuTimer = gpsTimer;
@@ -30,23 +30,28 @@ void setup()
   Serial.begin(115200); // laptop
   ss.begin(GPSBaud);    // local GPS
   while(!Serial){ ; }
-  Serial.println("Linn-Benton Community College, Eclipse 2017 payload tracker starting up..");
+  Serial.println(F("Linn-Benton Community College, Eclipse 2017 payload tracker starting up.."));
   
   // Set up BNO055 IMU
   if(!bno.begin()){
-    Serial.println("Ooops, could not find BNO055... Check your wiring or I2C ADDR!");
+    Serial.println(F("Ooops, could not find BNO055... Check your wiring or I2C ADDR!"));
 //    while(1);
   } else {
-    Serial.println("BNO055 IMU detected..");
+    Serial.println(F("BNO055 IMU detected.."));
   }
 //  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
 //  bno.setMode(bno.OPERATION_MODE_NDOF);
 }
 
+TinyGPSCustom magneticVariation(trackerGPS, "GPRMC", 10);
+
 void loop()
 {
   // If new info is available from the laptop, parse it!
   while(Serial.available() > 0){
+    // It's expecting a NMEA string, something like GPRMC:
+    // http://www.gpsinformation.org/dale/nmea.htm#RMC
+    // $GPRMC,045103.000,A,3014.1984,N,09749.2872,W,0.67,161.46,030913,,,A*7C\r\n
     payloadGPS.encode(Serial.read());
   }
 
@@ -64,6 +69,8 @@ void loop()
     
     print_location("payload", &payloadGPS);
     print_time("payload", &payloadGPS);
+    Serial.print("Mag variation: ");
+    Serial.println(magneticVariation.value());
   }
   
   // Display IMU info about 10 times per second
@@ -122,11 +129,11 @@ void print_imu(){
   q.z() = -q.z();
   // Converted back to eulers
   imu::Vector<3> euler = q.toEuler();
-  Serial.print("[IMU]");
+  Serial.print(F("[IMU]"));
   Serial.print(-180/M_PI * euler.x());  // heading, nose-right is positive, z-axis points up
-  Serial.print(',');
+  Serial.print(F(","));
   Serial.print(-180/M_PI * euler.y());  // roll, rightwing-up is positive, y-axis points forward
-  Serial.print(',');
+  Serial.print(F(","));
   Serial.print(-180/M_PI * euler.z());  // pitch, nose-down is positive, x-axis points right
   /*
   Serial.print(event.orientation.x,2);
@@ -135,13 +142,13 @@ void print_imu(){
   Serial.print(",");
   Serial.print(event.orientation.z,2);
   */
-  Serial.print(',');
+  Serial.print(F(","));
   Serial.print(sys);
-  Serial.print(',');
+  Serial.print(F(","));
   Serial.print(gyro);
-  Serial.print(',');
+  Serial.print(F(","));
   Serial.print(accel);
-  Serial.print(',');
+  Serial.print(F(","));
   Serial.println(mag);
 }
 
