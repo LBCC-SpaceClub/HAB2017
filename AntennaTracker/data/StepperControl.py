@@ -7,7 +7,6 @@ import serial.tools.list_ports
 from threading import Thread
 import geomag
 
-
 class StepperControl(Thread):
 
 	def __init__(self, parent):
@@ -101,6 +100,9 @@ class StepperControl(Thread):
 		self.parent.ids.station_alt.text = str(self.altMeters)
 		self.parent.ids.station_trueHeading.text = str(self.imuX)
 		self.parent.ids.station_time.text = str(self.gpsTime)
+		self.magDeclination = geomag.declination(
+            dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
+        )
 
 
 	def updateGuiCompass(self):
@@ -248,7 +250,46 @@ class Arduino(object):
 		self.parent.updateConsole("\tConnected to stepper arduino on port "+self.arduinoCOM)
 
 
+	def sendPayloadGpsToArduino():
+		curTime = time.strftime('%H%M%S')
+		'$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A'
+		if magDeclination > 0:
+			magSuffix = 'E'
+		else:
+			magSuffix = 'W'
+		# GPRMC does not include altitude.. add as custom field?
+		nmea = "GPRMC,{now},A,{lat},{lon},,,{mag},{magSuffix}".format(
+			now = curTime,
+			lat = decDegToNMEA(self.parent.ids.payload_lat.text)
+			lon = decDegToNMEA(self.parent.ids.payload_long.text)
+		)
+		nmea = '$'+nmea+genChecksum(nmea)
+		print nmea
+		# pAlt = float(self.parent.ids.payload_alt.text)
+
+
+	def decDegToNMEA(deg):
+		''' Converts from dec degrees to deg.decMinutes for NMEA '''
+		deg, dMin = deg.split('.')
+		minutes = str(float('0.'+dMin) * 60)[:6]
+		if deg.startswith('-'):
+			deg = deg[1:]
+			suffix = ',W'
+		else:
+			suffix = ',N'
+		return deg+minutes+suffix
+
+
+	def genChecksum(sentence):
+		''' Adds leading $ and trailing checksum to a custom NMEA string '''
+	    checksum = 0
+		for s in nmea:
+			checksum ^= ord(s)
+		return '*'+hex(checksum)[2:]
+
+
 	def degToStepper(self, deg):
+		''' Converts from degrees to stepper range, based on 1/16 microsteps '''
 		# Assuming 0 degrees is straight ahead
 		steps = (int)(deg * 48960 / 360)
 		return steps
