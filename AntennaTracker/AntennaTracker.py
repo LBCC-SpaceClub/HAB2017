@@ -99,10 +99,6 @@ class RootLayout(FloatLayout):
 			except IOError as e:
 				self.updateConsole(" **ERROR** "+e.args[0])
 				return
-			# except Exception as e:
-			# 	self.updateConsole(" **ERROR** Something unknown happened!")
-			# 	print(e)
-			# 	return
 		elif(self.ids.cbox_steppers.active):
 			self.updateConsole(" **START** local arduino stepper connection")
 			self.connectedArduino = StepperControl(self)
