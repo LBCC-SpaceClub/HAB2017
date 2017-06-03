@@ -3,8 +3,8 @@
 	Kivy standard library imports
 '''
 import kivy
-from kivy.config import Config
-kivy.config.Config.set('graphics','resizable', False) #config needs to be set before kivy.app is imported
+#from kivy.config import Config
+#kivy.config.Config.set('graphics','resizable', False) #config needs to be set before kivy.app is imported
 from kivy.app import App
 from time import time
 from os.path import dirname, join

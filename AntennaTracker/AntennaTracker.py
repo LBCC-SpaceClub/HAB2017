@@ -325,7 +325,7 @@ class AntennaTracker(App):
 	def build(self):
 		self.title = 'AntennaTracker'
 		self.load_kv('layout/layout.kv')
-		Window.size = (1280,900)
+		#Window.size = (1280,900)
 		return RootLayout()
 
 if __name__ == '__main__':
