@@ -1,11 +1,12 @@
-#include <SoftwareSerial.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <TinyGPS++.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
-#include <utility/imumaths.h>
+#include <AccelStepper.h>
 #include <math.h>
+#include <SoftwareSerial.h>
+#include <SPI.h>
+#include <TinyGPS++.h>
+#include <utility/imumaths.h>
+#include <Wire.h>
 
 #define DEBUGGING true
 #define GPSBAUD 9600
@@ -16,6 +17,7 @@ uint32_t imuTimer = gpsTimer;
 sensors_event_t event;           //Create a new local event instance
 uint8_t sys, gyro, accel, mag;   //Create local variables gyro, accel, mag
 double azimuth_deg, elevation_deg, distance_meters, delta_altitude;
+double azimuth_steps, elevation_steps;
 
 // Initializes an instance of the BNO055 called bno with an I2C address of 55
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
@@ -26,6 +28,9 @@ SoftwareSerial ss(RXPin, TXPin);
 TinyGPSPlus trackerGPS;
 TinyGPSPlus payloadGPS;
 TinyGPSCustom magneticVariation(trackerGPS, "GPRMC", 10);
+
+AccelStepper xAxis(1,12,11);
+AccelStepper yAxis(1,10,9);
 
 
 void setup()
@@ -47,6 +52,12 @@ void setup()
   }
 //  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
 //  bno.setMode(bno.OPERATION_MODE_NDOF);
+
+  // Set stepper motor acceleration and top speeds
+  xAxis.setMaxSpeed(10000);
+  xAxis.setAcceleration(5000);
+  yAxis.setMaxSpeed(10000);
+  yAxis.setAcceleration(5000);
 }
 
 
@@ -68,7 +79,12 @@ void loop()
   if(payloadGPS.location.isUpdated() || trackerGPS.location.isUpdated()){
     // Update target solution every time new GPS info is available
     get_tracking_solution();
+    // Update solution based on IMU
+    updateMotors(azimuth_deg, elevation_deg);
   }
+
+  xAxis.run();
+  yAxis.run();
 
   // Display GPS info about every 2 seconds
   if(millis() - gpsTimer > 2000){
@@ -89,6 +105,21 @@ void loop()
     imuTimer = millis(); // reset the timer
     // print_local_imu();
   }
+}
+
+void updateMotors(double aziDegs, double eleDegs){
+  azimuth_steps = radsToSteps(aziDegs);
+  elevation_steps = radsToSteps(eleDegs);
+  xAxis.moveTo(azimuth_steps);
+  yAxis.moveTo(elevation_steps);
+}
+
+
+float radsToSteps(float rad)
+{
+  // Takes radians, returns steps (assuming 16*3060 = 48960 total steps)
+  // rad/(2*pi) = steps / (microsteps * motor steps)
+  return rad * 24480 / M_PI;
 }
 
 
