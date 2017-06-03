@@ -1,123 +1,121 @@
 import math
 from math import radians, degrees, sin, cos, atan2, tan
 import serial
-import requests
 import time
+import serial
+import serial.tools.list_ports
+from threading import Thread
+import geomag
 
+class StepperControl(Thread):
 
-class StepperControl():
-
-	def __init__(self):
+	def __init__(self, parent):
+		Thread.__init__(self)
 		# General class fields
-		self.log = ""
-		self.run = True
+		self.parent = parent
+		self.connected = False
+		self.running = True
+		self.daemon = True		#stops thread on app exit, important
 
-		# Arduino (USB) fields
-		self.arduinoBaud = 115200
-		self.arduinoTimeout = 5
-		self.arduinoCOM = None
+		# Orientation fields
+		self.imuX = None
+		self.imuY = None
+		self.imuZ = None
+		self.imuSys = None
+		self.imuAcc = None
+		self.imuGyro = None
+		self.imuMag = None
+		self.latDeg = "Connecting.."
+		self.lonDeg = "Connecting.."
+		self.altMeters = None
+		self.gpsDate = None
+		self.gpsTime = None
 
-		# Servo (serial) fields
-		self.panOffset = 0     # + right, - left
-		self.tiltOffset = 0    # + raise, - lower
-		self.moveCommand = 0xFF
-		self.minPan = 0
-		self.maxPan = 255
-		self.minTilt = 70
-		self.maxTilt = 123
-		self.panChannel = 1
-		self.tiltChannel = 0
+		# Targetting solution fields:
+		self.targetAziDeg = 0
+		self.targetEleDeg = 0
+		self.targetDistanceM = 0
 
-		# Connect to the arduino and start a thread to keep this class updated
-		self.arduino = self.connectToArduino()
-		if self.arduino:
-			self.setLog(" something ")
-		else:
-			self.setLog(" nothing ")
+		# Connect to the arduino
+		self.arduino = Arduino(parent)
+		print("Steppers created!")
 
-	def __del__(self):
-		if self.arduino:
-			self.setLog(" **STOP** closing arduino port")
-			self.arduino.close()
+	def run(self):
+		while self.running:
+			print("Steppers Running!")
+			# Simplify by using some temp variables
+			stationConnected = self.parent.ids.station_connect.disabled
+			stationManualButton = self.parent.ids.station_switchmanual.active
+			payloadConnected = self.parent.ids.payload_connect.disabled
+			payloadManualButton = self.parent.ids.payload_switchmanual.active
 
+			# Unless Manual button enabled, check for new arduino gps
+			# if not stationManualButton:
 
+			# Manual mode currently undefined using stepper controller..
+			if stationConnected and not stationManualButton:
+				# Parse all available serial data
+				self.update()
+				self.updateGui()
 
-	##################################################
-	###
-	###     Connection Methods
-	###
-	##################################################
-	def connectToArduino(self):
-		try:
-			self.arduinoCOM = self.findComPort()
-			self.arduino = serial.Serial(
-				self.arduinoCOM,
-				baudrate = self.arduinoBaud,
-				timeout = self.arduinoTimeout
-			)
-			return not self.arduino
-		except:
-			return False
+			# Consider only sending when necessary, like this:
+			# newPayloadAvailable = self.lastSent < self.parent.ids.payload_time.text
+			# if stationConnected and newPayloadAvailable:
+			if stationConnected:
+				# Send the newest payload location to the arduino
+				self.arduino.sendPayloadGps()
 
+			# Update the gui compasses if both gps positions available
+			hasStationGps = (stationConnected or stationManualButton)
+			hasPayloadGps = (payloadConnected or payloadManualButton)
+			if (hasStationGps and hasPayloadGps):
+				self.updateGuiCompass()
+				# Only run motors if both gps positions AND motors are enabled
+				# if self.arduino.connected:
+					# self.moveMotors()
 
-	def findComPort(self):
-		ports = list(serial.tools.list_ports.comports())
-		for p in ports:
-			if 'Arduino' in p[1]:
-				self.setLog(" **UPDATE** found Arduino on ", self.p[0])
-				self.connected = True
-				return p[0]
-			else:
-				self.setLog(" **ERROR** could not find an attached Arduino")
-
-
-
-	##################################################
-	###
-	###     Calibration Methods
-	###
-	##################################################
-	def configServos(self, usb):
-		self.setLog(" **UPDATE** configuring servos...")
-		#Set acceleration rate for both servos
-		accelCommand = 0x89
-		tiltAccel = 1
-		panAccel = 1
-		setAccel = [accelCommand,self.tiltChannel,tiltAccel,0]
-		usb.write(setAccel)
-		setAccel = [accelCommand,self.panChannel,panAccel,0]
-		usb.write(setAccel)
-		#Set rotation rate for both servos
-		speedCommand = 0x87
-		tiltSpeed = 1
-		panSpeed = 3
-		setSpeed = [speedCommand,self.tiltChannel,tiltSpeed,0]
-		usb.write(setSpeed)
-		setSpeed = [speedCommand,self.panChannel,panSpeed,0]
-		usb.write(setSpeed)
+			# No point updating faster than new data becomes available
+			time.sleep(1)
 
 
-
-	##################################################
-	###
-	###     Update Values Methods
-	###
-	##################################################
 	def update(self):
-		while self.arduino.inWaiting():
-			line = self.arduino.readline()
+		while self.arduino.hasLines():
 			try:
+				line = self.arduino.getLine()
 				if line[:5] == '[IMU]':
-					self.updateIMU(line[5:])
-				elif line[:5] == '[GPS]':
-					self.updateGPS(line[5:])
-				else:
-					self.setLog(" **ERROR** Reading line: "+line)
-			except ValueError:
-				self.setLog(" **ERROR** Parsing "+line)
+					self.parseIMU(line[5:])
+				elif line[:5] == '[TGPS]':
+					self.parseGPS(line[6:])
+				elif line.startswith('[TIME]'):
+					self.parseTime(line[6:])
+				elif line.startswith('[MAGV]'):
+					print line # probably empty but who knows
+				elif line.startswith('[SOL]'):
+					self.parseSolution(line[5:])
+			except Exception as e:
+				print("Exception on line from arduino: ", e)
 
 
-	def updateIMU(self, line):
+	def updateGui(self):
+		self.parent.ids.station_lat.text = str(self.latDeg)
+		self.parent.ids.station_long.text = str(self.lonDeg)
+		self.parent.ids.station_alt.text = str(self.altMeters)
+		self.parent.ids.station_trueHeading.text = str(self.imuX)
+		self.parent.ids.station_time.text = str(self.gpsTime)
+		self.magDeclination = geomag.declination(
+            dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
+        )
+
+
+	def updateGuiCompass(self):
+		if self.parent.ids.station_switchmanual.active:
+			self.updateTargetSolution()
+
+		self.parent.x_value = self.targetAziDeg
+		self.parent.y_value = self.targetEleDeg
+
+
+	def parseIMU(self, line):
 		line = line.split(',')
 		self.imuX = float(line[0])
 		self.imuY = float(line[1])
@@ -128,66 +126,152 @@ class StepperControl():
 		self.imuMag = int(line[6])
 
 
-	def updateGPS(self, line):
+	def parseGPS(self, line):
 		line = line.split(',')
 		self.latDeg = float(line[0])
 		self.lonDeg = float(line[1])
 		self.altMeters = float(line[2])
+		self.hasNewPayloadGps = True
+
+
+	def parseTime(self, line):
+		line = line.split(',')
+		self.gpsDate = line[0]
+		self.gpsTime = line[1]
+
+
+	def parseSolution(self, line):
+		line = line.split(',')
+		self.gpsDate = line[0]
+		self.gpsTime = line[1]
+		self.targetAziDeg = float(line[0])
+		self.targetEleDeg = float(line[1])
 
 
 
-	##################################################
-	###
-	###     Move Servos Methods
-	###
-	##################################################
-	def moveToCenterPos(self, arduino):
-		moveTiltServo(127, arduino)
-		movePanServo(127, arduino)
+##################################################
+###
+###     Arduino Methods
+###
+##################################################
+class Arduino(object):
+	''' Methods to connect to the USB arduino '''
+	def __init__(self, parent):
+		# Arduino (USB) fields
+		self.connected = False # default to not connected
+		self.parent = parent
+		self.arduinoBaud = 115200 # might be too high, I'm seeing some garbage
+		self.arduinoTimeout = 1
+		self.arduinoCOM = self.findComPort()
+		self.connect()
+		self.prevAziSteps = 0
+		self.prevEleSteps = 0
+		if not self.connected:
+			raise IOError('Could not connect to arduino')
 
 
-	def moveTiltServo(self, degrees, arduino):
-		degInServo = 254.0 / 360 * degrees
-		if(degInServo < self.minTilt):
-		    degInServo = self.minTilt
-		elif(degInServo > self.maxTilt):
-		    degInServo = self.maxTilt
-		degInServo = int(round(degInServo))
-		moveTilt = [self.moveCommand, self.tiltChannel, chr(degInServo)]
-		arduino.write(degInServo)
+	def __del__(self):
+		if self.connected:
+			self.usb.close()
 
 
-	def movePanServo(self, position, arduino):
-		movePan = [moveCommand,panChannel,chr(255-position)]
-		arduino.write(movePan)
+	def connect(self):
+		self.usb = serial.Serial(
+			self.arduinoCOM,
+			baudrate = self.arduinoBaud,
+			timeout = self.arduinoTimeout
+		)
+		self.usb.flush()
+		self.connected = True
+		self.parent.updateConsole("\tConnected to stepper arduino on port "+self.arduinoCOM)
 
 
-	def degToServo(deg):
-		if deg >= 360:
-			deg = d % 360
-		if deg < 180:
-			val = int(round(127 - deg*(255.0/360.0)))
+	def sendPayloadGps(self):
+		'''
+			$GPGGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
+			1    = UTC of Position
+			2    = Latitude
+			3    = N or S
+			4    = Longitude
+			5    = E or W
+			6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
+			7    = Number of satellites in use [not those in view]
+			8    = Horizontal dilution of position
+			9    = Antenna altitude above/below mean sea level (geoid)
+			10   = Meters  (Antenna height unit)
+			11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
+			       mean sea level.  -=geoid is below WGS-84 ellipsoid)
+			12   = Meters  (Units of geoidal separation)
+			13   = Age in seconds since last update from diff. reference station
+			14   = Diff. reference station ID#
+			15   = Checksum
+		'''
+		nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,,".format(
+			now = time.strftime('%H%M%S.%f')[:9], #HHMMSS.SS UTC
+			lat = decDegToNMEA(self.parent.ids.payload_lat.text),
+			lon = decDegToNMEA(self.parent.ids.payload_long.text),
+			sats = 07,
+			alt = self.parent.ids.payload_alt.text,
+			geoid = self.parent.ids.payload_alt.text # not sure how to calc?
+		)
+		nmea = '$'+nmea+genChecksum(nmea)
+		print nmea
+		usb.write(nmea)
+
+
+	def decDegToNMEA(deg):
+		''' Converts from dec degrees to deg.decMinutes for NMEA '''
+		deg, dMin = deg.split('.')
+		minutes = str(float('0.'+dMin) * 60)[:6]
+		if deg.startswith('-'):
+			deg = deg[1:]
+			suffix = ',W'
 		else:
-			deg = 360 - d
-			val = int(round(127 + deg*(255.0/360.0)))
-		return val
+			suffix = ',N'
+		return deg+minutes+suffix
 
 
-
-	##################################################
-	###
-	###     Logging Methods
-	###
-	##################################################
-	def setLog(self, txt):
-		self.log= self.log+""+txt
+	def genChecksum(sentence):
+		''' Adds leading $ and trailing checksum to a custom NMEA string '''
+		checksum = 0
+		for s in sentence:
+			checksum ^= ord(s)
+		return '*'+hex(checksum)[2:]
 
 
-	def getLog(self):
-		if(self.log != ""):
-			return self.log
-		else:
-			return ""
+	# def degToStepper(self, deg):
+	# 	''' Converts from degrees to stepper range, based on 1/16 microsteps '''
+	# 	# Assuming 0 degrees is straight ahead
+	# 	steps = (int)(deg * 48960 / 360)
+	# 	return steps
+	#
+	#
+	# def moveToCenter(self):
+	# 	self.moveBoth(0, 0)
+	#
+	#
+	# def move(self, eleDeg, aziDeg):
+	# 	if self.connected and not self.parent.ids.motor_switchstop.active:
+	# 		aziSteps = self.degToStepper(aziDeg)
+	# 		eleSteps = self.degToStepper(eleDeg)
+	# 		cmd = "<{},{}>".format(eleSteps, aziSteps)
+	# 		if self.prevAziSteps != aziSteps and self.prevEleSteps != eleSteps:
+	# 			print(cmd)
+	# 		cmd = str.encode(cmd)
+	# 		self.usb.write(cmd)
 
-	def clearLog(self):
-		self.log = ""
+
+	def findComPort(self):
+		ports = list(serial.tools.list_ports.comports())
+		for p in ports:
+			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
+				return p[0]
+		raise IOError('Could not find arduino port')
+
+
+	def getLine(self):
+		return self.usb.readline().decode("utf-8")
+
+
+	def hasLines(self):
+		return self.usb.inWaiting()

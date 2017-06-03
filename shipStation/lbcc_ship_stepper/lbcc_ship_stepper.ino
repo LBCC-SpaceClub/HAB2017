@@ -1,194 +1,249 @@
-/*
- * Author: Dylan Trafford (EE/CpE), Trevor Gahl (CpE), Gabe Gordon (MSGC MAP Student). Adapted from example code from Adafruit.com
- * Modified for Linn-Benton Community College by Levi Willmeth
- * Developed for use by MSGC BOREALIS Program
- * Purpose: To transmit data from a GPS and IMU unit to a computer for ground station positional data.
- * Note: Sends comma seperated data lead by a '~'. When the recieving computer sees a tilda, it knows it is the beginning of the line.
- */
-
-//Included Libraries (some libraries are imported even though they are included in the base packages)
-#include <Adafruit_GPS.h>
-#include <SoftwareSerial.h>
-#include <Wire.h>
-#include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BNO055.h>
-#include <utility/imumaths.h>
+#include <AccelStepper.h>
 #include <math.h>
+#include <SoftwareSerial.h>
+#include <SPI.h>
+#include <TinyGPS++.h>
+#include <utility/imumaths.h>
+#include <Wire.h>
 
-//Defines (string replace constants)
-#define GPSECHO false
+#define DEBUGGING true
+#define GPSBAUD 9600
 
-//Instance Initializations
-//Initializes an instance of the BNO055 called bno with an I2C address of 55
-Adafruit_BNO055 bno = Adafruit_BNO055(55);
-//Initializes an instance of SoftwareSerial called mySerial with RX and TX on pins 8 and 7
-SoftwareSerial mySerial(8, 7);
-//Initializes an instance of Adafruit_GPS called GPS using the mySerial instance
-Adafruit_GPS GPS(&mySerial);
-
-//Global Intializations
-boolean usingInterrupt = true;
-boolean calibrated = true;
-
-float findBearing(float tLat, float tLon, float pLat, float pLon)
-{
-  // Returns bearing from tracker gps to payload gps
-  tLat = degToRad(tLat);
-  tLon = degToRad(tLon);
-  pLat = degToRad(pLat);
-  pLon = degToRad(pLon);
-  float deltaLon = pLon - tLon;
-
-  float bearing = atan2(
-    (sin(deltaLon) * cos(pLat)),
-    (cos(tLat) * sin(pLat) - sin(tLat) * cos(pLat) * cos(deltaLon))
-  );
-  float remainder = round(bearing);
-  // Modulus only works on integers
-  bearing = int(radToDeg(bearing)+360) % 360;  // stay within 0-360 degrees
-  bearing += remainder;
-  return bearing;
-}
-
-float degToRad(float deg)
-{
-  // Takes degrees, returns radians
-  return deg * M_PI / 180;
-}
-
-float radToDeg(float rad)
-{
-  // Takes radians, returns degrees
-  return rad * 180.0 / M_PI;
-}
-
-void setup()
-{
-  //Launches a serial connection with a 115200 baud rate
-  Serial.begin(115200);
-  while(!Serial){ ; }
-  Serial.println("Linn-Benton Community College, Eclipse 2017 payload tracker starting up..");
-  //Launches the IMU. It returns a true value if it successfully launches.
-  if(!bno.begin()){
-    /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.println("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while(1);
-  } else {
-    Serial.println("BNO055 IMU detected..");
-  }
-  GPS.begin(9600);
-  delay(500);
-  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
-  bno.setMode(bno.OPERATION_MODE_NDOF);
-  GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);   //String formatting on the GPS
-  GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);      //GPS packet dump rate
-  GPS.sendCommand(PGCMD_ANTENNA);
-  useInterrupt(usingInterrupt);                   //Set to use or not use the interrupt for GPS parcing
-  delay(100);
-}
-
-// Interrupt is called once a millisecond, looks for any new GPS data, and stores it
-SIGNAL(TIMER0_COMPA_vect)
-{
-  char c = GPS.read();
-  // if you want to debug, this is a good time to do it!
-  #ifdef UDR0
-    if (GPSECHO)
-      if (c) UDR0 = c;
-      // writing direct to UDR0 is much much faster than Serial.print
-      // but only one character can be written at a time.
-  #endif
-}
-
-void useInterrupt(boolean v)
-{
-  // Set up the interrupt, intended to be run once on startup
-  if (v) {
-    // Timer0 is already used for millis() - we'll just interrupt somewhere
-    // in the middle and call the "Compare A" function above
-    OCR0A = 0xAF;
-    TIMSK0 |= _BV(OCIE0A);
-    usingInterrupt = true;
-  } else {
-    // do not call the interrupt function COMPA anymore
-    TIMSK0 &= ~_BV(OCIE0A);
-    usingInterrupt = false;
-  }
-}
-
+static const uint8_t RXPin = 8, TXPin = 7;
 uint32_t gpsTimer = millis();
 uint32_t imuTimer = gpsTimer;
 sensors_event_t event;           //Create a new local event instance
 uint8_t sys, gyro, accel, mag;   //Create local variables gyro, accel, mag
+double azimuth_deg, elevation_deg, distance_meters, delta_altitude;
+double azimuth_steps, elevation_steps;
+
+// Initializes an instance of the BNO055 called bno with an I2C address of 55
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
+
+// Ultimate GPS shield uses RX and TX on pins 8 and 7
+SoftwareSerial ss(RXPin, TXPin);
+
+TinyGPSPlus trackerGPS;
+TinyGPSPlus payloadGPS;
+TinyGPSCustom magneticVariation(trackerGPS, "GPRMC", 10);
+
+AccelStepper xAxis(1,12,11);
+AccelStepper yAxis(1,10,9);
+
+
+void setup()
+{
+  Serial.begin(115200); // laptop
+  while(!Serial);
+  Serial.println(F("Linn-Benton Community College, Eclipse 2017 stepper controller starting up.."));
+
+  // Start GPS and tell it to send GPGGA and GPRMC strings
+  ss.begin(GPSBAUD);    // local GPS
+//  ss.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+
+  // Set up BNO055 IMU
+  if(!bno.begin()){
+    Serial.println(F("Ooops, could not find BNO055... Check your wiring or I2C ADDR!"));
+//    while(1);
+  } else {
+    Serial.println(F("BNO055 IMU detected.."));
+  }
+//  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
+//  bno.setMode(bno.OPERATION_MODE_NDOF);
+
+  // Set stepper motor acceleration and top speeds
+  xAxis.setMaxSpeed(10000);
+  xAxis.setAcceleration(5000);
+  yAxis.setMaxSpeed(10000);
+  yAxis.setAcceleration(5000);
+}
+
 
 void loop()
 {
-  //If new GPS data is ready, parse it!
-  if (GPS.newNMEAreceived()){
-    if (!GPS.parse(GPS.lastNMEA()))
-      return;
+  // If new info is available from the laptop, parse it!
+  while(Serial.available() > 0){
+    // It's expecting a NMEA string, something like GPGGA:
+    // http://www.gpsinformation.org/dale/nmea.htm#RMC
+    // '$GPGGA,123519,4433.109,N,12314.066,W,1,08,0.9,545.4,M,46.9,M,,*5a'
+    payloadGPS.encode(Serial.read());
   }
+
+  // If new info is available from the Adafruit GPS Shield, parse it!
+  if(ss.available() > 0){
+    trackerGPS.encode(ss.read());
+  }
+
+  if(payloadGPS.location.isUpdated() || trackerGPS.location.isUpdated()){
+    // Update target solution every time new GPS info is available
+    get_tracking_solution();
+    // Update solution based on IMU
+    updateMotors(azimuth_deg, elevation_deg);
+  }
+
+  xAxis.run();
+  yAxis.run();
 
   // Display GPS info about every 2 seconds
-  if (millis() - gpsTimer > 2000){
+  if(millis() - gpsTimer > 2000){
     gpsTimer = millis(); // reset the timer
-    Serial.print("Time: ");
-    Serial.print(GPS.hour, DEC); Serial.print(':');
-    Serial.print(GPS.minute, DEC); Serial.print(':');
-    Serial.print(GPS.seconds, DEC); Serial.print(" on ");
-    Serial.print(GPS.day, DEC); Serial.print('/');
-    Serial.print(GPS.month, DEC);Serial.print("/20");
-    Serial.println(GPS.year, DEC);
-    if(GPS.fix){
-      // GPS data on one line
-      Serial.print("[GPS]");
-      Serial.print(GPS.latitudeDegrees,7);
-      Serial.print(',');
-      Serial.print(GPS.longitudeDegrees,7);
-      Serial.print(',');
-      Serial.println((int)(GPS.altitude));
-      // Serial.println((int)(GPS.altitude * 3.28084)); // converted m to feet
-    }else{
-      Serial.print("No GPS fix!  GPS Quality: ");
-      Serial.println(GPS.fixquality);
-    }
-  }
-  // Display IMU info about 10 times per second
-  if (millis() - imuTimer > 100){
-    imuTimer = millis(); // reset the timer
-    //Read the current calibration values from the IMU
-    bno.getCalibration(&sys, &gyro, &accel, &mag);
-    //Read the current positional values
-    bno.getEvent(&event);
 
-    // Using quaternions
-    imu::Quaternion q = bno.getQuat();
-    q.normalize();
-    float temp = q.x();  q.x() = -q.y();  q.y() = temp;
-    q.z() = -q.z();
-    // Converted back to eulers
-    imu::Vector<3> euler = q.toEuler();
-    Serial.print("[IMU]");
-    Serial.print(-180/M_PI * euler.x());  // heading, nose-right is positive, z-axis points up
-    Serial.print(',');
-    Serial.print(-180/M_PI * euler.y());  // roll, rightwing-up is positive, y-axis points forward
-    Serial.print(',');
-    Serial.print(-180/M_PI * euler.z());  // pitch, nose-down is positive, x-axis points right
-    /*
-    Serial.print(event.orientation.x,2);
-    Serial.print(",");
-    Serial.print(event.orientation.y,2);
-    Serial.print(",");
-    Serial.print(event.orientation.z,2);
-    */
-    Serial.print(',');
-    Serial.print(sys);
-    Serial.print(',');
-    Serial.print(gyro);
-    Serial.print(',');
-    Serial.print(accel);
-    Serial.print(',');
-    Serial.println(mag);
+    print_location("[TGPS]", &trackerGPS);
+    print_time("[TIME]", &trackerGPS);
+    Serial.print(F("[MAGV]"));
+    Serial.println(magneticVariation.value());
+    print_solution("[SOL]");
+    // print_location("[payload location]", &payloadGPS);
+    // print_time("payload", &payloadGPS);
+    Serial.println();
+  }
+
+  // Display IMU info about 10 times per second
+  if(millis() - imuTimer > 100){
+    imuTimer = millis(); // reset the timer
+    // print_local_imu();
+  }
+}
+
+void updateMotors(double aziDegs, double eleDegs){
+  azimuth_steps = radsToSteps(aziDegs);
+  elevation_steps = radsToSteps(eleDegs);
+  xAxis.moveTo(azimuth_steps);
+  yAxis.moveTo(elevation_steps);
+}
+
+
+float radsToSteps(float rad)
+{
+  // Takes radians, returns steps (assuming 16*3060 = 48960 total steps)
+  // rad/(2*pi) = steps / (microsteps * motor steps)
+  return rad * 24480 / M_PI;
+}
+
+
+void get_tracking_solution(){
+  // Update the tracking solution variables when new gps information is available
+
+  // Distance across a sphere from tracker to payload
+  distance_meters = TinyGPSPlus::distanceBetween(
+    trackerGPS.location.lat(),
+    trackerGPS.location.lng(),
+    payloadGPS.location.lat(),
+    payloadGPS.location.lng()
+  );
+
+  // Altitude from tracker up to payload
+  delta_altitude = payloadGPS.altitude.meters() - trackerGPS.altitude.meters();
+
+  // Horizontal degrees from true north
+  azimuth_deg = TinyGPSPlus::courseTo(
+    trackerGPS.location.lat(),
+    trackerGPS.location.lng(),
+    payloadGPS.location.lat(),
+    payloadGPS.location.lng()
+  );
+
+  // Degrees from vertical at tracker, down to payload
+  elevation_deg = atan2(delta_altitude, distance_meters) * 57296 / 1000;
+}
+
+
+void print_solution(char* desc){
+  // Order is: azimuth, elevation, distance, altitude,
+  if(trackerGPS.location.isValid() && payloadGPS.location.isValid()){
+    Serial.print(desc);
+    Serial.print(azimuth_deg);
+    Serial.print(F(","));
+    Serial.print(elevation_deg);
+    Serial.print(F(","));
+    Serial.print(distance_meters);
+    Serial.print(F(","));
+    Serial.println(delta_altitude);
+  } else {
+    Serial.print(F("INV: "));
+    Serial.print(trackerGPS.location.isValid()==1?"tracker ok":"tracker BAD");
+    Serial.print(F(","));
+    Serial.println(payloadGPS.location.isValid()==1?"payload ok":"payload BAD");
+  }
+}
+
+
+void print_imu(){
+  //Read the current calibration values from the IMU
+  bno.getCalibration(&sys, &gyro, &accel, &mag);
+  //Read the current positional values
+  bno.getEvent(&event);
+
+  // Using quaternions
+  imu::Quaternion q = bno.getQuat();
+  q.normalize();
+  float temp = q.x();  q.x() = -q.y();  q.y() = temp;
+  q.z() = -q.z();
+  // Converted back to eulers
+  imu::Vector<3> euler = q.toEuler();
+  Serial.print(F("[IMU]"));
+  Serial.print(-180/M_PI * euler.x());  // heading, nose-right is positive, z-axis points up
+  Serial.print(F(","));
+  Serial.print(-180/M_PI * euler.y());  // roll, rightwing-up is positive, y-axis points forward
+  Serial.print(F(","));
+  Serial.print(-180/M_PI * euler.z());  // pitch, nose-down is positive, x-axis points right
+  /*
+  Serial.print(event.orientation.x,2);
+  Serial.print(",");
+  Serial.print(event.orientation.y,2);
+  Serial.print(",");
+  Serial.print(event.orientation.z,2);
+  */
+  Serial.print(F(","));
+  Serial.print(sys);
+  Serial.print(F(","));
+  Serial.print(gyro);
+  Serial.print(F(","));
+  Serial.print(accel);
+  Serial.print(F(","));
+  Serial.println(mag);
+}
+
+
+void print_time(char* desc, TinyGPSPlus* gps){
+  // Prints local GPS time to serial
+  Serial.print(desc);
+  if (gps->date.isValid() && gps->time.isValid()){
+    Serial.print(gps->date.month());
+    Serial.print(F("/"));
+    Serial.print(gps->date.day());
+    Serial.print(F("/"));
+    Serial.print(gps->date.year());
+    Serial.print(F(","));
+    if (gps->time.hour() < 10) Serial.print(F("0"));
+    Serial.print(gps->time.hour());
+    Serial.print(F(":"));
+    if (gps->time.minute() < 10) Serial.print(F("0"));
+    Serial.print(gps->time.minute());
+    Serial.print(F(":"));
+    if (gps->time.second() < 10) Serial.print(F("0"));
+    Serial.print(gps->time.second());
+    Serial.println(" UTC.");
+  } else {
+    Serial.println(F("INV TIME"));
+  }
+}
+
+
+void print_location(char* desc, TinyGPSPlus* gps){
+  // Prints local GPS location to serial
+  Serial.print(desc);
+  if (gps->location.isValid()){
+    Serial.print(gps->location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps->location.lng(), 6);
+    Serial.print(F(","));
+    Serial.println(gps->altitude.meters());
+  }
+  else
+  {
+    Serial.println(F("INVALID LOCATION"));
   }
 }

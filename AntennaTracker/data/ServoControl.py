@@ -60,16 +60,17 @@ class ServoControl(Thread):
 			hasStationGps = (stationConnected or stationManualButton)
 			hasPayloadGps = (payloadConnected or payloadManualButton)
 			if (hasStationGps and hasPayloadGps):
-				self.updateGuiCompass
+				self.updateTargetSolution()
+				self.updateGuiCompass()
 				# Only run servos if both gps positions AND motors are enabled
 				if self.servos.connected:
-					self.moveServos()
+					self.moveMotors()
 
 			# No point updating faster than new data becomes available
 			time.sleep(1)
 
 
-	def moveServos(self):
+	def moveMotors(self):
 		if self.parent.ids.motor_switchstop.active:
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
@@ -88,7 +89,6 @@ class ServoControl(Thread):
 					self.parseIMU(line[5:])
 				elif line[:5] == '[GPS]':
 					self.parseGPS(line[5:])
-					self.updateTargetSolution()
 				elif line.startswith('Time: '):
 					self.parseTime(line)
 			except Exception as e:
@@ -162,7 +162,7 @@ class ServoControl(Thread):
 				tLat, tLon, pLat, pLon
 			)
 		except ValueError as e:
-			print(e)
+			print("updateTargetSolution() error: ", e)
 			# defaults
 			self.targetDistanceM = 0
 			self.targetEleDeg = 0
@@ -174,7 +174,7 @@ class ServoControl(Thread):
 		try:
 			deltaAlt = payloadAlt - stationAlt
 			return float(math.degrees(math.atan2(deltaAlt, distance)))
-		except ValueError:
+		except (ValueError, TypeError) as e:
 			return 0
 
 
@@ -190,7 +190,7 @@ class ServoControl(Thread):
 			d = R*c
 			return int(d)
 			# return d*3280.839895 # multiply distance in Km by 3280 for feet
-		except ValueError:
+		except (ValueError, TypeError):
 			return 0
 
 
@@ -227,8 +227,8 @@ class Servo(object):
 		self.servoTimeout = 1
 		# Servo ranges
 		self.moveCommand = 0xFF
-		self.minAz = 0
-		self.maxAz = 255
+		self.minAzi = 0
+		self.maxAzi = 255
 		self.minEle = 70
 		self.maxEle = 180
 		# Pan and tilt servos on different channels
@@ -239,12 +239,21 @@ class Servo(object):
 		if self.servoCOM:
 			self.connect()
 			self.configServos()
+			self.moveToCenter()
 
 
 	def __del__(self):
 		if self.connected:
 			self.usb.close()
 
+	def testRange(self):
+		 for i in range(0,254,1):
+			 self.movePanServo(i)
+
+	def movePanServo(self, position):
+		 temp = [self.moveCommand,chr(self.panChannel),chr(position)]
+		 print(position, temp)
+		 self.usb.write(temp)
 
 	def connect(self):
 		if self.servoCOM:
@@ -259,6 +268,7 @@ class Servo(object):
 
 
 	def findComPort(self):
+		return '/dev/ttyACM1'
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
 			if 'Pololu Micro Maestro 6-Servo Controller' in p[1]:
@@ -269,6 +279,7 @@ class Servo(object):
 
 	def configServos(self):
 		#Set acceleration rate for both servos
+		print("Configuring servos..")
 		accelCommand = 0x89
 		tiltAccel = 1
 		panAccel = 1
@@ -302,41 +313,67 @@ class Servo(object):
 			deg = 360 - deg
 			# add from the 0 degree position
 			position = round(127 + deg * (255.0 / 360.0))
+		return 127
 		return int(position)
 
 
+	# def newDegToServo(self, channel, deg):
+	# 	#Valid range is 500-5500
+	# 	deg = int(deg)
+	# 	channel = int(channel)
+	# 	offyougo=int(5000*deg/180)+500
+	# 	#Get the lowest 7 bits
+	# 	byteone=(int)offyougo&127
+	# 	#Get the highest 7 bits
+	# 	bytetwo=(int)(offyougo-(offyougo&127))/128
+	# 	#move to an absolute position in 8-bit mode (0x04 for the mode, 0 for the servo, 0-255 for the position (spread over two bytes))
+	# 	bud=chr(0x80)+chr(0x01)+chr(0x04)+chr(channel)+chr(bytetwo)+chr(byteone)
+	# 	return bud
+
+
 	def moveToCenter(self):
-		moveTilt(127)
-		movePan(127)
-
-
-	def moveAz(self, deg):
-		if self.parent.ids.motor_switchstop.active:
-			return		# Don't move if the safety lockout is engaged!
-
-		position = self.degToServo(deg)
-		if(position < self.minAz):
-			print("Servo Warning: {} < minAz=={}.".format(position, self.minAz))
-			cmd = [self.moveCommand, self.tiltChannel, self.minAz]
-		elif(position > self.maxAz):
-			print("Servo Warning: {} > maxAz=={}.".format(position, self.maxAz))
-			cmd = [self.moveCommand, self.tiltChannel, self.maxAz]
-		else:
-			cmd = [self.moveCommand, self.tiltChannel, position]
-		self.usb.write(cmd)
+		self.moveAzi(0)
+		self.moveEle(0)
 
 
 	def moveEle(self, deg):
-		if self.parent.ids.motor_switchstop.active:
+		if self.parent.ids.motor_switchstop.active or not self.connected:
 			return		# Don't move if the safety lockout is engaged!
 
+		# cmd = self.newDegToServo(self.tiltChannel, deg)
+		# print("moveEle = ", cmd)
+		# self.usb.write(cmd)
+
 		position = self.degToServo(deg)
+		print("moveEle to {} ({})".format(deg, position))
 		if(position < self.minEle):
 			print("Servo Warning: {} < minEle=={}.".format(position, self.minEle))
-			cmd = [self.moveCommand, self.panChannel, self.minEle]
+			cmd = [self.moveCommand, self.tiltChannel, self.minEle]
 		elif(position > self.maxEle):
 			print("Servo Warning: {} > maxEle=={}.".format(position, self.maxEle))
-			cmd = [self.moveCommand, self.panChannel, self.maxEle]
+			cmd = [self.moveCommand, self.tiltChannel, self.maxEle]
+		else:
+			cmd = [self.moveCommand, self.tiltChannel, position]
+
+		self.usb.write(cmd)
+
+
+	def moveAzi(self, deg):
+		if self.parent.ids.motor_switchstop.active or not self.connected:
+			return		# Don't move if the safety lockout is engaged!
+
+		# cmd = self.newDegToServo(self.panChannel, deg)
+		# print("moveAzi = ", cmd)
+		# self.usb.write(cmd)
+
+		position = self.degToServo(deg)
+		print("moveAzi to {} ({})".format(deg, position))
+		if(position < self.minAzi):
+			print("Servo Warning: {} < minAzi=={}.".format(position, self.minAzi))
+			cmd = [self.moveCommand, self.panChannel, self.minAzi]
+		elif(position > self.maxAzi):
+			print("Servo Warning: {} > maxAzi=={}.".format(position, self.maxAzi))
+			cmd = [self.moveCommand, self.panChannel, self.maxAzi]
 		else:
 			cmd = [self.moveCommand, self.panChannel, position]
 		self.usb.write(cmd)
