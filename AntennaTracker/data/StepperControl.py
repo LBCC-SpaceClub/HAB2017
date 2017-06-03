@@ -89,7 +89,7 @@ class StepperControl(Thread):
 				elif line.startswith('[TIME]'):
 					self.parseTime(line[6:])
 				elif line.startswith('[MAGV]'):
-					print line # probably empty but who knows
+					print(line) # probably empty but who knows
 				elif line.startswith('[SOL]'):
 					self.parseSolution(line[5:])
 			except Exception as e:
@@ -97,14 +97,15 @@ class StepperControl(Thread):
 
 
 	def updateGui(self):
-		self.parent.ids.station_lat.text = str(self.latDeg)
-		self.parent.ids.station_long.text = str(self.lonDeg)
-		self.parent.ids.station_alt.text = str(self.altMeters)
-		self.parent.ids.station_trueHeading.text = str(self.imuX)
-		self.parent.ids.station_time.text = str(self.gpsTime)
-		self.magDeclination = geomag.declination(
-            dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
-        )
+		if self.latDeg and self.lonDeg and self.altMeters:
+			self.parent.ids.station_lat.text = str(self.latDeg)
+			self.parent.ids.station_long.text = str(self.lonDeg)
+			self.parent.ids.station_alt.text = str(self.altMeters)
+			self.parent.ids.station_trueHeading.text = str(self.imuX)
+			self.parent.ids.station_time.text = str(self.gpsTime)
+			self.magDeclination = geomag.declination(
+	            dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
+	        )
 
 
 	def updateGuiCompass(self):
@@ -127,6 +128,7 @@ class StepperControl(Thread):
 
 
 	def parseGPS(self, line):
+		print("Parsing GPS")
 		line = line.split(',')
 		self.latDeg = float(line[0])
 		self.lonDeg = float(line[1])
@@ -135,12 +137,14 @@ class StepperControl(Thread):
 
 
 	def parseTime(self, line):
+		print("Parsing time")
 		line = line.split(',')
 		self.gpsDate = line[0]
 		self.gpsTime = line[1]
 
 
 	def parseSolution(self, line):
+		print("Parsing solution")
 		line = line.split(',')
 		self.gpsDate = line[0]
 		self.gpsTime = line[1]
@@ -162,10 +166,11 @@ class Arduino(object):
 		self.parent = parent
 		self.arduinoBaud = 115200 # might be too high, I'm seeing some garbage
 		self.arduinoTimeout = 1
-		self.arduinoCOM = self.findComPort()
+		self.arduinoCOM = 'COM8' #self.findComPort()
 		self.connect()
 		self.prevAziSteps = 0
 		self.prevEleSteps = 0
+		print("Connected to stepper arduino.")
 		if not self.connected:
 			raise IOError('Could not connect to arduino')
 
@@ -206,20 +211,32 @@ class Arduino(object):
 			14   = Diff. reference station ID#
 			15   = Checksum
 		'''
-		nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,,".format(
-			now = time.strftime('%H%M%S.%f')[:9], #HHMMSS.SS UTC
-			lat = decDegToNMEA(self.parent.ids.payload_lat.text),
-			lon = decDegToNMEA(self.parent.ids.payload_long.text),
-			sats = 07,
-			alt = self.parent.ids.payload_alt.text,
-			geoid = self.parent.ids.payload_alt.text # not sure how to calc?
-		)
-		nmea = '$'+nmea+genChecksum(nmea)
-		print nmea
-		usb.write(nmea)
+		print("Beginning send to arduino")
+		# print(time.strftime('%H%M%S.%f')[:9])
+		# print(self.parent.ids.payload_lat.text)
+		# print(self.decDegToNMEA(self.parent.ids.payload_lat.text))
+		# print(self.decDegToNMEA(self.parent.ids.payload_long.text))
+		# print(self.parent.ids.payload_alt.text)
+		# print(int(float(self.parent.ids.payload_alt.text)))
+
+		try:
+			nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,,".format(
+				now = time.strftime('%H%M%S')[:6], #HHMMSS.SS UTC
+				lat = self.decDegToNMEA(self.parent.ids.payload_lat.text),
+				lon = self.decDegToNMEA(self.parent.ids.payload_long.text),
+				sats = '07',
+				alt = int(float(self.parent.ids.payload_alt.text)),
+				geoid = int(float(self.parent.ids.payload_alt.text)) # not sure how to calc?
+			)
+			nmea = '$'+nmea+self.genChecksum(nmea)
+			print("Sending {} to the stepper arduino".format(nmea))
+			self.usb.write(nmea.decode('utf-8'))
+		except Exception as e:
+			print("Failed to send to arduino.")
+			print(e)
 
 
-	def decDegToNMEA(deg):
+	def decDegToNMEA(self, deg):
 		''' Converts from dec degrees to deg.decMinutes for NMEA '''
 		deg, dMin = deg.split('.')
 		minutes = str(float('0.'+dMin) * 60)[:6]
@@ -231,7 +248,7 @@ class Arduino(object):
 		return deg+minutes+suffix
 
 
-	def genChecksum(sentence):
+	def genChecksum(self, sentence):
 		''' Adds leading $ and trailing checksum to a custom NMEA string '''
 		checksum = 0
 		for s in sentence:
