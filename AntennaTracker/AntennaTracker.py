@@ -101,9 +101,12 @@ class RootLayout(FloatLayout):
 				return
 		elif(self.ids.cbox_steppers.active):
 			self.updateConsole(" **START** local arduino stepper connection")
-			self.connectedArduino = StepperControl(self)
-			self.connectedArduino.setName('Stepper Thread')
-
+			try:
+				self.connectedArduino = StepperControl(self)
+				self.connectedArduino.setName('Stepper Thread')
+			except (IOError, OSError) as e:
+				self.updateConsole(" **ERROR** "+e.args[0])
+				return
 		self.connectedArduino.start()
 		self.ids.station_connect.disabled = True
 		self.ids.station_disconnect.disabled = False
@@ -113,14 +116,14 @@ class RootLayout(FloatLayout):
 
 	def stopArduino(self):
 		try:
-			self.updateConsole(" **STOP** local arduino conection")
+			self.updateConsole(" **STOP** arduino conection")
 			self.connectedArduino.running = False
 			self.ids.ard_status.text = "Not Connected"
 			self.ids.ard_status.color = (1,0,0,1)
 			self.ids.station_disconnect.disabled = True
 			self.ids.station_connect.disabled = False
 		except:
-			self.updateConsole(" **ERROR** Failed to stopArduino")
+			self.updateConsole(" **ERROR** Failed to stop arduino")
 
 
 
