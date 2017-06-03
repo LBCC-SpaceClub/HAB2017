@@ -32,7 +32,7 @@ class StepperControl(Thread):
 		self.gpsTime = None
 
 		# Targetting solution fields:
-		self.targetAzDeg = 0
+		self.targetAziDeg = 0
 		self.targetEleDeg = 0
 		self.targetDistanceM = 0
 
@@ -50,9 +50,20 @@ class StepperControl(Thread):
 			payloadManualButton = self.parent.ids.payload_switchmanual.active
 
 			# Unless Manual button enabled, check for new arduino gps
-			if not stationManualButton:
+			# if not stationManualButton:
+
+			# Manual mode currently undefined using stepper controller..
+			if stationConnected and not stationManualButton:
+				# Parse all available serial data
 				self.update()
-				self.updateMain()
+				self.updateGui()
+
+			# Consider only sending when necessary, like this:
+			# newPayloadAvailable = self.lastSent < self.parent.ids.payload_time.text
+			# if stationConnected and newPayloadAvailable:
+			if stationConnected:
+				# Send the newest payload location to the arduino
+				self.arduino.sendPayloadGps()
 
 			# Update the gui compasses if both gps positions available
 			hasStationGps = (stationConnected or stationManualButton)
@@ -60,23 +71,11 @@ class StepperControl(Thread):
 			if (hasStationGps and hasPayloadGps):
 				self.updateGuiCompass()
 				# Only run motors if both gps positions AND motors are enabled
-				if self.arduino.connected:
-					self.moveMotors()
+				# if self.arduino.connected:
+					# self.moveMotors()
 
 			# No point updating faster than new data becomes available
 			time.sleep(1)
-
-
-	def moveMotors(self):
-		if self.parent.ids.motor_switchstop.active:
-			return		# Don't move if the safety lockout is engaged!
-		if self.arduino.connected:
-			# print("Moving motors to ele = {:.3f}, az = {:.3f} degrees.".format(
-			# 	self.targetEleDeg, self.targetAzDeg)
-			# )
-			self.arduino.moveBoth(float(self.targetEleDeg), float(self.targetAzDeg))
-			# self.arduino.moveEle(float(self.targetEleDeg))
-			# self.arduino.moveAz(float(self.targetAzDeg))
 
 
 	def update(self):
@@ -85,16 +84,19 @@ class StepperControl(Thread):
 				line = self.arduino.getLine()
 				if line[:5] == '[IMU]':
 					self.parseIMU(line[5:])
-				elif line[:5] == '[GPS]':
-					self.parseGPS(line[5:])
-					self.updateTargetSolution()
-				elif line.startswith('Time: '):
-					self.parseTime(line)
+				elif line[:5] == '[TGPS]':
+					self.parseGPS(line[6:])
+				elif line.startswith('[TIME]'):
+					self.parseTime(line[6:])
+				elif line.startswith('[MAGV]'):
+					print line # probably empty but who knows
+				elif line.startswith('[SOL]'):
+					self.parseSolution(line[5:])
 			except Exception as e:
 				print("Exception on line from arduino: ", e)
 
 
-	def updateMain(self):
+	def updateGui(self):
 		self.parent.ids.station_lat.text = str(self.latDeg)
 		self.parent.ids.station_long.text = str(self.lonDeg)
 		self.parent.ids.station_alt.text = str(self.altMeters)
@@ -109,7 +111,7 @@ class StepperControl(Thread):
 		if self.parent.ids.station_switchmanual.active:
 			self.updateTargetSolution()
 
-		self.parent.x_value = self.targetAzDeg
+		self.parent.x_value = self.targetAziDeg
 		self.parent.y_value = self.targetEleDeg
 
 
@@ -129,87 +131,21 @@ class StepperControl(Thread):
 		self.latDeg = float(line[0])
 		self.lonDeg = float(line[1])
 		self.altMeters = float(line[2])
+		self.hasNewPayloadGps = True
 
 
 	def parseTime(self, line):
-		line = line.split()
+		line = line.split(',')
+		self.gpsDate = line[0]
 		self.gpsTime = line[1]
-		self.gpsDate = line[3]
 
 
-	def updateTargetSolution(self):
-		try:
-			pLat = float(self.parent.ids.payload_lat.text)
-			pLon = float(self.parent.ids.payload_long.text)
-			pAlt = float(self.parent.ids.payload_alt.text)
-
-			if self.parent.ids.station_switchmanual.active:
-				# Use manually entered GPS values
-				tLat = float(self.parent.ids.station_lat.text)
-				tLon = float(self.parent.ids.station_long.text)
-				tAlt = float(self.parent.ids.station_alt.text)
-			else:
-				# Use latest values (should be the same?)
-				tLat = self.latDeg
-				tLon = self.lonDeg
-				tAlt = self.altMeters
-
-			self.targetDistanceM = self.getTargetDistance(
-				tLat, tLon, pLat, pLon
-			)
-			self.targetEleDeg = self.getEleDegrees(
-				pAlt, tAlt, self.targetDistanceM
-			)
-			self.targetAzDeg = self.getAzDegrees(
-				tLat, tLon, pLat, pLon
-			)
-		except ValueError as e:
-			print(e)
-			# defaults
-			self.targetDistanceM = 0
-			self.targetEleDeg = 0
-			self.targetAzDeg = 0
-
-
-	def getEleDegrees(self, payloadAlt, stationAlt, distance):
-		''' Returns degrees from perpendicular to Earth surface, to payload '''
-		try:
-			deltaAlt = payloadAlt - stationAlt
-			return float(math.degrees(math.atan2(deltaAlt, distance)))
-		except ValueError:
-			return 0
-
-
-	def getTargetDistance(self, trackerLat, trackerLon, remoteLat, remoteLon):
-		''' Returns distance over a sphere, between two points '''
-		# haversine formula, see: http://www.movable-type.co.uk/scripts/latlong.html
-		try:
-			R = 6371000									# radius of earth in meters
-			dLat = math.radians(remoteLat-trackerLat)	# delta latitude in radians
-			dLon = math.radians(remoteLon-trackerLon)	# delta longitude in radians
-			a = math.sin(dLat/2)*math.sin(dLat/2)+math.cos(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.sin(dLon/2)*math.sin(dLon/2)
-			c = 2*math.atan2(math.sqrt(a),math.sqrt(1-a))
-			d = R*c
-			return int(d)
-			# return d*3280.839895 # multiply distance in Km by 3280 for feet
-		except ValueError:
-			return 0
-
-
-	def getAzDegrees(self, trackerLat, trackerLon, remoteLat, remoteLon):
-		''' Returns degrees from true North, to payload '''
-		try:
-			dLat = math.radians(remoteLat-trackerLat)		# delta latitude in radians
-			dLon = math.radians(remoteLon-trackerLon)		# delta longitude in radians
-
-			y = math.sin(dLon)*math.cos(math.radians(remoteLat))
-			x = math.cos(math.radians(trackerLat))*math.sin(math.radians(remoteLat))-math.sin(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.cos(dLat)
-			tempBearing = math.degrees(math.atan2(y,x))		# returns the bearing from true north
-			if (tempBearing < 0):
-				tempBearing = tempBearing + 360
-			return float(tempBearing)
-		except ValueError:
-			return 0
+	def parseSolution(self, line):
+		line = line.split(',')
+		self.gpsDate = line[0]
+		self.gpsTime = line[1]
+		self.targetAziDeg = float(line[0])
+		self.targetEleDeg = float(line[1])
 
 
 
@@ -250,7 +186,7 @@ class Arduino(object):
 		self.parent.updateConsole("\tConnected to stepper arduino on port "+self.arduinoCOM)
 
 
-	def sendPayloadGpsToArduino():
+	def sendPayloadGps(self):
 		'''
 			$GPGGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
 			1    = UTC of Position
@@ -303,34 +239,26 @@ class Arduino(object):
 		return '*'+hex(checksum)[2:]
 
 
-	def degToStepper(self, deg):
-		''' Converts from degrees to stepper range, based on 1/16 microsteps '''
-		# Assuming 0 degrees is straight ahead
-		steps = (int)(deg * 48960 / 360)
-		return steps
-
-
-	def moveToCenter(self):
-		self.moveBoth(0, 0)
-
-
-	def moveAz(self, deg):
-		pass
-
-
-	def moveEle(self, deg):
-		pass
-
-
-	def moveBoth(self, eleDeg, aziDeg):
-		if self.connected and not self.parent.ids.motor_switchstop.active:
-			aziSteps = self.degToStepper(aziDeg)
-			eleSteps = self.degToStepper(eleDeg)
-			cmd = "<{},{}>".format(eleSteps, aziSteps)
-			if self.prevAziSteps != aziSteps and self.prevEleSteps != eleSteps:
-				print(cmd)
-			cmd = str.encode(cmd)
-			self.usb.write(cmd)
+	# def degToStepper(self, deg):
+	# 	''' Converts from degrees to stepper range, based on 1/16 microsteps '''
+	# 	# Assuming 0 degrees is straight ahead
+	# 	steps = (int)(deg * 48960 / 360)
+	# 	return steps
+	#
+	#
+	# def moveToCenter(self):
+	# 	self.moveBoth(0, 0)
+	#
+	#
+	# def move(self, eleDeg, aziDeg):
+	# 	if self.connected and not self.parent.ids.motor_switchstop.active:
+	# 		aziSteps = self.degToStepper(aziDeg)
+	# 		eleSteps = self.degToStepper(eleDeg)
+	# 		cmd = "<{},{}>".format(eleSteps, aziSteps)
+	# 		if self.prevAziSteps != aziSteps and self.prevEleSteps != eleSteps:
+	# 			print(cmd)
+	# 		cmd = str.encode(cmd)
+	# 		self.usb.write(cmd)
 
 
 	def findComPort(self):
