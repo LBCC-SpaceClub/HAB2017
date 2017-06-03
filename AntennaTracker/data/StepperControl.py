@@ -251,21 +251,36 @@ class Arduino(object):
 
 
 	def sendPayloadGpsToArduino():
-		curTime = time.strftime('%H%M%S')
-		'$GPRMC,123519,A,4807.038,N,01131.000,E,022.4,084.4,230394,003.1,W*6A'
-		if magDeclination > 0:
-			magSuffix = 'E'
-		else:
-			magSuffix = 'W'
-		# GPRMC does not include altitude.. add as custom field?
-		nmea = "GPRMC,{now},A,{lat},{lon},,,{mag},{magSuffix}".format(
-			now = curTime,
-			lat = decDegToNMEA(self.parent.ids.payload_lat.text)
-			lon = decDegToNMEA(self.parent.ids.payload_long.text)
+		'''
+			$GPGGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
+			1    = UTC of Position
+			2    = Latitude
+			3    = N or S
+			4    = Longitude
+			5    = E or W
+			6    = GPS quality indicator (0=invalid; 1=GPS fix; 2=Diff. GPS fix)
+			7    = Number of satellites in use [not those in view]
+			8    = Horizontal dilution of position
+			9    = Antenna altitude above/below mean sea level (geoid)
+			10   = Meters  (Antenna height unit)
+			11   = Geoidal separation (Diff. between WGS-84 earth ellipsoid and
+			       mean sea level.  -=geoid is below WGS-84 ellipsoid)
+			12   = Meters  (Units of geoidal separation)
+			13   = Age in seconds since last update from diff. reference station
+			14   = Diff. reference station ID#
+			15   = Checksum
+		'''
+		nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,,".format(
+			now = time.strftime('%H%M%S.%f')[:9], #HHMMSS.SS UTC
+			lat = decDegToNMEA(self.parent.ids.payload_lat.text),
+			lon = decDegToNMEA(self.parent.ids.payload_long.text),
+			sats = 07,
+			alt = self.parent.ids.payload_alt.text,
+			geoid = self.parent.ids.payload_alt.text # not sure how to calc?
 		)
 		nmea = '$'+nmea+genChecksum(nmea)
 		print nmea
-		# pAlt = float(self.parent.ids.payload_alt.text)
+		usb.write(nmea)
 
 
 	def decDegToNMEA(deg):
@@ -282,8 +297,8 @@ class Arduino(object):
 
 	def genChecksum(sentence):
 		''' Adds leading $ and trailing checksum to a custom NMEA string '''
-	    checksum = 0
-		for s in nmea:
+		checksum = 0
+		for s in sentence:
 			checksum ^= ord(s)
 		return '*'+hex(checksum)[2:]
 
