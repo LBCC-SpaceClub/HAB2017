@@ -32,6 +32,7 @@ class StepperControl(Thread):
 		self.gpsTime = None
 
 		# Targetting solution fields:
+		self.hasNewPayloadGps = False
 		self.targetAziDeg = 0
 		self.targetEleDeg = 0
 		self.targetDistanceM = 0
@@ -82,6 +83,7 @@ class StepperControl(Thread):
 		while self.arduino.hasLines():
 			try:
 				line = self.arduino.getLine()
+				print('Received: ', line)
 				if line[:5] == '[IMU]':
 					self.parseIMU(line[5:])
 				elif line[:5] == '[TGPS]':
@@ -89,22 +91,23 @@ class StepperControl(Thread):
 				elif line.startswith('[TIME]'):
 					self.parseTime(line[6:])
 				elif line.startswith('[MAGV]'):
-					print line # probably empty but who knows
+					print(line) # probably empty but who knows
 				elif line.startswith('[SOL]'):
 					self.parseSolution(line[5:])
 			except Exception as e:
-				print("Exception on line from arduino: ", e)
-
+				print("Failed to parse a line: {}".format(e))
 
 	def updateGui(self):
-		self.parent.ids.station_lat.text = str(self.latDeg)
-		self.parent.ids.station_long.text = str(self.lonDeg)
-		self.parent.ids.station_alt.text = str(self.altMeters)
-		self.parent.ids.station_trueHeading.text = str(self.imuX)
-		self.parent.ids.station_time.text = str(self.gpsTime)
-		self.magDeclination = geomag.declination(
-            dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
-        )
+		if self.hasNewPayloadGps:
+			self.parent.ids.station_lat.text = str(self.latDeg)
+			self.parent.ids.station_long.text = str(self.lonDeg)
+			self.parent.ids.station_alt.text = str(self.altMeters)
+			self.parent.ids.station_trueHeading.text = str(self.imuX)
+			self.parent.ids.station_time.text = str(self.gpsTime)
+			self.magDeclination = geomag.declination(
+				dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
+			)
+			self.hasNewPayloadGps = False
 
 
 	def updateGuiCompass(self):
@@ -127,6 +130,7 @@ class StepperControl(Thread):
 
 
 	def parseGPS(self, line):
+		print("Parsing GPS: ", line)
 		line = line.split(',')
 		self.latDeg = float(line[0])
 		self.lonDeg = float(line[1])
@@ -207,19 +211,20 @@ class Arduino(object):
 			15   = Checksum
 		'''
 		nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,,".format(
-			now = time.strftime('%H%M%S.%f')[:9], #HHMMSS.SS UTC
-			lat = decDegToNMEA(self.parent.ids.payload_lat.text),
-			lon = decDegToNMEA(self.parent.ids.payload_long.text),
-			sats = 07,
+			now = time.strftime('%H%M%S')[:6], #HHMMSS.SS UTC
+			lat = self.decDegToNMEA(self.parent.ids.payload_lat.text),
+			lon = self.decDegToNMEA(self.parent.ids.payload_long.text),
+			sats = '07',
 			alt = self.parent.ids.payload_alt.text,
 			geoid = self.parent.ids.payload_alt.text # not sure how to calc?
 		)
-		nmea = '$'+nmea+genChecksum(nmea)
-		print nmea
-		usb.write(nmea)
+		nmea = '${}*{:02X}'.format(nmea,self.genChecksum(nmea))
+		nmea = nmea.encode('utf-8')
+		print("Sending: ", nmea)
+		self.usb.write(nmea)
 
 
-	def decDegToNMEA(deg):
+	def decDegToNMEA(self, deg):
 		''' Converts from dec degrees to deg.decMinutes for NMEA '''
 		deg, dMin = deg.split('.')
 		minutes = str(float('0.'+dMin) * 60)[:6]
@@ -231,12 +236,13 @@ class Arduino(object):
 		return deg+minutes+suffix
 
 
-	def genChecksum(sentence):
+	def genChecksum(self, sentence):
 		''' Adds leading $ and trailing checksum to a custom NMEA string '''
 		checksum = 0
 		for s in sentence:
 			checksum ^= ord(s)
-		return '*'+hex(checksum)[2:]
+		return checksum
+		# return "*{:02X}".format(checksum)
 
 
 	# def degToStepper(self, deg):

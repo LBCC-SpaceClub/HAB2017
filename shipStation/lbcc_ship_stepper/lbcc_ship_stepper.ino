@@ -68,7 +68,10 @@ void loop()
     // It's expecting a NMEA string, something like GPGGA:
     // http://www.gpsinformation.org/dale/nmea.htm#RMC
     // '$GPGGA,123519,4433.109,N,12314.066,W,1,08,0.9,545.4,M,46.9,M,,*5a'
-    payloadGPS.encode(Serial.read());
+    char letter = Serial.read();
+    Serial.print(letter);
+    payloadGPS.encode(letter);
+//    payloadGPS.encode(Serial.read());
   }
 
   // If new info is available from the Adafruit GPS Shield, parse it!
