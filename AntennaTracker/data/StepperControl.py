@@ -43,7 +43,6 @@ class StepperControl(Thread):
 
 	def run(self):
 		while self.running:
-			print("Steppers Running!")
 			# Simplify by using some temp variables
 			stationConnected = self.parent.ids.station_connect.disabled
 			stationManualButton = self.parent.ids.station_switchmanual.active
@@ -83,10 +82,11 @@ class StepperControl(Thread):
 		while self.arduino.hasLines():
 			try:
 				line = self.arduino.getLine()
-				print('Received: ', line)
-				if line[:5] == '[IMU]':
+				if len(line) > 5:
+					print('Received: ', line)
+				if line.startswith('[IMU]'):
 					self.parseIMU(line[5:])
-				elif line[:5] == '[TGPS]':
+				elif line.startswith('[TGPS]'):
 					self.parseGPS(line[6:])
 				elif line.startswith('[TIME]'):
 					self.parseTime(line[6:])
@@ -96,6 +96,7 @@ class StepperControl(Thread):
 					self.parseSolution(line[5:])
 			except Exception as e:
 				print("Failed to parse a line: {}".format(e))
+
 
 	def updateGui(self):
 		if self.hasNewPayloadGps:
@@ -218,20 +219,22 @@ class Arduino(object):
 			alt = self.parent.ids.payload_alt.text,
 			geoid = self.parent.ids.payload_alt.text # not sure how to calc?
 		)
-		nmea = '${}*{:02X}'.format(nmea,self.genChecksum(nmea))
-		nmea = nmea.encode('utf-8')
-		print("Sending: ", nmea)
+		nmea = '${}*{:02X}\r'.format(nmea,self.genChecksum(nmea)).encode('utf-8')
+		print('Sending: ', nmea)
 		self.usb.write(nmea)
 
 
 	def decDegToNMEA(self, deg):
 		''' Converts from dec degrees to deg.decMinutes for NMEA '''
 		deg, dMin = deg.split('.')
-		minutes = str(float('0.'+dMin) * 60)[:6]
+		# Clunky hack to convert from DDD.DDDD to DDDMM.MMMM
+		dMin = float('0.' + dMin) * 60
+		minutes = "{:02d}.{}".format(int(dMin), int(dMin*1000))
 		if deg.startswith('-'):
-			deg = deg[1:]
+			deg = deg[1:9]
 			suffix = ',W'
 		else:
+			deg = deg[:7]
 			suffix = ',N'
 		return deg+minutes+suffix
 
