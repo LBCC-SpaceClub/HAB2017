@@ -27,7 +27,7 @@ SoftwareSerial ss(RXPin, TXPin);
 
 TinyGPSPlus trackerGPS;
 TinyGPSPlus payloadGPS;
-TinyGPSCustom magneticVariation(trackerGPS, "GPRMC", 10);
+TinyGPSCustom magneticVariation(trackerGPS, "GPGGA", 13);
 
 AccelStepper xAxis(1,12,11);
 AccelStepper yAxis(1,10,9);
@@ -93,8 +93,6 @@ void loop()
     print_location("[TGPS]", &trackerGPS);
     //print_location("[PAYLOAD]", &payloadGPS);
     print_time("[TIME]", &trackerGPS);
-    Serial.print(F("[MAGV]"));
-    Serial.println(magneticVariation.value());
     print_solution("[SOL]");
     Serial.println();
   }
@@ -159,7 +157,7 @@ void print_solution(char* desc){
     Serial.print(F(","));
     Serial.print(distance_meters);
     Serial.print(F(","));
-    Serial.println(delta_altitude);
+    Serial.println(magneticVariation.value());
   } else {
     Serial.print(F("INV: "));
     Serial.print(trackerGPS.location.isValid()==1?"tracker ok":"tracker BAD");

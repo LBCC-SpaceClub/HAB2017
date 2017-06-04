@@ -36,6 +36,7 @@ class StepperControl(Thread):
 		self.targetAziDeg = 0
 		self.targetEleDeg = 0
 		self.targetDistanceM = 0
+		self.magDeclination = 0
 
 		# Connect to the arduino
 		self.arduino = Arduino(parent)
@@ -88,8 +89,6 @@ class StepperControl(Thread):
 					self.parseGPS(line[6:])
 				elif line.startswith('[TIME]'):
 					self.parseTime(line[6:])
-				elif line.startswith('[MAGV]'):
-					print(line) # probably empty but who knows
 				elif line.startswith('[SOL]'):
 					self.parseSolution(line[5:])
 			except Exception as e:
@@ -135,6 +134,8 @@ class StepperControl(Thread):
 		self.latDeg = float(line[0])
 		self.lonDeg = float(line[1])
 		self.altMeters = float(line[2])
+		if len(line) >= 4: # this field may be empty
+			self.magneticVariation = float(line[3])
 		self.hasNewPayloadGps = True
 
 
@@ -214,13 +215,14 @@ class Arduino(object):
 			15   = Checksum
 		'''
 
-		nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,,".format(
+		nmea = "GPGGA,{now},{lat},{lon},1,{sats},0.0,{alt},M,{geoid},M,{mag},".format(
 			now = time.strftime('%H%M%S')[:6], #HHMMSS.SS UTC
 			lat = self.decDegToNMEA(self.parent.ids.payload_lat.text),
 			lon = self.decDegToNMEA(self.parent.ids.payload_long.text),
 			sats = '07',
 			alt = self.parent.ids.payload_alt.text,
-			geoid = self.parent.ids.payload_alt.text # not sure how to calc?
+			geoid = self.parent.ids.payload_alt.text, # not sure how to calc?
+			mag = self.`magDeclination`
 		)
 		nmea = '${}*{:02X}\r'.format(nmea,self.genChecksum(nmea)).encode('utf-8')
 		self.usb.write(nmea)
