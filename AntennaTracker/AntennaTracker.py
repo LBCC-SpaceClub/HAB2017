@@ -97,7 +97,8 @@ class RootLayout(FloatLayout):
 				self.connectedArduino = ServoControl(self)
 				self.connectedArduino.setName('Servo Thread')
 			except IOError as e:
-				self.updateConsole(" **ERROR** "+e.args[0])
+				self.updateConsole(" **ERROR** while starting servo arduino.")
+				print(e)
 				return
 		elif(self.ids.cbox_steppers.active):
 			self.updateConsole(" **START** local arduino stepper connection")
@@ -105,7 +106,8 @@ class RootLayout(FloatLayout):
 				self.connectedArduino = StepperControl(self)
 				self.connectedArduino.setName('Stepper Thread')
 			except (IOError, OSError) as e:
-				self.updateConsole(" **ERROR** "+e.args[0])
+				self.updateConsole(" **ERROR** while starting servo arduino.")
+				print(e)
 				return
 		self.connectedArduino.start()
 		self.ids.station_connect.disabled = True

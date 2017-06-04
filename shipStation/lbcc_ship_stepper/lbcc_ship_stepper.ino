@@ -14,12 +14,12 @@
 static const uint8_t RXPin = 8, TXPin = 7;
 uint32_t gpsTimer = millis();
 uint32_t imuTimer = gpsTimer;
-sensors_event_t event;           //Create a new local event instance
-uint8_t sys, gyro, accel, mag;   //Create local variables gyro, accel, mag
+sensors_event_t event;           //Create a new local event instance for IMU
+uint8_t sys, gyro, accel, mag;
 double azimuth_deg, elevation_deg, distance_meters, delta_altitude;
 double azimuth_steps, elevation_steps;
 
-// Initializes an instance of the BNO055 called bno with an I2C address of 55
+// Initializes the BNO055 using I2C address 55
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 // Ultimate GPS shield uses RX and TX on pins 8 and 7
@@ -91,12 +91,11 @@ void loop()
     gpsTimer = millis(); // reset the timer
 
     print_location("[TGPS]", &trackerGPS);
+    //print_location("[PAYLOAD]", &payloadGPS);
     print_time("[TIME]", &trackerGPS);
     Serial.print(F("[MAGV]"));
     Serial.println(magneticVariation.value());
     print_solution("[SOL]");
-    // print_location("[payload location]", &payloadGPS);
-    // print_time("payload", &payloadGPS);
     Serial.println();
   }
 
@@ -227,7 +226,7 @@ void print_time(char* desc, TinyGPSPlus* gps){
     Serial.print(gps->time.second());
     Serial.println(" UTC.");
   } else {
-    Serial.println(F("INV TIME"));
+    Serial.println(F("INVALID TIME"));
   }
 }
 
