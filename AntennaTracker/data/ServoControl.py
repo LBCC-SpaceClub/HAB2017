@@ -39,7 +39,6 @@ class ServoControl(Thread):
 
 		# Connect to the arduino
 		self.arduino = Arduino(parent)
-		print("Servos created!")
 
 		# Connect to the tracking servos
 		self.servos = Servo(parent)
@@ -55,7 +54,6 @@ class ServoControl(Thread):
 
 			# Unless Manual button enabled, check for new arduino gps
 			if self.arduino.connected and not stationManualButton:
-				print("Updating.")
 				self.update()
 				self.updateMain()
 
@@ -65,9 +63,10 @@ class ServoControl(Thread):
 			if (hasStationGps and hasPayloadGps):
 				self.updateTargetSolution()
 				self.updateGuiCompass()
-				# Only run servos if both gps positions AND motors are enabled
-				if self.servos.connected:
-					self.moveMotors()
+
+			# Only run servos if motors are enabled
+			if self.servos.connected:
+				self.moveMotors()
 
 			# No point updating faster than new data becomes available
 			time.sleep(1)
@@ -77,11 +76,10 @@ class ServoControl(Thread):
 		if self.parent.ids.motor_switchstop.active:
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
-			# print("Moving servos to ele = {:.3f}, az = {:.3f} degrees.".format(
-			# 	self.targetEleDeg, self.targetAziDeg)
-			# )
-			self.servos.moveEle(float(self.targetEleDeg))
-			self.servos.moveAz(float(self.targetAziDeg))
+			pan = float(self.parent.x_value)
+			tilt = float(self.parent.y_value)
+			print("Moving servos to: ", pan, tilt)
+			self.servos.pointTo(pan, tilt)
 
 
 	def update(self):
@@ -230,34 +228,22 @@ class Servo(object):
 		self.servoBaud = 9600
 		self.servoTimeout = 1
 		# Servo ranges
-		self.moveCommand = 0xFF
-		self.minAzi = 0
-		self.maxAzi = 255
-		self.minEle = 70
-		self.maxEle = 180
+		self.PololuCmd = chr(0xaa) + chr(0xc)
+		self.minRange = [0, 70]
+		self.maxRange = [255, 180]
 		# Pan and tilt servos on different channels
-		self.panChannel = 1
-		self.tiltChannel = 0
+		self.aziChannel = 0
+		self.eleChannel = 1
 		# Connect to maestro servo controller
 		self.servoCOM = self.findComPort()
-		if self.servoCOM:
-			self.connect()
-			self.configServos()
-			self.moveToCenter()
+		self.connect()
+		self.configServos()
 
 
 	def __del__(self):
 		if self.connected:
 			self.usb.close()
 
-	def testRange(self):
-		 for i in range(0,254,1):
-			 self.movePanServo(i)
-
-	def movePanServo(self, position):
-		 temp = [self.moveCommand,chr(self.panChannel),chr(position)]
-		 print(position, temp)
-		 self.usb.write(temp)
 
 	def connect(self):
 		if self.servoCOM:
@@ -266,7 +252,6 @@ class Servo(object):
 				baudrate = self.servoBaud,
 				timeout = self.servoTimeout
 			)
-			self.usb.flush()
 			self.connected = True
 			self.parent.updateConsole("\tConnected to maestro on port "+self.servoCOM)
 
@@ -283,103 +268,67 @@ class Servo(object):
 	def configServos(self):
 		#Set acceleration rate for both servos
 		print("Configuring servos..")
-		accelCommand = 0x89
-		tiltAccel = 1
-		panAccel = 1
-		setAccel = [accelCommand, self.tiltChannel, tiltAccel, 0]
-		self.usb.write(setAccel)
-		setAccel = [accelCommand, self.panChannel, panAccel, 0]
-		self.usb.write(setAccel)
-		#Set rotation rate for both servos
-		speedCommand = 0x87
-		tiltSpeed = 1
-		panSpeed = 3
-		setSpeed = [speedCommand, self.tiltChannel, tiltSpeed, 0]
-		self.usb.write(setSpeed)
-		setSpeed = [speedCommand, self.panChannel, panSpeed, 0]
-		self.usb.write(setSpeed)
+		self.setSpeed(self.aziChannel, 4)
+		self.setSpeed(self.eleChannel, 4)
 
 
 	def degToServo(self, deg):
-		''' Converts 0-360 degrees to 0-255 servo positions '''
-		# remove any extra 360s
+		''' Converts 0-360 degrees to 3000-9000 microsteps '''
+		# remove any extra 360s and ensure we're positive degrees
 		deg = abs(deg % 360)
 
-		#convert if it is on the right hemisphere
-		if deg < 180:
-			#subtract from the 0 degree position
-			position = round(127 - deg * (255.0 / 360.0))
-
-		#convert if it is on the left hemisphere
-		else:
-			#get the degree position going left from center
-			deg = 360 - deg
-			# add from the 0 degree position
-			position = round(127 + deg * (255.0 / 360.0))
-		return 127
-		return int(position)
+		# steps = (degrees-degMin) * (stepMax-stepMin) / degMax + stepMin
+		return int(deg * 6000 / 360 + 3000)
 
 
-	# def newDegToServo(self, channel, deg):
-	# 	#Valid range is 500-5500
-	# 	deg = int(deg)
-	# 	channel = int(channel)
-	# 	offyougo=int(5000*deg/180)+500
-	# 	#Get the lowest 7 bits
-	# 	byteone=(int)offyougo&127
-	# 	#Get the highest 7 bits
-	# 	bytetwo=(int)(offyougo-(offyougo&127))/128
-	# 	#move to an absolute position in 8-bit mode (0x04 for the mode, 0 for the servo, 0-255 for the position (spread over two bytes))
-	# 	bud=chr(0x80)+chr(0x01)+chr(0x04)+chr(channel)+chr(bytetwo)+chr(byteone)
-	# 	return bud
+	def setTarget(self, chan, deg):
+		# Ensure we don't move past our physical range for this servo
+		if self.minRange[chan] > 0 and deg < self.minRange[chan]:
+			deg = self.minRange[chan]
+		if self.maxRange[chan] > 0 and deg > self.maxRange[chan]:
+			deg = self.maxRange[chan]
 
+		# Convert from degrees into micro steps for the servo
+		target = self.degToServo(deg)
+		lsb = target & 0x7f			#7 bits for least significant byte
+		msb = (target >> 7) & 0x7f	#shift 7 and take next 7 bits for msb
 
-	def moveToCenter(self):
-		self.moveAzi(0)
-		self.moveEle(0)
-
-
-	def moveEle(self, deg):
-		if self.parent.ids.motor_switchstop.active or not self.connected:
-			return		# Don't move if the safety lockout is engaged!
-
-		# cmd = self.newDegToServo(self.tiltChannel, deg)
-		# print("moveEle = ", cmd)
-		# self.usb.write(cmd)
-
-		position = self.degToServo(deg)
-		print("moveEle to {} ({})".format(deg, position))
-		if(position < self.minEle):
-			print("Servo Warning: {} < minEle=={}.".format(position, self.minEle))
-			cmd = [self.moveCommand, self.tiltChannel, self.minEle]
-		elif(position > self.maxEle):
-			print("Servo Warning: {} > maxEle=={}.".format(position, self.maxEle))
-			cmd = [self.moveCommand, self.tiltChannel, self.maxEle]
-		else:
-			cmd = [self.moveCommand, self.tiltChannel, position]
-
+		# Send Pololu intro, device number, command, channel, and target lsb/msb
+		cmd = self.PololuCmd + chr(0x04) + chr(chan) + chr(lsb) + chr(msb)
+		cmd = cmd.encode('utf-8')
+		print("Writing {0} out to servo.\n".format(cmd))
 		self.usb.write(cmd)
 
 
-	def moveAzi(self, deg):
-		if self.parent.ids.motor_switchstop.active or not self.connected:
-			return		# Don't move if the safety lockout is engaged!
+	# Set speed of channel
+	# Speed is measured as 0.25microseconds/10milliseconds
+	# For the standard 1ms pulse width change to move a servo between extremes, a speed
+	# of 1 will take 1 minute, and a speed of 60 would take 1 second.
+	# Speed of 0 is unrestricted.
+	def setSpeed(self, chan, speed):
+		lsb = speed & 0x7f #7 bits for least significant byte
+		msb = (speed >> 7) & 0x7f #shift 7 and take next 7 bits for msb
+		# Send Pololu intro, device number, command, channel, speed lsb, speed msb
+		cmd = self.PololuCmd + chr(0x07) + chr(chan) + chr(lsb) + chr(msb)
+		self.usb.write(cmd.encode('utf-8'))
 
-		# cmd = self.newDegToServo(self.panChannel, deg)
-		# print("moveAzi = ", cmd)
-		# self.usb.write(cmd)
 
-		position = self.degToServo(deg)
-		print("moveAzi to {} ({})".format(deg, position))
-		if(position < self.minAzi):
-			print("Servo Warning: {} < minAzi=={}.".format(position, self.minAzi))
-			cmd = [self.moveCommand, self.panChannel, self.minAzi]
-		elif(position > self.maxAzi):
-			print("Servo Warning: {} > maxAzi=={}.".format(position, self.maxAzi))
-			cmd = [self.moveCommand, self.panChannel, self.maxAzi]
-		else:
-			cmd = [self.moveCommand, self.panChannel, position]
-		self.usb.write(cmd)
+	# Set acceleration of channel
+	# This provide soft starts and finishes when servo moves to target position.
+	# Valid values are from 0 to 255. 0=unrestricted, 1 is slowest start.
+	# A value of 1 will take the servo about 3s to move between 1ms to 2ms range.
+	def setAccel(self, chan, accel):
+		lsb = accel & 0x7f #7 bits for least significant byte
+		msb = (accel >> 7) & 0x7f #shift 7 and take next 7 bits for msb
+		# Send Pololu intro, device number, command, channel, accel lsb, accel msb
+		cmd = self.PololuCmd + chr(0x09) + chr(chan) + chr(lsb) + chr(msb)
+		self.usb.write(cmd.encode('utf-8'))
+
+
+	def pointTo(self, pan, tilt):
+		self.setTarget(self.aziChannel, pan)	# pan
+		self.setTarget(self.eleChannel, tilt)	# tilt
+
 
 
 ##################################################
