@@ -36,7 +36,7 @@ class StepperControl(Thread):
 		self.targetAziDeg = 0
 		self.targetEleDeg = 0
 		self.targetDistanceM = 0
-		self.magDeclination = 0
+		self.magneticVariation = 0
 
 		# Connect to the arduino
 		self.arduino = Arduino(parent)
@@ -50,9 +50,6 @@ class StepperControl(Thread):
 			payloadConnected = self.parent.ids.payload_connect.disabled
 			payloadManualButton = self.parent.ids.payload_switchmanual.active
 
-			# Unless Manual button enabled, check for new arduino gps
-			# if not stationManualButton:
-
 			# Manual mode currently undefined using stepper controller..
 			if stationConnected and not stationManualButton:
 				# Parse all available serial data
@@ -64,7 +61,7 @@ class StepperControl(Thread):
 			# if stationConnected and newPayloadAvailable:
 			if stationConnected:
 				# Send the newest payload location to the arduino
-				self.arduino.sendPayloadGps()
+				self.arduino.sendPayloadGps(self.magneticVariation)
 
 			# Update the gui compasses if both gps positions available
 			hasStationGps = (stationConnected or stationManualButton)
@@ -82,6 +79,7 @@ class StepperControl(Thread):
 	def update(self):
 		while self.arduino.hasLines():
 			line = self.arduino.getLine()
+			print('Received: ', line)
 			try:
 				if line.startswith('[IMU]'):
 					self.parseIMU(line[5:])
@@ -103,7 +101,7 @@ class StepperControl(Thread):
 			self.parent.ids.station_alt.text = str(self.altMeters)
 			self.parent.ids.station_trueHeading.text = str(self.imuX)
 			self.parent.ids.station_time.text = str(self.gpsTime)
-			self.magDeclination = geomag.declination(
+			self.magneticVariation = geomag.declination(
 				dlat=self.latDeg, dlon=self.lonDeg, h=self.altMeters
 			)
 			self.hasNewPayloadGps = False
@@ -194,7 +192,7 @@ class Arduino(object):
 		self.parent.updateConsole("\tConnected to stepper arduino on port "+self.arduinoCOM)
 
 
-	def sendPayloadGps(self):
+	def sendPayloadGps(self, magVariation):
 		'''
 			$GPGGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx*hh
 			1    = UTC of Position
@@ -222,7 +220,7 @@ class Arduino(object):
 			sats = '07',
 			alt = self.parent.ids.payload_alt.text,
 			geoid = self.parent.ids.payload_alt.text, # not sure how to calc?
-			mag = self.`magDeclination`
+			mag = magVariation
 		)
 		nmea = '${}*{:02X}\r'.format(nmea,self.genChecksum(nmea)).encode('utf-8')
 		self.usb.write(nmea)

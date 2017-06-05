@@ -6,7 +6,7 @@ servos = []
 
 print("All ports:")
 for p in ports:
-    print p
+    print(p)
     if 'Pololu' in p[1]:
         servos += (p)
     elif 'Arduino' in p[1]:

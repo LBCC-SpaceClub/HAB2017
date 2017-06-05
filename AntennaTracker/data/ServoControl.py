@@ -32,12 +32,14 @@ class ServoControl(Thread):
 		self.gpsTime = None
 
 		# Targetting solution fields:
-		self.targetAzDeg = 0
+		self.targetAziDeg = 0
 		self.targetEleDeg = 0
 		self.targetDistanceM = 0
+		self.magneticVariation = 0
 
 		# Connect to the arduino
 		self.arduino = Arduino(parent)
+		print("Servos created!")
 
 		# Connect to the tracking servos
 		self.servos = Servo(parent)
@@ -52,7 +54,8 @@ class ServoControl(Thread):
 			payloadManualButton = self.parent.ids.payload_switchmanual.active
 
 			# Unless Manual button enabled, check for new arduino gps
-			if not stationManualButton:
+			if self.arduino.connected and not stationManualButton:
+				print("Updating.")
 				self.update()
 				self.updateMain()
 
@@ -75,19 +78,19 @@ class ServoControl(Thread):
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
 			# print("Moving servos to ele = {:.3f}, az = {:.3f} degrees.".format(
-			# 	self.targetEleDeg, self.targetAzDeg)
+			# 	self.targetEleDeg, self.targetAziDeg)
 			# )
 			self.servos.moveEle(float(self.targetEleDeg))
-			self.servos.moveAz(float(self.targetAzDeg))
+			self.servos.moveAz(float(self.targetAziDeg))
 
 
 	def update(self):
 		while self.arduino.hasLines():
 			try:
 				line = self.arduino.getLine()
-				if line[:5] == '[IMU]':
+				if line.startswith('[IMU]'):
 					self.parseIMU(line[5:])
-				elif line[:5] == '[GPS]':
+				elif line.startswith('[GPS]'):
 					self.parseGPS(line[5:])
 				elif line.startswith('Time: '):
 					self.parseTime(line)
@@ -107,7 +110,7 @@ class ServoControl(Thread):
 		if self.parent.ids.station_switchmanual.active:
 			self.updateTargetSolution()
 
-		self.parent.x_value = self.targetAzDeg
+		self.parent.x_value = self.targetAziDeg
 		self.parent.y_value = self.targetEleDeg
 
 
@@ -123,6 +126,7 @@ class ServoControl(Thread):
 
 
 	def parseGPS(self, line):
+		print("Parsing GPS line: ", line)
 		line = line.split(',')
 		self.latDeg = float(line[0])
 		self.lonDeg = float(line[1])
@@ -158,7 +162,7 @@ class ServoControl(Thread):
 			self.targetEleDeg = self.getEleDegrees(
 				pAlt, tAlt, self.targetDistanceM
 			)
-			self.targetAzDeg = self.getAzDegrees(
+			self.targetAziDeg = self.getAzDegrees(
 				tLat, tLon, pLat, pLon
 			)
 		except ValueError as e:
@@ -166,7 +170,7 @@ class ServoControl(Thread):
 			# defaults
 			self.targetDistanceM = 0
 			self.targetEleDeg = 0
-			self.targetAzDeg = 0
+			self.targetAziDeg = 0
 
 
 	def getEleDegrees(self, payloadAlt, stationAlt, distance):
@@ -268,7 +272,6 @@ class Servo(object):
 
 
 	def findComPort(self):
-		return '/dev/ttyACM1'
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
 			if 'Pololu Micro Maestro 6-Servo Controller' in p[1]:
@@ -418,6 +421,7 @@ class Arduino(object):
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
 			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
+				print("Using port: ", p[0])
 				return p[0]
 		raise IOError('Could not find arduino port')
 
