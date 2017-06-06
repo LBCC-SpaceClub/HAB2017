@@ -50,14 +50,16 @@ void setup()
   } else {
     Serial.println(F("BNO055 IMU detected.."));
   }
-//  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
-//  bno.setMode(bno.OPERATION_MODE_NDOF);
+  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
+  bno.setMode(bno.OPERATION_MODE_NDOF);
 
   // Set stepper motor acceleration and top speeds
   xAxis.setMaxSpeed(10000);
   xAxis.setAcceleration(5000);
   yAxis.setMaxSpeed(10000);
   yAxis.setAcceleration(5000);
+  // Temporary
+  balance();
 }
 
 
@@ -105,18 +107,51 @@ void loop()
 }
 
 void updateMotors(double aziDegs, double eleDegs){
-  azimuth_steps = radsToSteps(aziDegs);
-  elevation_steps = radsToSteps(eleDegs);
+  azimuth_steps = degreesToSteps(aziDegs);
+  elevation_steps = degreesToSteps(eleDegs);
   xAxis.moveTo(azimuth_steps);
   yAxis.moveTo(elevation_steps);
 }
 
 
-float radsToSteps(float rad)
+void balance(){
+  while(1){
+    // Read IMU 10 times per second
+    if(millis() - imuTimer > 100){
+      imuTimer = millis(); // reset the timer
+      //Read the current calibration values from the IMU
+      bno.getCalibration(&sys, &gyro, &accel, &mag);
+      //Read the current positional values
+      bno.getEvent(&event);
+    
+      // Using quaternions
+      imu::Quaternion q = bno.getQuat();
+      q.normalize();
+      float temp = q.x();  q.x() = -q.y();  q.y() = temp;
+      q.z() = -q.z();
+      // Converted back to eulers
+      imu::Vector<3> euler = q.toEuler();
+      Serial.print(F("[IMU] X="));
+      Serial.print(euler.x());  // heading, nose-right is positive, z-axis points up
+      Serial.print(F(", Y="));
+      Serial.print(euler.y());  // roll, rightwing-up is positive, y-axis points forward
+      Serial.print(F(", Z="));
+      Serial.print(euler.z());  // pitch, nose-down is positive, x-axis points right
+      
+      updateMotors(euler.x(), euler.z());
+    }
+  
+    xAxis.run();
+    yAxis.run();
+  }
+}
+
+
+float degreesToSteps(double deg)
 {
-  // Takes radians, returns steps (assuming 16*3060 = 48960 total steps)
-  // rad/(2*pi) = steps / (microsteps * motor steps)
-  return rad * 24480 / M_PI;
+  // Takes degrees, returns steps (assuming 16*3060 = 48960 total steps)
+  // deg / 360 = steps / (microsteps * motor steps)
+  return deg * 136;
 }
 
 
