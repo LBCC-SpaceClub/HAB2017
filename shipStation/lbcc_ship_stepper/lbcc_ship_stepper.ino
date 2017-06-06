@@ -50,14 +50,16 @@ void setup()
   } else {
     Serial.println(F("BNO055 IMU detected.."));
   }
-//  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
-//  bno.setMode(bno.OPERATION_MODE_NDOF);
+  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
+  bno.setMode(bno.OPERATION_MODE_NDOF);
 
   // Set stepper motor acceleration and top speeds
   xAxis.setMaxSpeed(10000);
   xAxis.setAcceleration(5000);
   yAxis.setMaxSpeed(10000);
   yAxis.setAcceleration(5000);
+  // Temporary
+  balance();
 }
 
 
@@ -105,18 +107,64 @@ void loop()
 }
 
 void updateMotors(double aziDegs, double eleDegs){
-  azimuth_steps = radsToSteps(aziDegs);
-  elevation_steps = radsToSteps(eleDegs);
+  azimuth_steps = degreesToSteps(aziDegs);
+  elevation_steps = degreesToSteps(eleDegs);
+  Serial.print(F("yaw="));
+  Serial.print(aziDegs);
+  Serial.print(F(", pitch="));
+  Serial.print(eleDegs);
+  Serial.print(F(", "));
+  Serial.print(sys);
+  Serial.print(F(", "));
+  Serial.print(gyro);
+  Serial.print(F(", "));
+  Serial.print(accel);
+  Serial.print(F(", "));
+  Serial.println(mag);
   xAxis.moveTo(azimuth_steps);
   yAxis.moveTo(elevation_steps);
 }
 
 
-float radsToSteps(float rad)
-{
-  // Takes radians, returns steps (assuming 16*3060 = 48960 total steps)
-  // rad/(2*pi) = steps / (microsteps * motor steps)
-  return rad * 24480 / M_PI;
+void balance(){
+  while(1){
+    // Read IMU 10 times per second
+    if(millis() - imuTimer > 100){
+      imuTimer = millis(); // reset the timer
+      //Read the current calibration values from the IMU
+      bno.getCalibration(&sys, &gyro, &accel, &mag);
+      //Read the current positional values
+      bno.getEvent(&event);
+    
+      // Using quaternions
+      imu::Quaternion q = bno.getQuat();
+      q.normalize();
+      float temp = q.x();  q.x() = -q.y();  q.y() = temp;
+      q.z() = -q.z();
+      // Converted back to eulers
+      imu::Vector<3> euler = q.toEuler();
+      
+      updateMotors(
+        radsToDegrees(euler.x()),
+        radsToDegrees(euler.z())
+      );
+    }
+  
+    xAxis.run();
+    yAxis.run();
+  }
+}
+
+
+double degreesToSteps(double deg){
+  // Takes degrees, returns steps (assuming 16*3060 = 48960 total steps)
+  // deg / 360 = steps / (microsteps * motor steps)
+  return deg * 136;
+}
+
+double radsToDegrees(double rad){
+  // Takes radians, returns degrees
+  return rad * 180 / M_PI;
 }
 
 
