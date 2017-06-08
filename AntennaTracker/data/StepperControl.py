@@ -56,21 +56,19 @@ class StepperControl(Thread):
 				self.update()
 				self.updateGui()
 
-			# Consider only sending when necessary, like this:
-			# newPayloadAvailable = self.lastSent < self.parent.ids.payload_time.text
-			# if stationConnected and newPayloadAvailable:
-			if stationConnected:
-				# Send the newest payload location to the arduino
-				self.arduino.sendPayloadGps(self.magneticVariation)
 
 			# Update the gui compasses if both gps positions available
 			hasStationGps = (stationConnected or stationManualButton)
 			hasPayloadGps = (payloadConnected or payloadManualButton)
 			if (hasStationGps and hasPayloadGps):
 				self.updateGuiCompass()
-				# Only run motors if both gps positions AND motors are enabled
-				# if self.arduino.connected:
-					# self.moveMotors()
+
+			# Consider only sending when necessary, like this:
+			# newPayloadAvailable = self.lastSent < self.parent.ids.payload_time.text
+			# if stationConnected and newPayloadAvailable:
+			if stationConnected and hasPayloadGps:
+				# Send the newest payload location to the arduino
+				self.arduino.sendPayloadGps(self.magneticVariation)
 
 			# No point updating faster than new data becomes available
 			time.sleep(1)
@@ -108,9 +106,8 @@ class StepperControl(Thread):
 
 
 	def updateGuiCompass(self):
-		if self.parent.ids.station_switchmanual.active:
-			self.updateTargetSolution()
-
+		# if self.parent.ids.station_switchmanual.active:
+			# self.updateTargetSolution()
 		self.parent.x_value = self.targetAziDeg
 		self.parent.y_value = self.targetEleDeg
 
@@ -171,6 +168,8 @@ class Arduino(object):
 		self.connect()
 		self.prevAziSteps = 0
 		self.prevEleSteps = 0
+		self.lastSentNmea = None
+		self.lastSentTime = time.time()
 		print("Connected to stepper arduino.")
 		if not self.connected:
 			raise IOError('Could not connect to arduino')
@@ -223,7 +222,11 @@ class Arduino(object):
 			mag = magVariation
 		)
 		nmea = '${}*{:02X}\r'.format(nmea,self.genChecksum(nmea)).encode('utf-8')
-		self.usb.write(nmea)
+		# No point resending the same string over and over without a delay
+		if nmea != self.lastSentNmea or (time.time() - self.lastSentTime) > 5.0:
+			self.lastSentNmea = nmea
+			self.lastSentTime = time.time()
+			self.usb.write(nmea)
 
 
 	def decDegToNMEA(self, deg):

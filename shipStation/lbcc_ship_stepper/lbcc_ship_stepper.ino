@@ -54,12 +54,10 @@ void setup()
   bno.setMode(bno.OPERATION_MODE_NDOF);
 
   // Set stepper motor acceleration and top speeds
-  xAxis.setMaxSpeed(10000);
-  xAxis.setAcceleration(5000);
-  yAxis.setMaxSpeed(10000);
-  yAxis.setAcceleration(5000);
-  // Temporary
-  balance();
+  xAxis.setMaxSpeed(7500);
+  xAxis.setAcceleration(4000);
+  yAxis.setMaxSpeed(7500);
+  yAxis.setAcceleration(4000);
 }
 
 
@@ -81,6 +79,7 @@ void loop()
   if(payloadGPS.location.isUpdated() || trackerGPS.location.isUpdated()){
     // Update target solution every time new GPS info is available
     get_tracking_solution();
+    apply_IMU();
     // Update solution based on IMU
     updateMotors(azimuth_deg, elevation_deg);
   }
@@ -96,76 +95,25 @@ void loop()
     //print_location("[PAYLOAD]", &payloadGPS);
     print_time("[TIME]", &trackerGPS);
     print_solution("[SOL]");
+    print_imu();
     Serial.println();
   }
 
-  // Display IMU info about 10 times per second
-  if(millis() - imuTimer > 100){
+  // Display IMU info about 5 times per second
+  if(millis() - imuTimer > 200){
     imuTimer = millis(); // reset the timer
-    // print_local_imu();
   }
 }
 
 void updateMotors(double aziDegs, double eleDegs){
-  azimuth_steps = degreesToSteps(-aziDegs);
-  elevation_steps = degreesToSteps(-eleDegs);
-  Serial.print(F("yaw="));
-  Serial.print(aziDegs);
-  Serial.print(F(", pitch="));
-  Serial.print(eleDegs);
-  Serial.print(F(", "));
-  Serial.print(sys);
-  Serial.print(F(", "));
-  Serial.print(gyro);
-  Serial.print(F(", "));
-  Serial.print(accel);
-  Serial.print(F(", "));
-  Serial.println(mag);
+  long azimuth_steps = map(aziDegs, 0, 360, 0, 45900);
+  long elevation_steps = map(eleDegs, 0, 360, 0, 45900);
   xAxis.moveTo(azimuth_steps);
   yAxis.moveTo(elevation_steps);
 }
 
 
-void balance(){
-  while(1){
-    // Read IMU 10 times per second
-    if(millis() - imuTimer > 100){
-      imuTimer = millis(); // reset the timer
-      //Read the current calibration values from the IMU
-      bno.getCalibration(&sys, &gyro, &accel, &mag);
-      //Read the current positional values
-      bno.getEvent(&event);
-    
-      // Using quaternions
-      imu::Quaternion q = bno.getQuat();
-      q.normalize();
-      float temp = q.x();  q.x() = -q.y();  q.y() = temp;
-      q.z() = -q.z();
-      // Converted back to eulers
-      imu::Vector<3> euler = q.toEuler();
-      
-      updateMotors(
-        radsToDegrees(euler.x()),
-        radsToDegrees(euler.y())
-      );
-    }
-  
-    xAxis.run();
-    yAxis.run();
-  }
-}
-
-
-double degreesToSteps(double deg){
-  // Takes degrees, returns steps (assuming 16*3060 = 48960 total steps)
-  // deg / 360 = steps / (microsteps * motor steps)
-  return deg * 136;
-}
-
-double radsToDegrees(double rad){
-  // Takes radians, returns degrees
-  return rad * 180 / M_PI;
-}
+void apply_IMU(){   }
 
 
 void get_tracking_solution(){
@@ -218,29 +166,14 @@ void print_solution(char* desc){
 void print_imu(){
   //Read the current calibration values from the IMU
   bno.getCalibration(&sys, &gyro, &accel, &mag);
-  //Read the current positional values
-  bno.getEvent(&event);
-
-  // Using quaternions
-  imu::Quaternion q = bno.getQuat();
-  q.normalize();
-  float temp = q.x();  q.x() = -q.y();  q.y() = temp;
-  q.z() = -q.z();
-  // Converted back to eulers
-  imu::Vector<3> euler = q.toEuler();
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   Serial.print(F("[IMU]"));
-  Serial.print(-180/M_PI * euler.x());  // heading, nose-right is positive, z-axis points up
+  Serial.print(euler.x());
   Serial.print(F(","));
-  Serial.print(-180/M_PI * euler.y());  // roll, rightwing-up is positive, y-axis points forward
+  Serial.print(euler.y());
   Serial.print(F(","));
-  Serial.print(-180/M_PI * euler.z());  // pitch, nose-down is positive, x-axis points right
-  /*
-  Serial.print(event.orientation.x,2);
-  Serial.print(",");
-  Serial.print(event.orientation.y,2);
-  Serial.print(",");
-  Serial.print(event.orientation.z,2);
-  */
+  Serial.print(euler.z());
+
   Serial.print(F(","));
   Serial.print(sys);
   Serial.print(F(","));

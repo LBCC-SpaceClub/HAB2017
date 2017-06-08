@@ -106,7 +106,7 @@ class RootLayout(FloatLayout):
 				self.connectedArduino = StepperControl(self)
 				self.connectedArduino.setName('Stepper Thread')
 			except (IOError, OSError) as e:
-				self.updateConsole(" **ERROR** while starting servo arduino.")
+				self.updateConsole(" **ERROR** while starting stepper arduino.")
 				print(e)
 				return
 		self.connectedArduino.start()
