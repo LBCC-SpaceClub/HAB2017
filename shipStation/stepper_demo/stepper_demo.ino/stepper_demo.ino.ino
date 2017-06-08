@@ -41,23 +41,23 @@ void setup()
 
   // Start GPS and tell it to send GPGGA and GPRMC strings
   ss.begin(GPSBAUD);    // local GPS
-//  ss.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  //ss.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
   // Set up BNO055 IMU
   if(!bno.begin()){
     Serial.println(F("Ooops, could not find BNO055... Check your wiring or I2C ADDR!"));
-//    while(1);
   } else {
     Serial.println(F("BNO055 IMU detected.."));
   }
+  delay(100); // give BNO055 time to start up
   bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
-  bno.setMode(bno.OPERATION_MODE_NDOF);
+//  bno.setMode(bno.OPERATION_MODE_NDOF);
 
   // Set stepper motor acceleration and top speeds
-  xAxis.setMaxSpeed(10000);
-  xAxis.setAcceleration(5000);
-  yAxis.setMaxSpeed(10000);
-  yAxis.setAcceleration(5000);
+  xAxis.setMaxSpeed(8000);
+  xAxis.setAcceleration(4000);
+  yAxis.setMaxSpeed(8000);
+  yAxis.setAcceleration(4000);
   // Temporary
   balance();
 }
@@ -106,48 +106,54 @@ void loop()
   }
 }
 
+
 void updateMotors(double aziDegs, double eleDegs){
-  azimuth_steps = degreesToSteps(-aziDegs);
-  elevation_steps = degreesToSteps(-eleDegs);
-  Serial.print(F("yaw="));
-  Serial.print(aziDegs);
-  Serial.print(F(", pitch="));
-  Serial.print(eleDegs);
-  Serial.print(F(", "));
-  Serial.print(sys);
-  Serial.print(F(", "));
-  Serial.print(gyro);
-  Serial.print(F(", "));
-  Serial.print(accel);
-  Serial.print(F(", "));
-  Serial.println(mag);
-  xAxis.moveTo(azimuth_steps);
-  yAxis.moveTo(elevation_steps);
+  if(isnan(aziDegs) || isnan(eleDegs)){
+    Serial.println("Moving to 0, 0");
+    xAxis.moveTo(0);
+    yAxis.moveTo(0);
+  } else {
+    long a = degreesToSteps(aziDegs);
+    long e = -degreesToSteps(eleDegs);
+//    Serial.print(F("yaw="));
+//    Serial.print(aziDegs);
+//    Serial.print(F(", "));
+//    Serial.print(a);
+//    Serial.print(F(", pitch="));
+//    Serial.print(eleDegs);
+//    Serial.print(F(", "));
+//    Serial.print(e);
+//    Serial.print(F(", calibrations: "));
+//    Serial.print(sys);
+//    Serial.print(F(", "));
+//    Serial.print(gyro);
+//    Serial.print(F(", "));
+//    Serial.print(accel);
+//    Serial.print(F(", "));
+//    Serial.println(mag);
+    xAxis.moveTo(a);
+    yAxis.moveTo(e);
+
+  }
 }
 
 
 void balance(){
   while(1){
     // Read IMU 10 times per second
-    if(millis() - imuTimer > 100){
+    if(millis() - imuTimer > 250){
       imuTimer = millis(); // reset the timer
-      //Read the current calibration values from the IMU
-      bno.getCalibration(&sys, &gyro, &accel, &mag);
-      //Read the current positional values
-      bno.getEvent(&event);
-    
-      // Using quaternions
-      imu::Quaternion q = bno.getQuat();
-      q.normalize();
-      float temp = q.x();  q.x() = -q.y();  q.y() = temp;
-      q.z() = -q.z();
-      // Converted back to eulers
-      imu::Vector<3> euler = q.toEuler();
-      
-      updateMotors(
-        radsToDegrees(euler.x()),
-        radsToDegrees(euler.y())
-      );
+
+      imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+      long x = map(euler.x(), 0, 360, 0, 45900);
+      long y = map(euler.y(), 0, 360, 0, 45900);
+      long z = map(euler.z(), 0, 360, 0, 45900);
+//      Serial.print("x=");     Serial.print(euler.x());      Serial.print(" -> ");     Serial.println(x);
+//      Serial.print("y=");     Serial.print(euler.y());      Serial.print(" -> ");     Serial.println(y);
+//      Serial.print("z=");     Serial.print(euler.z());      Serial.print(" -> ");     Serial.println(z);
+//      Serial.println("------------------");
+      xAxis.moveTo(y);
+      yAxis.moveTo(-z);
     }
   
     xAxis.run();
@@ -156,10 +162,12 @@ void balance(){
 }
 
 
-double degreesToSteps(double deg){
+long degreesToSteps(double deg){
   // Takes degrees, returns steps (assuming 16*3060 = 48960 total steps)
   // deg / 360 = steps / (microsteps * motor steps)
-  return deg * 136;
+  // 3000/0.12*15.3 = 45900
+  // deg * 45900 / 360
+  return round(deg * 127.5);
 }
 
 double radsToDegrees(double rad){
