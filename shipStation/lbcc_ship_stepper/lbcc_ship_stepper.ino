@@ -15,7 +15,7 @@
 // GPS variables
 static const uint8_t RXPin = 8, TXPin = 7;
 uint32_t gpsTimer = millis();
-double azimuth_deg, elevation_deg, distance_meters, delta_altitude;
+double azimuth_deg, elevation_deg, distance_meters, delta_altitude, magVariation;
 
 // IMU variables
 uint32_t imuTimer = millis();
@@ -87,7 +87,7 @@ void loop()
   if(payloadGPS.location.isUpdated() || trackerGPS.location.isUpdated()){
     // Update target solution every time new GPS info is available
     get_tracking_solution();
-    apply_IMU();
+//    apply_IMU();
     // Update solution based on IMU
     updateMotors(-azimuth_deg, elevation_deg);
   }
@@ -161,7 +161,22 @@ void updateMotors(double aziDegs, double eleDegs){
 }
 
 
-void apply_IMU(){   }
+void apply_IMU(){
+  // Update solution by applying values from the IMU and accounting for the magnetic variation
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  magVariation = atof(magneticVariation.value());
+//  Serial.print("azimuth_deg=");
+//  Serial.print(azimuth_deg);
+  azimuth_deg = fmod(360 + azimuth_deg - euler.x() - magVariation, 360);
+//  Serial.print(", new=");
+//  Serial.println(azimuth_deg);
+//  
+//  Serial.print("elevation_deg=");
+//  Serial.print(elevation_deg);
+  elevation_deg = fmod(360 + elevation_deg + euler.z(), 360);
+//  Serial.print(", new=");
+//  Serial.println(elevation_deg);
+}
 
 
 void get_tracking_solution(){

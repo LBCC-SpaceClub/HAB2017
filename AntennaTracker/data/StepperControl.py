@@ -226,7 +226,7 @@ class Arduino(object):
 		nmea = '${}*{:02X}\r'.format(nmea,self.genChecksum(nmea)).encode('utf-8')
 		# No point resending the same string over and over without a delay
 		if nmea != self.lastSentNmea or (time.time() - self.lastSentTime) > 5.0:
-			print("Sending: ", nmea)
+			# print("Sending: ", nmea)
 			self.lastSentNmea = nmea
 			self.lastSentTime = time.time()
 			self.usb.write(nmea)
