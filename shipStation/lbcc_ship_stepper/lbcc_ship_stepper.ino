@@ -7,18 +7,22 @@
 #include <TinyGPS++.h>
 #include <utility/imumaths.h>
 #include <Wire.h>
+#include <EEPROM.h>
 
 #define DEBUGGING true
 #define GPSBAUD 9600
 
+// GPS variables
 static const uint8_t RXPin = 8, TXPin = 7;
 uint32_t gpsTimer = millis();
-uint32_t imuTimer = gpsTimer;
-sensors_event_t event;           //Create a new local event instance for IMU
-uint8_t sys, gyro, accel, mag;
 double azimuth_deg, elevation_deg, distance_meters, delta_altitude;
-double azimuth_steps, elevation_steps;
 
+// IMU variables
+uint32_t imuTimer = millis();
+sensor_t sensor;
+int eeAddress = 0;  // Any valid address in EEPROM
+long bnoID = 42;    // Any unique ID for this IMU
+bool recentlySaved = false;
 // Initializes the BNO055 using I2C address 55
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
@@ -41,18 +45,22 @@ void setup()
 
   // Start GPS and tell it to send GPGGA and GPRMC strings
   ss.begin(GPSBAUD);    // local GPS
-//  ss.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+  //ss.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
   // Set up BNO055 IMU
   if(!bno.begin()){
     Serial.println(F("Ooops, could not find BNO055... Check your wiring or I2C ADDR!"));
-//    while(1);
   } else {
     Serial.println(F("BNO055 IMU detected.."));
+    bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
+    bno.setMode(bno.OPERATION_MODE_NDOF);
+    if(restore_imu_offsets()){
+      Serial.println(F("Loaded IMU offsets from EEPROM."));
+    } else {
+      Serial.println(F("Could not load offsets from EEPROM."));
+    }
   }
-  bno.setExtCrystalUse(true);                     //Use the external clock in the IMU
-  bno.setMode(bno.OPERATION_MODE_NDOF);
-
+  
   // Set stepper motor acceleration and top speeds
   xAxis.setMaxSpeed(7500);
   xAxis.setAcceleration(4000);
@@ -97,6 +105,9 @@ void loop()
     print_solution("[SOL]");
     print_imu();
     Serial.println();
+    if(!recentlySaved && bno.isFullyCalibrated()){
+      recentlySaved = backup_imu_offsets();
+    }
   }
 
   // Display IMU info about 5 times per second
@@ -104,6 +115,42 @@ void loop()
     imuTimer = millis(); // reset the timer
   }
 }
+
+
+boolean restore_imu_offsets(){
+  // Check EEPROM to see if our IMU offsets have been saved
+  EEPROM.get(eeAddress, bnoID);
+  bno.getSensor(&sensor);
+  if (bnoID != sensor.sensor_id){
+    Serial.println("No IMU Calibration in EEPROM.");
+    return false;
+  } else {
+    Serial.println("Loading BNO055 calibration data from EEPROM.");
+    adafruit_bno055_offsets_t calibrationData;
+    int temp = eeAddress + sizeof(long);
+    EEPROM.get(temp, calibrationData);
+    bno.setSensorOffsets(calibrationData);
+    return true;
+  }
+}
+
+boolean backup_imu_offsets(){
+  // Back up IMU offsets into EEPROM
+  bno.getSensor(&sensor);
+  if(bno.isFullyCalibrated()){
+    adafruit_bno055_offsets_t newCalib;
+    bno.getSensorOffsets(newCalib);
+    bnoID = sensor.sensor_id;
+    // Write our IMU ID out to EEPROM
+    EEPROM.put(eeAddress, bnoID);
+    // Write the current (calibrated) IMU offsets out to EEPROM
+    eeAddress += sizeof(long);
+    EEPROM.put(eeAddress, newCalib);
+    return true;
+  }
+  return false;
+}
+
 
 void updateMotors(double aziDegs, double eleDegs){
   long azimuth_steps = map(aziDegs, 0, 360, 0, 45900);
@@ -155,9 +202,10 @@ void print_solution(char* desc){
     Serial.print(F(","));
     Serial.println(magneticVariation.value());
   } else {
-    Serial.print(F("INV: "));
+    Serial.print(desc);
+    Serial.print(F("INVALID GPS: "));
     Serial.print(trackerGPS.location.isValid()==1?"tracker ok":"tracker BAD");
-    Serial.print(F(","));
+    Serial.print(F(", "));
     Serial.println(payloadGPS.location.isValid()==1?"payload ok":"payload BAD");
   }
 }
@@ -165,7 +213,7 @@ void print_solution(char* desc){
 
 void print_imu(){
   //Read the current calibration values from the IMU
-  bno.getCalibration(&sys, &gyro, &accel, &mag);
+  //sensors_event_t event;
   imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
   Serial.print(F("[IMU]"));
   Serial.print(euler.x());
@@ -174,21 +222,23 @@ void print_imu(){
   Serial.print(F(","));
   Serial.print(euler.z());
 
+  uint8_t sys, gyro, accel, mag = 0;
+  bno.getCalibration(&sys, &gyro, &accel, &mag);
   Serial.print(F(","));
-  Serial.print(sys);
+  Serial.print(sys, DEC);
   Serial.print(F(","));
-  Serial.print(gyro);
+  Serial.print(gyro, DEC);
   Serial.print(F(","));
-  Serial.print(accel);
+  Serial.print(accel, DEC);
   Serial.print(F(","));
-  Serial.println(mag);
+  Serial.println(mag, DEC);
 }
 
 
 void print_time(char* desc, TinyGPSPlus* gps){
   // Prints local GPS time to serial
-  Serial.print(desc);
   if (gps->date.isValid() && gps->time.isValid()){
+    Serial.print(desc);
     Serial.print(gps->date.month());
     Serial.print(F("/"));
     Serial.print(gps->date.day());
@@ -204,24 +254,18 @@ void print_time(char* desc, TinyGPSPlus* gps){
     if (gps->time.second() < 10) Serial.print(F("0"));
     Serial.print(gps->time.second());
     Serial.println(" UTC.");
-  } else {
-    Serial.println(F("INVALID TIME"));
   }
 }
 
 
 void print_location(char* desc, TinyGPSPlus* gps){
   // Prints local GPS location to serial
-  Serial.print(desc);
   if (gps->location.isValid()){
+    Serial.print(desc);
     Serial.print(gps->location.lat(), 6);
     Serial.print(F(","));
     Serial.print(gps->location.lng(), 6);
     Serial.print(F(","));
     Serial.println(gps->altitude.meters());
-  }
-  else
-  {
-    Serial.println(F("INVALID LOCATION"));
   }
 }
