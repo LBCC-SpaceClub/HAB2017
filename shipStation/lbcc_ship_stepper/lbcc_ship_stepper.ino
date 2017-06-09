@@ -89,7 +89,7 @@ void loop()
     get_tracking_solution();
     apply_IMU();
     // Update solution based on IMU
-    updateMotors(azimuth_deg, elevation_deg);
+    updateMotors(-azimuth_deg, elevation_deg);
   }
 
   xAxis.run();
@@ -107,6 +107,7 @@ void loop()
     Serial.println();
     if(!recentlySaved && bno.isFullyCalibrated()){
       recentlySaved = backup_imu_offsets();
+      if(recentlySaved) Serial.println("IMU offsets backed up to EEPROM.");
     }
   }
 

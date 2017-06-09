@@ -51,7 +51,7 @@ class StepperControl(Thread):
 			payloadManualButton = self.parent.ids.payload_switchmanual.active
 
 			# Manual mode currently undefined using stepper controller..
-			if stationConnected and not stationManualButton:
+			if stationConnected:
 				# Parse all available serial data
 				self.update()
 				self.updateGui()
@@ -77,7 +77,8 @@ class StepperControl(Thread):
 	def update(self):
 		while self.arduino.hasLines():
 			line = self.arduino.getLine()
-			print('Received: ', line)
+			if len(line) > 10:
+				print('Received: ', line)
 			try:
 				if line.startswith('[IMU]'):
 					self.parseIMU(line[5:])
@@ -124,25 +125,26 @@ class StepperControl(Thread):
 
 
 	def parseGPS(self, line):
-		# print("Parsing GPS")
-		line = line.split(',')
-		self.latDeg = float(line[0])
-		self.lonDeg = float(line[1])
-		self.altMeters = float(line[2])
-		if len(line) >= 4: # this field may be empty
-			self.magneticVariation = float(line[3])
-		self.hasNewPayloadGps = True
+		stationManualButton = self.parent.ids.station_switchmanual.active
+		# Don't parse local GPS strings if we're not using them
+		if not stationManualButton:
+			# print("Parsing GPS")
+			line = line.split(',')
+			self.latDeg = float(line[0])
+			self.lonDeg = float(line[1])
+			self.altMeters = float(line[2])
+			if len(line) >= 4: # this field may be empty
+				self.magneticVariation = float(line[3])
+			self.hasNewPayloadGps = True
 
 
 	def parseTime(self, line):
-		# print("Parsing time")
 		line = line.split(',')
 		self.gpsDate = line[0]
 		self.gpsTime = line[1]
 
 
 	def parseSolution(self, line):
-		print("Parsing solution: ", line)
 		line = line.split(',')
 		self.gpsDate = line[0]
 		self.gpsTime = line[1]
@@ -224,6 +226,7 @@ class Arduino(object):
 		nmea = '${}*{:02X}\r'.format(nmea,self.genChecksum(nmea)).encode('utf-8')
 		# No point resending the same string over and over without a delay
 		if nmea != self.lastSentNmea or (time.time() - self.lastSentTime) > 5.0:
+			print("Sending: ", nmea)
 			self.lastSentNmea = nmea
 			self.lastSentTime = time.time()
 			self.usb.write(nmea)
