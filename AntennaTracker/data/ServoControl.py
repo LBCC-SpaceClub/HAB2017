@@ -232,8 +232,8 @@ class Servo(object):
 		self.minRange = [0, 70]
 		self.maxRange = [255, 180]
 		# Pan and tilt servos on different channels
-		self.aziChannel = 0
-		self.eleChannel = 1
+		self.aziChannel = 2
+		self.eleChannel = 3
 		# Connect to maestro servo controller
 		self.servoCOM = self.findComPort()
 		self.connect()
