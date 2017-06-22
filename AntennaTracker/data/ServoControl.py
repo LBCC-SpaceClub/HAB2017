@@ -131,6 +131,7 @@ class ServoControl(Thread):
 		self.altMeters = float(line[2])
 
 
+
 	def parseTime(self, line):
 		line = line.split()
 		self.gpsTime = line[1]
@@ -150,9 +151,9 @@ class ServoControl(Thread):
 				tAlt = float(self.parent.ids.station_alt.text)
 			else:
 				# Use latest values (should be the same?)
-				tLat = self.latDeg
-				tLon = self.lonDeg
-				tAlt = self.altMeters
+				tLat = float(self.latDeg)
+				tLon = float(self.lonDeg)
+				tAlt = float(self.altMeters)
 
 			self.targetDistanceM = self.getTargetDistance(
 				tLat, tLon, pLat, pLon
@@ -177,6 +178,7 @@ class ServoControl(Thread):
 			deltaAlt = payloadAlt - stationAlt
 			return float(math.degrees(math.atan2(deltaAlt, distance)))
 		except (ValueError, TypeError) as e:
+			print("Get Elevation Error: ", e)
 			return 0
 
 
@@ -192,7 +194,8 @@ class ServoControl(Thread):
 			d = R*c
 			return int(d)
 			# return d*3280.839895 # multiply distance in Km by 3280 for feet
-		except (ValueError, TypeError):
+		except (ValueError, TypeError) as e:
+			print("Get Distance Error: ", e)
 			return 0
 
 
@@ -205,10 +208,10 @@ class ServoControl(Thread):
 			y = math.sin(dLon)*math.cos(math.radians(remoteLat))
 			x = math.cos(math.radians(trackerLat))*math.sin(math.radians(remoteLat))-math.sin(math.radians(trackerLat))*math.cos(math.radians(remoteLat))*math.cos(dLat)
 			tempBearing = math.degrees(math.atan2(y,x))		# returns the bearing from true north
-			if (tempBearing < 0):
-				tempBearing = tempBearing + 360
+			tempBearing = tempBearing % 360		#keeps it within 0-360
 			return float(tempBearing)
-		except ValueError:
+		except ValueError as e:
+			print ("Get Azimuth Error: ", e)
 			return 0
 
 
@@ -227,10 +230,13 @@ class Servo(object):
 		self.parent = parent
 		self.servoBaud = 9600
 		self.servoTimeout = 1
-		# Servo ranges
-		self.PololuCmd = chr(0xaa) + chr(0xc)
-		self.minRange = [0, 70]
-		self.maxRange = [255, 180]
+		# Servo ranges and commands
+		self.moveCommand = 0xFF
+		self.speedCommand = 0x87
+		self.accCommand = 0x89
+		self.PololuCmd = chr(0xAA) + chr(0x0C)
+		self.minRange = [0, 0, 0, 70]
+		self.maxRange = [0, 0, 255, 180]
 		# Pan and tilt servos on different channels
 		self.aziChannel = 2
 		self.eleChannel = 3
@@ -254,12 +260,13 @@ class Servo(object):
 			)
 			self.connected = True
 			self.parent.updateConsole("\tConnected to maestro on port "+self.servoCOM)
-
+			print("connected to maestro board")
 
 	def findComPort(self):
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
-			if 'Pololu Micro Maestro 6-Servo Controller' in p[1]:
+			if 'Pololu Micro Maestro 6-Servo Controller Command Port' in p[1]:
+				print("Maestro Using: ", p[0])
 				return p[0]
 		self.parent.updateConsole(" **WARNING** could not find a maestro port")
 		return None
@@ -273,12 +280,31 @@ class Servo(object):
 
 
 	def degToServo(self, deg):
+		"""
 		''' Converts 0-360 degrees to 3000-9000 microsteps '''
 		# remove any extra 360s and ensure we're positive degrees
 		deg = abs(deg % 360)
 
 		# steps = (degrees-degMin) * (stepMax-stepMin) / degMax + stepMin
-		return int(deg * 6000 / 360 + 3000)
+		return int(deg * 6000.0 / 360.0 + 3000)
+		"""
+		''' Converts 0-360 degrees to 0-255 servo positions '''
+		# remove any extra 360s
+		deg = abs(deg % 360)
+
+		#convert if it is on the right hemisphere
+		if deg < 180:
+			#subtract from the 0 degree position
+			position = round(127 - deg * (255.0 / 360.0))
+
+		#convert if it is on the left hemisphere
+		else:
+			#get the degree position going left from center
+			deg = 360 - deg
+			# add from the 0 degree position
+			position = round(127 + deg * (255.0 / 360.0))
+		return 127
+		return int(position)
 
 
 	def setTarget(self, chan, deg):
@@ -290,15 +316,8 @@ class Servo(object):
 
 		# Convert from degrees into micro steps for the servo
 		target = self.degToServo(deg)
-		lsb = target & 0x7f			#7 bits for least significant byte
-		msb = (target >> 7) & 0x7f	#shift 7 and take next 7 bits for msb
-
-		# Send Pololu intro, device number, command, channel, and target lsb/msb
-		cmd = self.PololuCmd + chr(0x04) + chr(chan) + chr(lsb) + chr(msb)
-		cmd = cmd.encode('utf-8')
-		print("Writing {0} out to servo.\n".format(cmd))
+		cmd = [self.moveCommand, chan, target]
 		self.usb.write(cmd)
-
 
 	# Set speed of channel
 	# Speed is measured as 0.25microseconds/10milliseconds
@@ -309,9 +328,8 @@ class Servo(object):
 		lsb = speed & 0x7f #7 bits for least significant byte
 		msb = (speed >> 7) & 0x7f #shift 7 and take next 7 bits for msb
 		# Send Pololu intro, device number, command, channel, speed lsb, speed msb
-		cmd = self.PololuCmd + chr(0x07) + chr(chan) + chr(lsb) + chr(msb)
-		self.usb.write(cmd.encode('utf-8'))
-
+		cmd = [self.speedCommand, chan, lsb, msb]
+		self.usb.write(cmd)
 
 	# Set acceleration of channel
 	# This provide soft starts and finishes when servo moves to target position.
@@ -321,9 +339,8 @@ class Servo(object):
 		lsb = accel & 0x7f #7 bits for least significant byte
 		msb = (accel >> 7) & 0x7f #shift 7 and take next 7 bits for msb
 		# Send Pololu intro, device number, command, channel, accel lsb, accel msb
-		cmd = self.PololuCmd + chr(0x09) + chr(chan) + chr(lsb) + chr(msb)
-		self.usb.write(cmd.encode('utf-8'))
-
+		cmd = [self.accCommand, chan, lsb, msb]
+		self.usb.write(cmd)
 
 	def pointTo(self, pan, tilt):
 		self.setTarget(self.aziChannel, pan)	# pan
@@ -370,7 +387,7 @@ class Arduino(object):
 		ports = list(serial.tools.list_ports.comports())
 		for p in ports:
 			if 'Arduino' in p[1] or 'ttyACM' in p[1]:
-				print("Using port: ", p[0])
+				print("Arduino Using: ", p[0])
 				return p[0]
 		raise IOError('Could not find arduino port')
 
