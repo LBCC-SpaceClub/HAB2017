@@ -303,19 +303,21 @@ class Servo(object):
 			deg = 360 - deg
 			# add from the 0 degree position
 			position = round(127 + deg * (255.0 / 360.0))
-		return 127
 		return int(position)
 
 
 	def setTarget(self, chan, deg):
-		# Ensure we don't move past our physical range for this servo
-		if self.minRange[chan] > 0 and deg < self.minRange[chan]:
-			deg = self.minRange[chan]
-		if self.maxRange[chan] > 0 and deg > self.maxRange[chan]:
-			deg = self.maxRange[chan]
-
-		# Convert from degrees into micro steps for the servo
+		# Convert from degrees into servo
 		target = self.degToServo(deg)
+
+		# Ensure we don't move past our physical range for this servo
+		if self.minRange[chan] > 0 and target < self.minRange[chan]:
+			target = self.minRange[chan]
+		if self.maxRange[chan] > 0 and target > self.maxRange[chan]:
+			target = self.maxRange[chan]
+
+		print("Channel ", chan, " target in Servo is: ", target)
+		#command, channel, value to servo
 		cmd = [self.moveCommand, chan, target]
 		self.usb.write(cmd)
 
