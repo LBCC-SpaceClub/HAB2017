@@ -65,7 +65,7 @@ class DatabaseThread(Thread):
 
 	def update(self):
 		#new connection to db for this update
-		if time.time() - self.lastChecked > 30: # don't hammer db
+		if time.time() - self.lastChecked > 15: # don't hammer db
 			self.connectToDB()
 			#print("Checking Database")
 			try:
@@ -87,7 +87,7 @@ class DatabaseThread(Thread):
 
 					except:
 						# a botched parse deserves a smaller delay
-						self.lastChecked = time.time() - 20
+						self.lastChecked = time.time() - 10
 						self.parent.updateConsole(" **ERROR** failed to parse line from database")
 						print("**ERROR** failed to parse line from database")
 			except:

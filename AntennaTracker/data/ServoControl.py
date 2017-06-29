@@ -51,35 +51,51 @@ class ServoControl(Thread):
 			stationManualButton = self.parent.ids.station_switchmanual.active
 			payloadConnected = self.parent.ids.payload_connect.disabled
 			payloadManualButton = self.parent.ids.payload_switchmanual.active
+			motorManualButton = self.parent.ids.motor_switchmanual.active
+			#if the motor manual button is off, run like normal
+			if(not motorManualButton):
+				# Unless Manual button enabled, check for new arduino gps
+				if self.arduino.connected and not stationManualButton:
+					self.update()
+					self.updateMain()
 
-			# Unless Manual button enabled, check for new arduino gps
-			if self.arduino.connected and not stationManualButton:
-				self.update()
-				self.updateMain()
+				# Update the gui compasses if both gps positions available
+				hasStationGps = (stationConnected or stationManualButton)
+				hasPayloadGps = (payloadConnected or payloadManualButton)
+				if (hasStationGps and hasPayloadGps):
+					self.updateTargetSolution()
+					self.updateGuiCompass()
 
-			# Update the gui compasses if both gps positions available
-			hasStationGps = (stationConnected or stationManualButton)
-			hasPayloadGps = (payloadConnected or payloadManualButton)
-			if (hasStationGps and hasPayloadGps):
-				self.updateTargetSolution()
-				self.updateGuiCompass()
-
+			#move based on calculations or manually
 			# Only run servos if motors are enabled
 			if self.servos.connected:
 				self.moveMotors()
 
 			# No point updating faster than new data becomes available
-			time.sleep(1)
-
+			if(not motorManualButton):
+				time.sleep(1)
 
 	def moveMotors(self):
 		if self.parent.ids.motor_switchstop.active:
+			'''
+			self.servos.stopMoving(self.servos.aziChannel) #stop the movement
+			self.servos.stopMoving(self.servos.eleChannel)
+			'''
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
 			pan = float(self.parent.x_value)
 			tilt = float(self.parent.y_value)
-			print("Moving servos to: ", pan, tilt)
 			self.servos.pointTo(pan, tilt)
+			#don't print if manually pointing to avoid spam
+			if(not self.parent.ids.motor_switchmanual.active):
+				print("Moving servos to: ", pan, tilt)
+			'''
+			#testing values given when reading servo position
+			if(self.servos.checkMoving()):
+				#getting the value of the servos
+				print("Azi Position: ", self.servos.getServoPosition(self.aziChannel))
+				print("Ele Position: ", self.servos.getServoPosition(self.eleChannel))
+			'''
 
 
 	def update(self):
@@ -230,13 +246,17 @@ class Servo(object):
 		self.parent = parent
 		self.servoBaud = 9600
 		self.servoTimeout = 1
-		# Servo ranges and commands
+		#Maestro commands
 		self.moveCommand = 0xFF
+		self.moveCommandCompact = 0x84
 		self.speedCommand = 0x87
 		self.accCommand = 0x89
+		self.checkMovingCommand = 0x93
+		self.getPosition = 0x90
 		self.PololuCmd = chr(0xAA) + chr(0x0C)
-		self.minRange = [0, 0, 0, 70]
-		self.maxRange = [0, 0, 255, 180]
+		#Servo ranges
+		self.minRange = [0, 0, 0, 45]
+		self.maxRange = [0, 0, 255, 134]
 		# Pan and tilt servos on different channels
 		self.aziChannel = 2
 		self.eleChannel = 3
@@ -306,6 +326,8 @@ class Servo(object):
 		return int(position)
 
 
+
+
 	def setTarget(self, chan, deg):
 		# Convert from degrees into servo
 		target = self.degToServo(deg)
@@ -316,7 +338,7 @@ class Servo(object):
 		if self.maxRange[chan] > 0 and target > self.maxRange[chan]:
 			target = self.maxRange[chan]
 
-		print("Channel ", chan, " target in Servo is: ", target)
+		#print("Channel ", chan, " target in Servo is: ", target)
 		#command, channel, value to servo
 		cmd = [self.moveCommand, chan, target]
 		self.usb.write(cmd)
@@ -348,6 +370,37 @@ class Servo(object):
 		self.setTarget(self.aziChannel, pan)	# pan
 		self.setTarget(self.eleChannel, tilt)	# tilt
 
+	def checkMoving(self):
+		#send command to check if the servos are still moving
+		self.usb.write(self.checkMovingCommand)
+		#read the controller's response (still moving is 1, not moving is 0)
+		movingStatus = self.usb.read()
+		#return boolean based on response
+		if(movingStatus == 1):
+			return True
+		else:
+			return False
+
+	def getServoPosition(self, chan):
+		#command to get the current position of the servo
+		cmd = [self.getPosition, chan]
+		self.usb.write(cmd)
+		#get the response
+		lsb = self.usb.read()
+		msb = self.usb.read()
+		return {'lsb': lsb, 'msb': msb}
+		#print("lsb: ", self.usb.read())
+		#print("msb: ", self.usb.read())
+
+	#currently not functional
+	def stopMoving(self, chan):
+		#stop the servo
+		#get the current position
+		res = self.getServoPosition(chan)
+		lsb = res['lsb']
+		msb = res['msb']
+		#move to the current position
+		self.usb.write([self.moveCommandCompact, chan, lsb, msb])
 
 
 ##################################################
