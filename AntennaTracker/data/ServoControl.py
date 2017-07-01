@@ -89,13 +89,7 @@ class ServoControl(Thread):
 			#don't print if manually pointing to avoid spam
 			if(not self.parent.ids.motor_switchmanual.active):
 				print("Moving servos to: ", pan, tilt)
-			'''
-			#testing values given when reading servo position
-			if(self.servos.checkMoving()):
-				#getting the value of the servos
-				print("Azi Position: ", self.servos.getServoPosition(self.aziChannel))
-				print("Ele Position: ", self.servos.getServoPosition(self.eleChannel))
-			'''
+
 
 
 	def update(self):

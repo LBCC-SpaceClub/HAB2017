@@ -58,7 +58,7 @@ class DatabaseThread(Thread):
 			)
 			#print("connecting to db")
 			return True
-		except:
+		except Exception as e:
 			self.parent.updateConsole(" **ERROR** could not connect to iridium database")
 			return False
 
