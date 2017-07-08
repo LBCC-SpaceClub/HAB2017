@@ -72,8 +72,7 @@ class ServoControl(Thread):
 				self.moveMotors()
 
 			# No point updating faster than new data becomes available
-			if(not motorManualButton):
-				time.sleep(1)
+			time.sleep(1)
 
 	def moveMotors(self):
 		if self.parent.ids.motor_switchstop.active:

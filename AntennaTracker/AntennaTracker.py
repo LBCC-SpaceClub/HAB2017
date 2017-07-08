@@ -4,6 +4,7 @@
 				Kyle Prouty 	<kyle@prouty.io>
 								<proutyky@oregonstate.edu>
 				Levi Willmeth 	<levi.willmeth@gmail.com>
+				Jeremy Thoennes <jeremy.thoennes.4644@mail.linnbenton.edu>
 """
 from data.libs.Dependencies import *
 
