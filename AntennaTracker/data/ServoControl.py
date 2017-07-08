@@ -81,6 +81,8 @@ class ServoControl(Thread):
 			self.servos.stopMoving(self.servos.aziChannel) #stop the movement
 			self.servos.stopMoving(self.servos.eleChannel)
 			'''
+			#command the servos to stop moving
+			self.servos.stopMoving()
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
 			pan = float(self.parent.x_value)
@@ -246,10 +248,12 @@ class Servo(object):
 		self.speedCommand = 0x87
 		self.accCommand = 0x89
 		self.checkMovingCommand = 0x93
+		#make sure to copy/paste and upload stopMovingScript.txt to the maestro controller through Pololu Maestro Controll Center
+		self.stopMovingCommand = [0xA7, 0x00]
 		self.getPosition = 0x90
 		self.PololuCmd = chr(0xAA) + chr(0x0C)
 		#Servo ranges
-		self.minRange = [0, 0, 0, 45]
+		self.minRange = [0, 0, 0, 0]
 		self.maxRange = [0, 0, 255, 134]
 		# Pan and tilt servos on different channels
 		self.aziChannel = 2
@@ -386,16 +390,10 @@ class Servo(object):
 		#print("lsb: ", self.usb.read())
 		#print("msb: ", self.usb.read())
 
-	#currently not functional
-	def stopMoving(self, chan):
-		#stop the servo
-		#get the current position
-		res = self.getServoPosition(chan)
-		lsb = res['lsb']
-		msb = res['msb']
-		#move to the current position
-		self.usb.write([self.moveCommandCompact, chan, lsb, msb])
-
+	def stopMoving(self):
+		#make sure to copy/paste and upload stopMovingScript.txt to the maestro controller through Pololu Maestro Controll Center
+		#command to run stop moving script on maestro controller
+		self.usb.write(self.stopMovingCommand)
 
 ##################################################
 ###
