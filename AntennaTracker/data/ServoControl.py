@@ -94,9 +94,7 @@ class ServoControl(Thread):
 		while self.arduino.hasLines():
 			try:
 				line = self.arduino.getLine()
-				if line.startswith('[IMU]'):
-					self.parseIMU(line[5:])
-				elif line.startswith('[GPS]'):
+				if line.startswith('[GPS]'):
 					self.parseGPS(line[5:])
 				elif line.startswith('Time: '):
 					self.parseTime(line)
@@ -108,7 +106,6 @@ class ServoControl(Thread):
 		self.parent.ids.station_lat.text = str(self.latDeg)
 		self.parent.ids.station_long.text = str(self.lonDeg)
 		self.parent.ids.station_alt.text = str(self.altMeters)
-		self.parent.ids.station_trueHeading.text = str(self.imuX)
 		self.parent.ids.station_time.text = str(self.gpsTime)
 
 
@@ -123,6 +120,10 @@ class ServoControl(Thread):
 
 	#convert to -180 to 180 range
 	def convertGuiRange(self):
+		#get rid of extra 360s and negatives
+		self.targetAziDeg = self.targetAziDeg % 360
+		self.targetEleDeg = self.targetEleDeg % 360
+
 		if(self.targetAziDeg > 180):
 			self.targetAziDeg -= 360
 
@@ -314,7 +315,7 @@ class Servo(object):
 		"""
 		''' Converts 0-360 degrees to 0-255 servo positions '''
 		# remove any extra 360s or negatives
-		deg = abs(deg % 360)
+		deg = deg % 360
 
 		#convert if it is on the right hemisphere
 		if deg < 180:

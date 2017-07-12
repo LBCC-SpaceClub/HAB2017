@@ -45,6 +45,10 @@ class RootLayout(FloatLayout):
 		self.ids.eth_status.color = (1,0,0,1)
 		self.ids.payload_disconnect.disabled = True
 		self.ids.station_disconnect.disabled = True
+		self.ids.cbox_North.active = True
+		self.ids.cbox_East.active = False
+		self.ids.cbox_South.active = False
+		self.ids.cbox_West.active = False
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
 		self.motorManualSwitch()

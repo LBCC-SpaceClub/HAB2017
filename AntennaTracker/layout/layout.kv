@@ -65,7 +65,7 @@
                     on_press: root.stationDisconnect()
             GridLayout:
                 cols: 1
-                rows: 4
+                rows: 2
                 size_hint:(None, None)
                 pos_hint: {'x':.08,'y':.76}
                 row_force_default:True
@@ -92,28 +92,71 @@
                         id: cbox_steppers
 						active: False
                         group: 'gr2'
+            GridLayout:
+                cols: 1
+                rows: 3
+                size_hint:(None, None)
+                pos_hint: {'x':.08,'y':.68}
+                row_force_default:True
+                row_default_height:'32dp'
+                GridLayout:
+                    cols: 1
+                    rows: 1
+                    Label:
+                        text: 'Facing'
+                        font_size: '16sp'
                 GridLayout:
                     cols: 2
                     rows: 1
-                    spacing:'80dp'
-                    Label:
-                        text: ''
-                        font_size: '16sp'
-                    CheckBox:
-                        id: cbox_a
-                        group: 'gr2'
-                        disabled: True
+                    spacing: '60db'
+                    GridLayout:
+                        cols: 2
+                        rows: 1
+                        spacing:'40dp'
+                        Label:
+                            text: 'North'
+                            font_size: '16sp'
+                        CheckBox:
+                            id: cbox_North
+    						active: False
+                            group: 'gr3'
+                    GridLayout:
+                        cols: 2
+                        rows: 1
+                        spacing:'40dp'
+                        Label:
+                            text: 'East'
+                            font_size: '16sp'
+                        CheckBox:
+                            id: cbox_East
+    						active: False
+                            group: 'gr3'
                 GridLayout:
                     cols: 2
                     rows: 1
-                    spacing:'80dp'
-                    Label:
-                        text: ''
-                        font_size: '16sp'
-                    CheckBox:
-                        id: cbox_b
-                        group: 'gr2'
-                        disabled: True
+                    spacing:'60dp'
+                    GridLayout:
+                        cols: 2
+                        rows: 1
+                        spacing:'40dp'
+                        Label:
+                            text: 'South'
+                            font_size: '16sp'
+                        CheckBox:
+                            id: cbox_South
+    						active: False
+                            group: 'gr3'
+                    GridLayout:
+                        cols: 2
+                        rows: 1
+                        spacing:'40dp'
+                        Label:
+                            text: 'West'
+                            font_size: '16sp'
+                        CheckBox:
+                            id: cbox_West
+    						active: False
+                            group: 'gr3'
             ### END STATION SOURCES ###
 
             ### STATION GPS DATA ###
@@ -150,10 +193,27 @@
                 cols: 1
                 rows: 5
                 size_hint: (None, None)
-                pos_hint: {'x':.04,'y':.58}
+                pos_hint: {'x':.04,'y':.5225}
                 row_force_default:True
                 row_default_height:'40dp'
                 spacing: '2dp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        text: 'Time'
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '140dp'
+                        TextInput:
+                            id: station_time
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
                 GridLayout:
                     cols: 2
                     row_force_default:True
@@ -205,40 +265,6 @@
                         col_default_width: '140dp'
                         TextInput:
                             id: station_alt
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        text: 'Heading'
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'35dp'
-                        col_default_width: '140dp'
-                        TextInput:
-                            id: station_trueHeading
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        text: 'Time'
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'35dp'
-                        col_default_width: '140dp'
-                        TextInput:
-                            id: station_time
                             readonly: True
                             multiline: False
                             font_size: '18sp'
@@ -388,6 +414,40 @@
                     row_default_height:'35dp'
                     spacing:'20dp'
                     Label:
+                        text: 'Date'
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '140dp'
+                        TextInput:
+                            id: payload_date
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
+                        text: 'Time'
+                    GridLayout:
+                        cols: 1
+                        row_force_default:True
+                        row_default_height:'35dp'
+                        col_default_width: '140dp'
+                        TextInput:
+                            id: payload_time
+                            readonly: True
+                            multiline: False
+                            font_size: '18sp'
+                GridLayout:
+                    cols: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    spacing:'20dp'
+                    Label:
                         id: payload_lat_lbl
                         text: 'Latitude'
                     GridLayout:
@@ -433,40 +493,6 @@
                         col_default_width: '140dp'
                         TextInput:
                             id: payload_alt
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        text: 'Date'
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'35dp'
-                        col_default_width: '140dp'
-                        TextInput:
-                            id: payload_date
-                            readonly: True
-                            multiline: False
-                            font_size: '18sp'
-                GridLayout:
-                    cols: 2
-                    row_force_default:True
-                    row_default_height:'35dp'
-                    spacing:'20dp'
-                    Label:
-                        text: 'Time'
-                    GridLayout:
-                        cols: 1
-                        row_force_default:True
-                        row_default_height:'35dp'
-                        col_default_width: '140dp'
-                        TextInput:
-                            id: payload_time
                             readonly: True
                             multiline: False
                             font_size: '18sp'
