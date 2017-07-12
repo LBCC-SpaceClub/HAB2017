@@ -1,3 +1,4 @@
+#paste the following into the Maestro Control Center's script section and click apply settings:
 sub stop_all_servos_here
   0 begin dup 6 less_than while
   dup dup get_position swap servo

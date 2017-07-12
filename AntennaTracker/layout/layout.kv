@@ -558,7 +558,7 @@
             FloatLayout:
                 Bubble:
                     size_hint: (None, None)
-                    width: '250dp'
+                    width: '500dp'
                     height: '65dp'
                     pos_hint: {'x':.10,'y':.34}
                     background_color:(1, 0, 0, .4)
@@ -570,7 +570,7 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.12,'y':.21}
+                pos_hint: {'x':.10,'y':.21}
                 row_force_default: True
                 row_default_height:'50dp'
                 GridLayout: #Stop Motor
@@ -605,10 +605,10 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.05,'y':.07}
+                pos_hint: {'x':.01,'y':.07}
                 row_force_default: True
                 row_default_height:'30dp'
-                col_default_width: '240dp'
+                col_default_width: '190dp'
                 GridLayout:
                     cols: 1
                     row_force_default: True
@@ -641,11 +641,11 @@
                         row_force_default: True
                         row_default_height:'30dp'
                         col_force_default: True
-                        col_default_width: '250dp'
+                        col_default_width: '225dp'
                         Slider:
                             id: motor_sliderX
-                            min:0.00
-                            max:360.00
+                            min:-180.00
+                            max:180.00
                             step:.01
                             value: root.x_value
                             on_value: root.x_value = self.value
@@ -662,10 +662,10 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.05,'y':.00}
+                pos_hint: {'x':.01,'y':.00}
                 row_force_default: True
                 row_default_height:'30dp'
-                col_default_width: '240dp'
+                col_default_width: '190dp'
                 GridLayout:
                     cols: 1
                     row_force_default: True
@@ -698,11 +698,11 @@
                         row_force_default: True
                         row_default_height:'30dp'
                         col_force_default: True
-                        col_default_width: '250dp'
+                        col_default_width: '225dp'
                         Slider:
                             id: motor_sliderY
-                            min:0.0
-                            max:360.0
+                            min:-180.0
+                            max:180.0
                             step:.01
                             value: root.y_value
                             on_value: root.y_value = self.value
@@ -715,29 +715,168 @@
                             Label:
                                 font_size: '17sp'
                                 text: str(root.truncate(motor_sliderY.value))
+
+            #offset Switch
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.37,'y':.15}
+                row_force_default: True
+                row_default_height:'50dp'
+                GridLayout: #Manual Motor
+                    cols: 1
+                    rows: 2
+                    row_force_default:True
+                    row_default_height:'35dp'
+                    col_default_width: '210dp'
+                    Label:
+                        text: 'Motor Offset'
+                        font_size:'16sp'
+                        bold: True
+                    Switch:
+                        id: motor_offset
+                        active: False
+                        on_active: root.motorOffsetSwitch()
+
+            #offset sliders
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.28,'y':.07}
+                row_force_default: True
+                row_default_height:'30dp'
+                col_default_width: '190dp'
+                GridLayout:
+                    cols: 1
+                    row_force_default: True
+                    row_default_height:'50dp'
+                    col_force_default: True
+                    col_default_width: '385dp'
+                    Label:
+                        text:'azimuth offset'
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    row_force_default: True
+                    row_default_height:'22dp'
+                    col_default_width: '75dp'
+                    GridLayout:
+                        cols: 1
+                        row_force_default: True
+                        row_default_height:'30dp'
+                        col_force_default: True
+                        col_default_width: '70dp'
+                        TextInput:
+                            id: motor_offsetX_text
+                            readonly: False
+                            multiline: False
+                            font_size: '17sp'
+                            text: str(root.truncate(root.x_offset))
+                            on_text: root.x_offset = root.sliderValidate(float(self.text))
+                    GridLayout:
+                        cols: 2
+                        row_force_default: True
+                        row_default_height:'30dp'
+                        col_force_default: True
+                        col_default_width: '225dp'
+                        Slider:
+                            id: motor_offsetX
+                            min:-180.00
+                            max:180.00
+                            step:.01
+                            value: root.x_offset
+                            on_value: root.x_offset = self.value
+                        GridLayout:
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:'35dp'
+                            col_force_default: True
+                            col_default_width: '35dp'
+                            Label:
+                                font_size: '17sp'
+                                text: str(root.truncate(motor_offsetX.value))
+            GridLayout:
+                cols: 1
+                rows: 2
+                size_hint: (None, None)
+                pos_hint: {'x':.28,'y':.00}
+                row_force_default: True
+                row_default_height:'30dp'
+                col_default_width: '190dp'
+                GridLayout:
+                    cols: 1
+                    row_force_default: True
+                    row_default_height:'50dp'
+                    col_force_default: True
+                    col_default_width: '393dp'
+                    Label:
+                        text:'elevation offset'
+                GridLayout:
+                    cols: 2
+                    rows: 1
+                    row_force_default: True
+                    row_default_height:'22dp'
+                    col_default_width: '75dp'
+                    GridLayout:
+                        cols: 1
+                        row_force_default: True
+                        row_default_height:'30dp'
+                        col_force_default: True
+                        col_default_width: '70dp'
+                        TextInput:
+                            id: motor_offsetY_text
+                            readonly: False
+                            multiline: False
+                            font_size: '17sp'
+                            text: str(root.truncate(root.y_offset))
+                            on_text: root.y_offset = root.sliderValidate(float(self.text))
+                    GridLayout:
+                        cols: 2
+                        row_force_default: True
+                        row_default_height:'30dp'
+                        col_force_default: True
+                        col_default_width: '225dp'
+                        Slider:
+                            id: motor_offsetY
+                            min:-180.0
+                            max:180.0
+                            step:.01
+                            value: root.y_offset
+                            on_value: root.y_offset = self.value
+                        GridLayout:
+                            cols: 1
+                            row_force_default: True
+                            row_default_height:'35dp'
+                            col_force_default: True
+                            col_default_width: '35dp'
+                            Label:
+                                font_size: '17sp'
+                                text: str(root.truncate(motor_offsetY.value))
             ## COMPASS ###########
             GridLayout:
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.31,'y':.32}
+                pos_hint: {'x':.55,'y':.37}
                 row_force_default: True
                 row_default_height:'40dp'
-                col_default_width: '209dp'
+                col_default_width: '165dp'
                 Label:
                     text: "azimuth"
                 GridLayout:
                     cols: 1
                     row_force_default: True
-                    row_default_height:'210dp'
+                    row_default_height:'150dp'
                     col_default_width: '210dp'
                     MyKnob:
-                        size:               210, 210
+                        size:               160, 160
                         min:                0
                         max:                360
                         step:               1
                         slope:              0
-                        value:              root.x_value
+                        value:              root.x_value + root.x_offset
                         knobimg_source:     "img/compass-needle.png"
                         show_marker:        True
                         marker_img:         "img/compass-outside.png"
@@ -746,24 +885,24 @@
                 cols: 1
                 rows: 2
                 size_hint: (None, None)
-                pos_hint: {'x':.49,'y':.32}
+                pos_hint: {'x':.55,'y':.12}
                 row_force_default: True
                 row_default_height:'40dp'
-                col_default_width: '210dp'
+                col_default_width: '165dp'
                 Label:
                     text: "elevation"
                 GridLayout:
                     cols: 1
                     row_force_default: True
-                    row_default_height:'210dp'
+                    row_default_height:'150dp'
                     col_default_width: '210dp'
                     MyKnob:
-                        size:               210, 210
+                        size:               160, 160
                         min:                0
                         max:                360
                         step:               1
                         slope:              0
-                        value:              root.y_value
+                        value:              root.y_value + root.y_offset
                         knobimg_source:     "img/compass-needle.png"
                         show_marker:        True
                         marker_img:         "img/compass-outside.png"
@@ -810,12 +949,12 @@
     id: aboutpopup
     title:"About"
     size_hint:(None,None)
-    size:(450,300)
+    size:(600,300)
     auto_dismiss:False
     title_size:16
     FloatLayout:
         Label:
-            text:"Kyle Prouty\nkyle@prouty.io\n\nLevi Willmeth\nlevi.willmeth@gmail.com"
+            text:"Kyle Prouty\nkyle@prouty.io\n\nLevi Willmeth\nlevi.willmeth@gmail.com\n\nJeremy Thoennes\njeremy.thoennes.4644@mail.linnbenton.edu"
             font_size:18
             size_hint:(None,None)
             pos_hint:{'x':.22,'y':.38}

@@ -52,6 +52,7 @@ class ServoControl(Thread):
 			payloadConnected = self.parent.ids.payload_connect.disabled
 			payloadManualButton = self.parent.ids.payload_switchmanual.active
 			motorManualButton = self.parent.ids.motor_switchmanual.active
+			motorOffsetButton = self.parent.ids.motor_offset.active
 			#if the motor manual button is off, run like normal
 			if(not motorManualButton):
 				# Unless Manual button enabled, check for new arduino gps
@@ -76,16 +77,12 @@ class ServoControl(Thread):
 
 	def moveMotors(self):
 		if self.parent.ids.motor_switchstop.active:
-			'''
-			self.servos.stopMoving(self.servos.aziChannel) #stop the movement
-			self.servos.stopMoving(self.servos.eleChannel)
-			'''
 			#command the servos to stop moving
 			self.servos.stopMoving()
 			return		# Don't move if the safety lockout is engaged!
 		if self.servos.connected:
-			pan = float(self.parent.x_value)
-			tilt = float(self.parent.y_value)
+			pan = float(self.parent.x_value + self.parent.x_offset)
+			tilt = float(self.parent.y_value + self.parent.y_offset)
 			self.servos.pointTo(pan, tilt)
 			#don't print if manually pointing to avoid spam
 			if(not self.parent.ids.motor_switchmanual.active):
@@ -119,9 +116,18 @@ class ServoControl(Thread):
 		if self.parent.ids.station_switchmanual.active:
 			self.updateTargetSolution()
 
+		self.convertGuiRange()
+
 		self.parent.x_value = self.targetAziDeg
 		self.parent.y_value = self.targetEleDeg
 
+	#convert to -180 to 180 range
+	def convertGuiRange(self):
+		if(self.targetAziDeg > 180):
+			self.targetAziDeg -= 360
+
+		if(self.targetEleDeg > 180):
+			self.targetEleDeg -= 360
 
 	def parseIMU(self, line):
 		line = line.split(',')
@@ -175,6 +181,7 @@ class ServoControl(Thread):
 			self.targetAziDeg = self.getAzDegrees(
 				tLat, tLon, pLat, pLon
 			)
+
 		except ValueError as e:
 			print("updateTargetSolution() error: ", e)
 			# defaults
@@ -306,7 +313,7 @@ class Servo(object):
 		return int(deg * 6000.0 / 360.0 + 3000)
 		"""
 		''' Converts 0-360 degrees to 0-255 servo positions '''
-		# remove any extra 360s
+		# remove any extra 360s or negatives
 		deg = abs(deg % 360)
 
 		#convert if it is on the right hemisphere

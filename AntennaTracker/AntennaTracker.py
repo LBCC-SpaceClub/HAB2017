@@ -14,6 +14,8 @@ class RootLayout(FloatLayout):
 	configs = "cfg/Configs.ini"
 	x_value = NumericProperty(0.0)
 	y_value = NumericProperty(0.0)
+	x_offset = NumericProperty(0.0)
+	y_offset = NumericProperty(0.0)
 	rst_doc = StringProperty('')
 	connectedDatabase = None
 	connectedArduino = None
@@ -46,6 +48,7 @@ class RootLayout(FloatLayout):
 		self.payloadManualSwitch()
 		self.stationManualSwitch()
 		self.motorManualSwitch()
+		self.motorOffsetSwitch()
 		self.mapUpdate()
 
 
@@ -273,12 +276,32 @@ class RootLayout(FloatLayout):
 			self.ids.motor_sliderX_text.disabled = False
 			self.ids.motor_sliderY.disabled = False
 			self.ids.motor_sliderY_text.disabled = False
+			#disable offset
+			self.ids.motor_offset.active = False
+			self.motorOffsetSwitch()
 		else:
 			self.updateConsole(" **MODE** auto motor control")
 			self.ids.motor_sliderX.disabled = True
 			self.ids.motor_sliderX_text.disabled = True
 			self.ids.motor_sliderY.disabled = True
 			self.ids.motor_sliderY_text.disabled = True
+
+	def motorOffsetSwitch(self):
+		if(self.ids.motor_offset.active):
+			self.updateConsole(" **MODE** offset control")
+			self.ids.motor_offsetX.disabled = False
+			self.ids.motor_offsetX_text.disabled = False
+			self.ids.motor_offsetY.disabled = False
+			self.ids.motor_offsetY_text.disabled = False
+		else:
+			self.updateConsole(" **MODE** no offset control")
+			self.ids.motor_offsetX.disabled = True
+			self.x_offset= 0.0
+			self.ids.motor_offsetX_text.disabled = True
+			self.ids.motor_offsetY.disabled = True
+			self.y_offset = 0.0
+			self.ids.motor_offsetY_text.disabled = True
+
 
 
 
